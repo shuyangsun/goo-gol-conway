@@ -12,7 +12,9 @@ pub trait Board<T> {
         let mut new_states: Vec<T> = Vec::new();
         for (idx, cell) in self.cell_iter().enumerate() {
             let neighbors = self.get_cell_neighbors_states(idx);
-            let new_state = cell.next_state(&*neighbors);
+            let new_state = cell
+                .evolution_strategy()
+                .next_state(&cell.state(), &*neighbors);
             new_states.push(new_state);
         }
 
