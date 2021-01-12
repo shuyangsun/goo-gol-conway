@@ -1,6 +1,6 @@
 [workspace]
 
 members = [
-    "gol-core"
+    "gol-core",
     "gol-simple"
 ]
