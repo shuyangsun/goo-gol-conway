@@ -1,4 +1,4 @@
-use super::strategy::EvolutionStrategy;
+use super::super::evolution::strategy::EvolutionStrategy;
 
 pub trait Cell<T> {
     fn new_from_state(state: T) -> Self
