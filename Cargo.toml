@@ -2,5 +2,5 @@
 
 members = [
     "gol-core",
-    "gol-simple"
+    "gol-client"
 ]

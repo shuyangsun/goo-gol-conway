@@ -1,5 +1,5 @@
 [package]
-name = "gol-simple"
+name = "gol-client"
 version = "0.1.0"
 authors = ["Shuyang Sun <sunbuffett@gmail.com>"]
 edition = "2018"
