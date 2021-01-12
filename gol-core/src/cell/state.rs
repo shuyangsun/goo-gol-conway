@@ -1,3 +1,3 @@
-pub trait CellState: Copy {}
+pub trait CellState: Clone {}
 
-impl<T> CellState for T where T: Clone + Copy {}
+impl<T> CellState for T where T: Clone {}
