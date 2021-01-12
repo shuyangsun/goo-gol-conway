@@ -14,7 +14,7 @@ pub trait Board<T> {
             let neighbors = self.get_cell_neighbors_states(idx);
             let new_state = cell
                 .evolution_strategy()
-                .next_state(&cell.state(), &*neighbors);
+                .next_state(idx, &cell.state(), &*neighbors);
             new_states.push(new_state);
         }
 
