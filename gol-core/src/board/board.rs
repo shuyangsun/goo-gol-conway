@@ -1,13 +1,30 @@
+// use super::super::cell::common::CellIdx;
 // use super::super::evolution::strategy::EvolutionStrategy;
 // use rayon::prelude::*;
+//
+// pub trait CellStateManager<'data, 'dref, T, I1>
+// where
+//     'data: 'dref,
+//     T: 'data,
+//     I1: Iterator<Item = CellIdx>,
+// {
+//     fn get_state_at_idx(&self, idx: CellIdx) -> &'dref T;
+// }
+//
+// pub trait BoardSpaceManager<I>
+// where
+//     I: Iterator<Item = CellIdx>,
+// {
+//     fn get_neighbors_idx(&self, idx: CellIdx) -> I;
+// }
 //
 // pub trait BoardData<'t, 'b, T, I1, I2, I3>
 // where
 //     T: 't + Send + Sync,
 //     't: 'b,
-//     I1: IndexedParallelIterator<Item = &'b T>,
-//     I2: IndexedParallelIterator<Item = &'b mut T>,
-//     I3: IndexedParallelIterator<Item = &'b dyn EvolutionStrategy<T>>,
+//     I1: ParallelIterator<Item = &'b T>,
+//     I2: ParallelIterator<Item = &'b mut T>,
+//     I3: ParallelIterator<Item = &'b dyn EvolutionStrategy<T>>,
 // {
 //     fn cell_state(&self, idx: usize) -> &T;
 //     fn set_cell_state(&mut self, idx: usize, new_state: T);

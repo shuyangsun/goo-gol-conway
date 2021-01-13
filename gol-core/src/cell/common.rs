@@ -1,1 +1,2 @@
-pub type IndexedCellItem<'dref, T> = (usize, &'dref T);
+pub trait CellIndex: Clone + Copy + Send + Sync {}
+pub type IndexedCellItem<'dref, T, CI> = (CI, &'dref T);

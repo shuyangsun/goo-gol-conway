@@ -1,21 +1,17 @@
-use super::super::cell::common::{CellIdx, IndexedCellItem};
+use super::super::cell::common::IndexedCellItem;
 use super::super::cell::state::ConwayState;
 use super::strategy::EvolutionStrategy;
 
 pub struct ConwayStrategy {}
 
-impl<'data, 'dataref, I> EvolutionStrategy<'data, 'dataref, ConwayState, I> for ConwayStrategy
+impl<'data, 'dataref, CI, I> EvolutionStrategy<'data, 'dataref, ConwayState, CI, I>
+    for ConwayStrategy
 where
     'data: 'dataref,
     ConwayState: 'data,
-    I: Iterator<Item = IndexedCellItem<'dataref, ConwayState>>,
+    I: Iterator<Item = IndexedCellItem<'dataref, ConwayState, CI>>,
 {
-    fn next_state(
-        &self,
-        _: CellIdx,
-        cur_state: &'dataref ConwayState,
-        neighbors: I,
-    ) -> ConwayState {
+    fn next_state(&self, _: CI, cur_state: &'dataref ConwayState, neighbors: I) -> ConwayState {
         let mut alive_count = 0;
         for (_, state) in neighbors {
             alive_count += match state {
