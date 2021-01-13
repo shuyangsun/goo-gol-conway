@@ -1,55 +1,58 @@
-use super::super::cell::cell::Cell;
+use super::super::evolution::strategy::EvolutionStrategy;
 use rayon::prelude::*;
 
-pub trait Board<T>: Send + Sync
+pub trait BoardData<'a, 'b, T, I1, I2, I3, I4>
 where
-    T: Send + Sync + Clone,
+    T: 'a,
+    'a: 'b,
+    I1: IndexedParallelIterator<Item = &'b T>,
+    I2: IndexedParallelIterator<Item = &'b mut T>,
+    I3: IndexedParallelIterator<Item = &'b dyn EvolutionStrategy<T>>,
+    I4: Iterator<Item = (usize, &'b T)>,
 {
     fn cell_state(&self, idx: usize) -> &T;
-
     fn set_cell_state(&mut self, idx: usize, new_state: T);
+    fn get_cell_neighbor_states(&self, idx: usize) -> I4;
 
-    fn get_cell_neighbor_states<'a, 'b, U>(&self, idx: usize) -> U
+    fn cell_states_par_iter(&self) -> I1;
+    fn cell_states_par_iter_mut(&self) -> I2;
+
+    fn cell_strategy_par_iter_mut(&self) -> I3;
+}
+
+pub trait Board<'a, 'b, T, I1, I2, I3, I4>: Send + Sync
+where
+    'a: 'b,
+    T: 'a + Send + Sync + Clone,
+    I1: IndexedParallelIterator<Item = &'b T>,
+    I2: IndexedParallelIterator<Item = &'b mut T>,
+    I3: IndexedParallelIterator<Item = &'b dyn EvolutionStrategy<T>>,
+    I4: Iterator<Item = (usize, &'b T)>,
+{
+    fn data(&self) -> &dyn BoardData<'a, 'b, T, I1, I2, I3, I4>;
+    fn advance(&mut self)
     where
         'a: 'b,
         T: 'a,
-        U: Iterator<Item = (usize, &'b T)>;
-
-    fn cell_iter<'a, 'b, U>(&self) -> U
-    where
-        'a: 'b,
-        T: 'a,
-        U: IndexedParallelIterator<Item = &'b dyn Cell<T>>;
-
-    fn cell_iter_mut<'a, 'b, U>(&self) -> U
-    where
-        'a: 'b,
-        T: 'a,
-        U: IndexedParallelIterator<Item = &'b mut dyn Cell<T>>;
-
-    fn advance<'a, 'b, U, V, W>(&mut self)
-    where
-        'a: 'b,
-        T: 'a,
-        U: IndexedParallelIterator<Item = &'b dyn Cell<T>>,
-        V: IndexedParallelIterator<Item = &'b mut dyn Cell<T>>,
-        W: Iterator<Item = (usize, &'b T)>,
     {
-        let c_iter: U = self.cell_iter();
+        let c_iter: I1 = self.data().cell_states_par_iter();
+        let strategy_iter: I3 = self.data().cell_strategy_par_iter_mut();
         let new_states: Vec<T> = c_iter
+            .zip(strategy_iter)
             .enumerate()
-            .map(|(idx, cell)| {
-                let neighbors: W = self.get_cell_neighbor_states(idx);
-                cell.evolution_strategy()
-                    .next_state(idx, &cell.state(), &neighbors)
-            })
+            .map(
+                |(idx, (state, strat)): (usize, (&'b T, &dyn EvolutionStrategy<T>))| {
+                    let neighbors = self.data().get_cell_neighbor_states(idx);
+                    strat.next_state(idx, state, &neighbors)
+                },
+            )
             .collect();
 
         // TODO: call back and set states.
 
-        let c_iter_mut: V = self.cell_iter_mut();
+        let c_iter_mut: I2 = self.data().cell_states_par_iter_mut();
         c_iter_mut
             .zip(new_states.par_iter())
-            .for_each(|(cell, new_state)| cell.set_state((*new_state).clone()));
+            .for_each(|(old_state, new_state)| *old_state = (*new_state).clone());
     }
 }
