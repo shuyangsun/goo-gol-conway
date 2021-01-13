@@ -3,13 +3,13 @@ use super::strategy::EvolutionStrategy;
 
 pub struct ConwayStrategy {}
 
-impl<'a, 't, I> EvolutionStrategy<'a, 't, ConwayState, I> for ConwayStrategy
+impl<'data, 'dataref, I> EvolutionStrategy<'data, 'dataref, ConwayState, I> for ConwayStrategy
 where
-    't: 'a,
-    ConwayState: 't,
-    I: Iterator<Item = (usize, &'a ConwayState)>,
+    'data: 'dataref,
+    ConwayState: 'data,
+    I: Iterator<Item = (usize, &'dataref ConwayState)>,
 {
-    fn next_state(&self, _: usize, cur_state: &'a ConwayState, neighbors: I) -> ConwayState {
+    fn next_state(&self, _: usize, cur_state: &'dataref ConwayState, neighbors: I) -> ConwayState {
         let mut alive_count = 0usize;
         for (_, state) in neighbors {
             alive_count += match state {

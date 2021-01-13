@@ -1,8 +1,8 @@
-pub trait EvolutionStrategy<'a, 't, T, I>: Send + Sync
+pub trait EvolutionStrategy<'data, 'dataref, T, I>: Send + Sync
 where
-    't: 'a,
-    T: 't,
-    I: Iterator<Item = (usize, &'a T)>,
+    'data: 'dataref,
+    T: 'data,
+    I: Iterator<Item = (usize, &'dataref T)>,
 {
-    fn next_state(&self, idx: usize, cur_state: &'a T, neighbors: I) -> T;
+    fn next_state(&self, idx: usize, cur_state: &'dataref T, neighbors: I) -> T;
 }
