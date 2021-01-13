@@ -3,13 +3,13 @@ use super::strategy::EvolutionStrategy;
 
 pub struct ConwayStrategy {}
 
-impl EvolutionStrategy<ConwayState> for ConwayStrategy {
-    fn next_state(
-        &self,
-        _: usize,
-        cur_state: ConwayState,
-        neighbors: impl IntoIterator<Item = (usize, ConwayState)>,
-    ) -> ConwayState {
+impl<'a, 't, I> EvolutionStrategy<'a, 't, ConwayState, I> for ConwayStrategy
+where
+    't: 'a,
+    ConwayState: 't,
+    I: Iterator<Item = (usize, &'a ConwayState)>,
+{
+    fn next_state(&self, _: usize, cur_state: &'a ConwayState, neighbors: I) -> ConwayState {
         let mut alive_count = 0usize;
         for (_, state) in neighbors {
             alive_count += match state {
@@ -17,7 +17,7 @@ impl EvolutionStrategy<ConwayState> for ConwayStrategy {
                 ConwayState::Dead => 0,
             };
         }
-        if alive_count == 3 || alive_count == 2 && cur_state == ConwayState::Alive {
+        if alive_count == 3 || alive_count == 2 && *cur_state == ConwayState::Alive {
             ConwayState::Alive
         } else {
             ConwayState::Dead
@@ -47,10 +47,8 @@ mod conway_strategy_test {
     fn conway_strat_test_0() {
         let strat = ConwayStrategy::new();
         let neighbors = create_neighbors(0);
-        let neighbors_iter = neighbors.into_iter().enumerate();
-        let alive_next = strat.next_state(0, ConwayState::Alive, neighbors_iter);
+        let neighbors_iter = neighbors.iter().enumerate();
+        let alive_next = strat.next_state(0, &ConwayState::Alive, neighbors_iter);
         assert_eq!(alive_next, ConwayState::Dead);
     }
 }
-
-struct A {}
