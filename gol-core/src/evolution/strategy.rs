@@ -1,10 +1,10 @@
-use super::super::cell::common::IndexedCellItem;
+use super::super::cell::common::IndexedDataRef;
 
-pub trait EvolutionStrategy<'data, 'dataref, T, CI, I>: Send + Sync
+pub trait EvolutionStrategy<'data, 'dref, CI, T, I>: Send + Sync
 where
-    'data: 'dataref,
+    'data: 'dref,
     T: 'data,
-    I: Iterator<Item = IndexedCellItem<'dataref, T, CI>>,
+    I: Iterator<Item = IndexedDataRef<'dref, CI, T>>,
 {
-    fn next_state(&self, idx: CI, cur_state: &'dataref T, neighbors: I) -> T;
+    fn next_state(&self, idx: CI, cur_state: &'dref T, neighbors: I) -> T;
 }

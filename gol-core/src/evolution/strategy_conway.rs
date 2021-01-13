@@ -1,15 +1,15 @@
-use super::super::cell::common::IndexedCellItem;
+use super::super::cell::common::IndexedDataRef;
 use super::super::cell::state::ConwayState;
 use super::strategy::EvolutionStrategy;
 
 pub struct ConwayStrategy {}
 
-impl<'data, 'dataref, CI, I> EvolutionStrategy<'data, 'dataref, ConwayState, CI, I>
+impl<'data, 'dataref, CI, I> EvolutionStrategy<'data, 'dataref, CI, ConwayState, I>
     for ConwayStrategy
 where
     'data: 'dataref,
     ConwayState: 'data,
-    I: Iterator<Item = IndexedCellItem<'dataref, ConwayState, CI>>,
+    I: Iterator<Item = IndexedDataRef<'dataref, CI, ConwayState>>,
 {
     fn next_state(&self, _: CI, cur_state: &'dataref ConwayState, neighbors: I) -> ConwayState {
         let mut alive_count = 0;
