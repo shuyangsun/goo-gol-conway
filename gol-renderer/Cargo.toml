@@ -1,7 +1,7 @@
 [package]
 name = "gol-renderer"
 version = "0.1.0"
-authors = ["Shuyang Sun <sunbuffett@gmail.com>"]
+authors = ["Shuyang Sun <shuyangsun10@gmail.com>"]
 edition = "2018"
 description = "Renderer for gol-client."
 license = "Apache-2.0"
