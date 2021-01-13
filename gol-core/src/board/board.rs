@@ -1,10 +1,10 @@
 // use super::super::evolution::strategy::EvolutionStrategy;
 // use rayon::prelude::*;
 //
-// pub trait BoardData<'a, 'b, T, I1, I2, I3>
+// pub trait BoardData<'t, 'b, T, I1, I2, I3>
 // where
-//     T: 'a + Send + Sync,
-//     'a: 'b,
+//     T: 't + Send + Sync,
+//     't: 'b,
 //     I1: IndexedParallelIterator<Item = &'b T>,
 //     I2: IndexedParallelIterator<Item = &'b mut T>,
 //     I3: IndexedParallelIterator<Item = &'b dyn EvolutionStrategy<T>>,

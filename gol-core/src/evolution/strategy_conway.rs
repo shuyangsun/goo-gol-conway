@@ -1,3 +1,4 @@
+use super::super::cell::common::IndexedCellItem;
 use super::super::cell::state::ConwayState;
 use super::strategy::EvolutionStrategy;
 
@@ -7,7 +8,7 @@ impl<'data, 'dataref, I> EvolutionStrategy<'data, 'dataref, ConwayState, I> for 
 where
     'data: 'dataref,
     ConwayState: 'data,
-    I: Iterator<Item = (usize, &'dataref ConwayState)>,
+    I: Iterator<Item = IndexedCellItem<'dataref, ConwayState>>,
 {
     fn next_state(&self, _: usize, cur_state: &'dataref ConwayState, neighbors: I) -> ConwayState {
         let mut alive_count = 0usize;
