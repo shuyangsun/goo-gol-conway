@@ -1,4 +1,4 @@
-pub trait EvolutionStrategy<T> {
+pub trait EvolutionStrategy<T>: Send + Sync {
     fn next_state(
         &self,
         idx: usize,

@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 pub trait BoardData<'a, 'b, T, I1, I2, I3, I4>
 where
-    T: 'a,
+    T: 'a + Send + Sync,
     'a: 'b,
     I1: IndexedParallelIterator<Item = &'b T>,
     I2: IndexedParallelIterator<Item = &'b mut T>,
