@@ -2,7 +2,8 @@
 
 members = [
     "gol-core",
-    "gol-client"
+    "gol-client",
+    "gol-renderer"
 ]
 
 [profile.dev]
