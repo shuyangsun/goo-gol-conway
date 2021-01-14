@@ -3,6 +3,7 @@ use crate::{
     CellState, IndexedDataOwned, IndexedDataRef,
 };
 use rayon::prelude::*;
+use std::pin::Pin;
 
 pub trait Board<'data, 'dref, T, CI, I>
 where
@@ -41,12 +42,9 @@ where
 
     fn callback_manager(
         &self,
-    ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
+    ) -> &mut BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
-    fn advance(&'data mut self)
-    where
-        CI: 'data,
-    {
+    fn advance(&mut self) {
         let states = self.state_manager();
         let strat = self.strategy_manager();
         let space = self.space_manager();

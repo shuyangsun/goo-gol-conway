@@ -1,10 +1,6 @@
 use crate::{CellIndex, CellState, IndexedDataOwned};
-use futures::Future;
 use rayon::prelude::*;
-use std::cell::RefCell;
-use std::pin::Pin;
-
-type FutureVec = Vec<Pin<Box<dyn Future<Output = ()>>>>;
+use tokio;
 
 pub trait BoardCallback<T, CI, I>: Send + Sync
 where
@@ -12,7 +8,7 @@ where
     CI: Send + Sync,
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
-    fn callback(&self, states: I);
+    fn execute(&self, states: I);
 }
 
 pub struct BoardCallbackManager<T, CI, I>
@@ -22,8 +18,8 @@ where
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
     callbacks: Vec<Box<dyn BoardCallback<T, CI, I>>>,
-    states_cache: RefCell<Option<Vec<IndexedDataOwned<CI, T>>>>,
-    futures_res: RefCell<FutureVec>,
+    states_cache: Option<Vec<IndexedDataOwned<CI, T>>>,
+    futures_res: Vec<usize>,
 }
 
 impl<T, CI> BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
@@ -38,23 +34,22 @@ where
     ) -> Self {
         Self {
             callbacks,
-            states_cache: RefCell::new(None),
-            futures_res: RefCell::new(Vec::with_capacity(callbacks.len())),
+            states_cache: None,
+            futures_res: Vec::new(),
         }
     }
 
-    pub fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>) {
-        *self.states_cache.borrow_mut() = Some(next_states);
-        for callback_obj in self.callbacks {
-            let cur_future = Box::pin(async {
-                callback_obj.callback(self.states_cache.borrow().unwrap().clone().into_par_iter());
-            });
-            self.futures_res.borrow_mut().push(cur_future);
-        }
+    pub async fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>)
+    where
+        CI: 'static,
+        T: 'static,
+    {
+        let asdf: tokio::task::JoinHandle<()> =
+            tokio::spawn(async { self.callbacks[0].execute(next_states.into_par_iter()) });
     }
 
-    pub fn block_until_finish(&self) {
+    pub fn block_until_finish(&mut self) {
         // TODO: implementation
-        self.futures_res.borrow_mut().clear();
+        self.futures_res = Vec::new();
     }
 }
