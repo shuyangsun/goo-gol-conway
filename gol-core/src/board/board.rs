@@ -41,7 +41,7 @@ where
 
     fn callback_manager(
         &self,
-    ) -> &BoardCallbackManager<'dref, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
+    ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn advance(&'data mut self)
     where

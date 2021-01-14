@@ -15,26 +15,25 @@ where
     fn callback(&self, states: I);
 }
 
-pub struct BoardCallbackManager<'callback, T, CI, I>
+pub struct BoardCallbackManager<T, CI, I>
 where
     T: Send + Sync,
     CI: Send + Sync,
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
-    callbacks: Vec<Box<&'callback dyn BoardCallback<T, CI, I>>>,
+    callbacks: Vec<Box<dyn BoardCallback<T, CI, I>>>,
     states_cache: RefCell<Option<Vec<IndexedDataOwned<CI, T>>>>,
     futures_res: RefCell<FutureVec>,
 }
 
-impl<'callback, T, CI>
-    BoardCallbackManager<'callback, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
+impl<T, CI> BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
 where
     T: CellState,
     CI: CellIndex,
 {
     pub fn new(
         callbacks: Vec<
-            Box<&'callback dyn BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>,
+            Box<dyn BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>,
         >,
     ) -> Self {
         Self {
