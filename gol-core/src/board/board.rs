@@ -11,6 +11,8 @@ where
     CI: CellIndex,
     I: Iterator<Item = CI>,
 {
+    fn space_manager(&self) -> &dyn BoardSpaceManager<CI, I, rayon::vec::IntoIter<CI>>;
+
     fn state_manager(
         &self,
     ) -> &dyn BoardStateManager<'data, 'dref, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
@@ -24,8 +26,6 @@ where
         CI,
         rayon::vec::IntoIter<IndexedDataOwned<CI, T>>,
     >;
-
-    fn space_manager(&self) -> &dyn BoardSpaceManager<CI, I, rayon::vec::IntoIter<CI>>;
 
     fn strategy_manager(
         &self,
@@ -63,9 +63,9 @@ where
             })
             .collect();
 
-        // TODO: Drawing and callbacks.
-
         self.state_manager_mut()
             .update_cell_states_from_par_iter(next_states.into_par_iter());
+
+        // TODO: Drawing and callbacks.
     }
 }
