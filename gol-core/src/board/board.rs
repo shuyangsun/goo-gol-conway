@@ -1,32 +1,8 @@
-use super::super::cell::common::{CellIndex, CellState, IndexedDataOwned, IndexedDataRef};
-use super::super::evolution::strategy::EvolutionStrategy;
+use crate::{
+    BoardSpaceManager, BoardStateManager, BoardStrategyManager, CellIndex, CellState,
+    IndexedDataOwned, IndexedDataRef,
+};
 use rayon::prelude::*;
-
-pub trait BoardStateManager<'data, 'dref, T, CI, I>: Send + Sync
-where
-    'data: 'dref,
-    T: 'data + Send + Sync,
-    CI: Send + Sync,
-    I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
-{
-    fn get_cell_state(&self, idx: CI) -> &'dref T;
-    fn update_cell_states_from_par_iter(&mut self, new_states: I);
-}
-
-pub trait BoardSpaceManager<CI, I1, I2>: Send + Sync
-where
-    CI: Send + Sync,
-    I1: Iterator<Item = CI>,
-    I2: ParallelIterator<Item = CI>,
-{
-    fn indices_iter(&self) -> I1;
-    fn indices_par_iter(&self) -> I2;
-    fn get_neighbors_idx(&self, idx: CI) -> I1;
-}
-
-pub trait BoardStrategyManager<'data, 'dref, CI, T, I>: Send + Sync {
-    fn get_strategy_at_index(&self, idx: CI) -> &dyn EvolutionStrategy<'data, 'dref, CI, T, I>;
-}
 
 pub trait Board<'data, 'dref, T, CI, I>
 where

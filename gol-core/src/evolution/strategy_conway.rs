@@ -1,6 +1,4 @@
-use super::super::cell::common::IndexedDataRef;
-use super::super::cell::state::ConwayState;
-use super::strategy::EvolutionStrategy;
+use crate::{ConwayState, EvolutionStrategy, IndexedDataRef};
 
 pub struct ConwayStrategy {}
 
@@ -35,9 +33,7 @@ impl ConwayStrategy {
 
 #[cfg(test)]
 mod conway_strategy_test {
-    use super::super::super::cell::state::ConwayState;
-    use super::ConwayStrategy;
-    use super::EvolutionStrategy;
+    use crate::{ConwayState, ConwayStrategy, EvolutionStrategy};
 
     fn create_neighbors(alive_count: usize) -> Vec<ConwayState> {
         let mut res = vec![ConwayState::Alive; alive_count];

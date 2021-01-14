@@ -1,4 +1,4 @@
-use super::super::cell::common::IndexedDataRef;
+use crate::IndexedDataRef;
 
 pub trait EvolutionStrategy<'data, 'dref, CI, T, I>: Send + Sync
 where
