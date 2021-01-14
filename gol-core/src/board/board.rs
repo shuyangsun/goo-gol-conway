@@ -2,11 +2,7 @@ use crate::{
     BoardCallbackManager, BoardSpaceManager, BoardStateManager, BoardStrategyManager, CellIndex,
     CellState, IndexedDataOwned, IndexedDataRef,
 };
-use futures::{join, Future};
 use rayon::prelude::*;
-use std::pin::Pin;
-
-type FutureVec = Vec<Pin<Box<dyn Future<Output = ()>>>>;
 
 pub trait Board<'data, 'dref, T, CI, I>
 where
@@ -43,14 +39,9 @@ where
 
     fn iter_count(&self) -> usize;
 
-    fn callback_managers(
+    fn callback_manager(
         &self,
-    ) -> Vec<&dyn BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>> {
-        Vec::new()
-    }
-
-    fn callback_futures(&mut self) -> FutureVec;
-    fn set_callback_futures(&mut self, futures: FutureVec);
+    ) -> &BoardCallbackManager<'dref, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn advance(&'data mut self) {
         let states = self.state_manager();
@@ -79,14 +70,7 @@ where
         self.state_manager_mut()
             .update_cell_states_from_par_iter(next_states.clone().into_par_iter());
 
-        // TODO: implement blocking on all future finishes.
-        let mut futures: FutureVec = Vec::new();
-        for callback_obj in self.callback_managers() {
-            let future_res = Box::pin(async {
-                callback_obj.callback(next_states.clone().into_par_iter());
-            });
-            futures.push(future_res);
-        }
-        self.set_callback_futures(futures);
+        self.callback_manager().block_until_finish();
+        self.callback_manager().call(next_states);
     }
 }
