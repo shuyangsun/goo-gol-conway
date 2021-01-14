@@ -23,7 +23,7 @@ where
 {
     callbacks: Vec<Box<&'callback dyn BoardCallback<T, CI, I>>>,
     states_cache: RefCell<Option<Vec<IndexedDataOwned<CI, T>>>>,
-    futures_res: RefCell<Option<FutureVec>>,
+    futures_res: RefCell<FutureVec>,
 }
 
 impl<'callback, T, CI>
@@ -40,23 +40,22 @@ where
         Self {
             callbacks,
             states_cache: RefCell::new(None),
-            futures_res: RefCell::new(None),
+            futures_res: RefCell::new(Vec::with_capacity(callbacks.len())),
         }
     }
 
     pub fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>) {
         *self.states_cache.borrow_mut() = Some(next_states);
-        let mut futures: FutureVec = Vec::new();
         for callback_obj in self.callbacks {
-            let future_res = Box::pin(async {
+            let cur_future = Box::pin(async {
                 callback_obj.callback(self.states_cache.borrow().unwrap().clone().into_par_iter());
             });
-            futures.push(future_res);
+            self.futures_res.borrow_mut().push(cur_future);
         }
-        *self.futures_res.borrow_mut() = Some(futures);
     }
 
     pub fn block_until_finish(&self) {
         // TODO: implementation
+        self.futures_res.borrow_mut().clear();
     }
 }

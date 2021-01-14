@@ -43,7 +43,10 @@ where
         &self,
     ) -> &BoardCallbackManager<'dref, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
-    fn advance(&'data mut self) {
+    fn advance(&'data mut self)
+    where
+        CI: 'data,
+    {
         let states = self.state_manager();
         let strat = self.strategy_manager();
         let space = self.space_manager();
