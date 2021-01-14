@@ -1,7 +1,8 @@
 use crate::{
-    BoardSpaceManager, BoardStateManager, BoardStrategyManager, CellIndex, CellState,
-    IndexedDataOwned, IndexedDataRef,
+    BoardCallbackManager, BoardSpaceManager, BoardStateManager, BoardStrategyManager, CellIndex,
+    CellState, IndexedDataOwned, IndexedDataRef,
 };
+use futures::Future;
 use rayon::prelude::*;
 
 pub trait Board<'data, 'dref, T, CI, I>
@@ -39,6 +40,15 @@ where
 
     fn iter_count(&self) -> usize;
 
+    fn callback_managers(
+        &self,
+    ) -> Vec<&dyn BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>> {
+        Vec::new()
+    }
+
+    fn callback_futures(&mut self) -> Vec<Box<dyn Future<Output = ()>>>;
+    fn set_callback_futures(&mut self, futures: Vec<Box<impl Future>>);
+
     fn advance(&mut self) {
         let states = self.state_manager();
         let strat = self.strategy_manager();
@@ -64,8 +74,15 @@ where
             .collect();
 
         self.state_manager_mut()
-            .update_cell_states_from_par_iter(next_states.into_par_iter());
+            .update_cell_states_from_par_iter(next_states.clone().into_par_iter());
 
-        // TODO: Drawing and callbacks.
+        let callback_futures = self
+            .callback_managers()
+            .iter()
+            .map(|callback_obj| {
+                Box::new(async { callback_obj.callback(next_states.clone().into_par_iter()) })
+            })
+            .collect();
+        self.set_callback_futures(callback_futures);
     }
 }
