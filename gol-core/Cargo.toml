@@ -10,6 +10,7 @@ license = "Apache-2.0"
 
 [dependencies]
 rayon = "1.5.0"
+num-traits = "0.2"
 
 #[[bench]]
 #name = "gol_core_benchmark"

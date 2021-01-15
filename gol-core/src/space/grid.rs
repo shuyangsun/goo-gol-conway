@@ -1,53 +1,62 @@
 use crate::{BoardSpaceManager, GridPointND};
+use num_traits::{CheckedDiv, FromPrimitive, PrimInt, ToPrimitive, Unsigned};
 use rayon::prelude::*;
 
-pub struct GridND {
-    shape: Vec<usize>,
-    indices_cache: Vec<GridPointND>,
+pub struct GridND<T> {
+    indices_cache: Vec<GridPointND<T>>,
 }
 
-impl
+impl<T>
     BoardSpaceManager<
-        GridPointND,
-        std::vec::IntoIter<GridPointND>,
-        rayon::vec::IntoIter<GridPointND>,
-    > for GridND
+        GridPointND<T>,
+        std::vec::IntoIter<GridPointND<T>>,
+        rayon::vec::IntoIter<GridPointND<T>>,
+    > for GridND<T>
+where
+    T: PrimInt + Send + Sync,
 {
-    fn indices_iter(&self) -> std::vec::IntoIter<GridPointND> {
+    fn indices_iter(&self) -> std::vec::IntoIter<GridPointND<T>> {
         self.indices_cache.clone().into_iter()
     }
 
-    fn indices_par_iter(&self) -> rayon::vec::IntoIter<GridPointND> {
+    fn indices_par_iter(&self) -> rayon::vec::IntoIter<GridPointND<T>> {
         self.indices_cache.clone().into_par_iter()
     }
 }
 
-impl GridND {
-    fn new<I>(shape: I) -> Self
+impl<T> GridND<T> {
+    pub fn new<U, I>(shape: I) -> Self
     where
-        I: Iterator<Item = usize>,
+        T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + FromPrimitive + Send + Sync,
+        I: Iterator<Item = U>,
     {
-        let shape_vec = shape.collect();
+        let shape_vec: Vec<U> = shape.collect();
         let indices_cache = Self::indices_vec(&shape_vec);
-        Self {
-            shape: shape_vec,
-            indices_cache,
-        }
+        Self { indices_cache }
     }
 
-    fn indices_vec(shape: &Vec<usize>) -> Vec<GridPointND> {
-        // let num_cell = shape.iter().product();
-        // let mut final_iter = None;
-        // for &dim in shape.iter() {
-        //     let cur_iter = std::iter::repeat(0usize..dim)
-        //         .take(num_cell / dim)
-        //         .flatten()
-        //         .into_iter();
-        //     final_iter = match final_iter {
-        //         None => Some(cur_iter),
-        //         Some(prev_iter) => Some(prev_iter.zip(cur_iter)),
-        //     }
-        // }
-        Vec::new()
+    fn indices_vec<U>(shape: &Vec<U>) -> Vec<GridPointND<T>>
+    where
+        T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + FromPrimitive + Send + Sync,
+    {
+        let mut num_cell = U::one();
+        for dim in shape.iter() {
+            num_cell = num_cell * *dim;
+        }
+        (0..num_cell.to_u64().unwrap())
+            .into_par_iter()
+            .map(|i| {
+                let i = U::from_u64(i).unwrap();
+                let mut res = Vec::new();
+                let mut cur = i;
+                for dim in shape.iter() {
+                    res.push(T::try_from(cur / *dim).ok().unwrap());
+                    cur = cur % *dim;
+                }
+                GridPointND { idx: res }
+            })
+            .collect()
     }
 }
