@@ -47,7 +47,12 @@ impl<T> GridND<GridPointND<T>> {
                 let mut res = Vec::new();
                 let mut cur = i;
                 for dim in shape.iter() {
-                    res.push(T::try_from(cur / *dim).ok().unwrap());
+                    let dim_idx_raw = cur / *dim;
+                    let dim_idx = match T::try_from(dim_idx_raw) {
+                        Ok(val) => val,
+                        Err(_) => panic!("Cannot convert size to index type."),
+                    };
+                    res.push(dim_idx);
                     cur = cur % *dim;
                 }
                 GridPointND { idx: res }
@@ -115,11 +120,11 @@ impl<T> GridND<GridPoint1D<T>> {
 
 #[cfg(test)]
 mod grid_tests {
-    use crate::{BoardSpaceManager, GridND, GridPoint1D};
+    use crate::{BoardSpaceManager, GridND, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
     use rayon::prelude::*;
 
     #[test]
-    fn grid_1d_test() {
+    fn grid_1d_test_1() {
         type Point = GridPoint1D<u64>;
 
         let grid = Box::new(GridND::<Point>::new(10u64))
@@ -133,6 +138,78 @@ mod grid_tests {
         let indices: Vec<Point> = grid.indices_iter().collect();
         let indices_par: Vec<Point> = grid.indices_par_iter().collect();
         assert_eq!(indices.len(), 10);
-        assert_eq!(indices_par.len(), 10);
+        assert_eq!(indices_par.len(), indices.len());
+    }
+
+    #[test]
+    fn grid_1d_test_2() {
+        type Point = GridPoint1D<i32>;
+
+        let grid = Box::new(GridND::<Point>::new(10u64))
+            as Box<
+                dyn BoardSpaceManager<
+                    Point,
+                    std::vec::IntoIter<Point>,
+                    rayon::vec::IntoIter<Point>,
+                >,
+            >;
+        let indices: Vec<Point> = grid.indices_iter().collect();
+        let indices_par: Vec<Point> = grid.indices_par_iter().collect();
+        assert_eq!(indices.len(), 10);
+        assert_eq!(indices_par.len(), indices.len());
+    }
+
+    #[test]
+    fn grid_2d_test_1() {
+        type Point = GridPoint2D<u64>;
+
+        let grid = Box::new(GridND::<Point>::new(5u64, 10))
+            as Box<
+                dyn BoardSpaceManager<
+                    Point,
+                    std::vec::IntoIter<Point>,
+                    rayon::vec::IntoIter<Point>,
+                >,
+            >;
+        let indices: Vec<Point> = grid.indices_iter().collect();
+        let indices_par: Vec<Point> = grid.indices_par_iter().collect();
+        assert_eq!(indices.len(), 50);
+        assert_eq!(indices_par.len(), indices.len());
+    }
+
+    #[test]
+    fn grid_3d_test_1() {
+        type Point = GridPoint3D<u64>;
+
+        let grid = Box::new(GridND::<Point>::new(5u64, 10, 6))
+            as Box<
+                dyn BoardSpaceManager<
+                    Point,
+                    std::vec::IntoIter<Point>,
+                    rayon::vec::IntoIter<Point>,
+                >,
+            >;
+        let indices: Vec<Point> = grid.indices_iter().collect();
+        let indices_par: Vec<Point> = grid.indices_par_iter().collect();
+        assert_eq!(indices.len(), 300);
+        assert_eq!(indices_par.len(), indices.len());
+    }
+
+    #[test]
+    fn grid_nd_test_1() {
+        type Point = GridPointND<u64>;
+
+        let grid = Box::new(GridND::<Point>::new(vec![5u64, 10, 6, 10].into_iter()))
+            as Box<
+                dyn BoardSpaceManager<
+                    Point,
+                    std::vec::IntoIter<Point>,
+                    rayon::vec::IntoIter<Point>,
+                >,
+            >;
+        let indices: Vec<Point> = grid.indices_iter().collect();
+        let indices_par: Vec<Point> = grid.indices_par_iter().collect();
+        assert_eq!(indices.len(), 3000);
+        assert_eq!(indices_par.len(), indices.len());
     }
 }
