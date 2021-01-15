@@ -7,8 +7,8 @@ use rayon::prelude::*;
 pub trait Board<'data, 'dref, T, CI, I>
 where
     'data: 'dref,
-    T: 'data + CellState,
-    CI: CellIndex,
+    T: 'static + CellState,
+    CI: 'static + CellIndex,
     I: Iterator<Item = CI>,
 {
     fn space_manager(&self) -> &dyn BoardSpaceManager<CI, I, rayon::vec::IntoIter<CI>>;
@@ -43,7 +43,11 @@ where
         &self,
     ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
-    fn advance(&mut self) {
+    fn advance(&mut self)
+    where
+        T: 'data,
+        CI: 'data,
+    {
         let states = self.state_manager();
         let strat = self.strategy_manager();
         let space = self.space_manager();
