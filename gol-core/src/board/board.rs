@@ -41,7 +41,7 @@ where
 
     fn callback_manager(
         &self,
-    ) -> &mut BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
+    ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn advance(&mut self) {
         let states = self.state_manager();
@@ -70,7 +70,7 @@ where
         self.state_manager_mut()
             .update_cell_states_from_par_iter(next_states.clone().into_par_iter());
 
-        //        self.callback_manager().block_until_finish();
-        //        self.callback_manager().call(next_states);
+        self.callback_manager().block_until_finish();
+        self.callback_manager().call(next_states);
     }
 }
