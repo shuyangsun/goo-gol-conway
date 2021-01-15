@@ -88,24 +88,31 @@ impl<T> Grid<GridPointND<T>> {
     }
 }
 
-impl<T> Grid<GridPoint3D<T>> {
-    pub fn new<U>(x: U, y: U, z: U) -> Self
-    where
-        T: PrimInt + FromPrimitive + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
-    {
-        Self::new_with_origin(x, y, z, GridOrigin::Center)
-    }
+impl<T, U, I> GridFactory<GridPoint3D<T>, U, I> for Grid<GridPoint3D<T>>
+where
+    T: PrimInt + FromPrimitive + Send + Sync,
+    U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    I: Iterator<Item = U>,
+{
+    fn new_with_origin(shape: I, origin: GridOrigin) -> Grid<GridPoint3D<T>> {
+        let shape_vec: Vec<U> = shape.collect();
+        assert_eq!(shape_vec.len(), 3);
 
-    pub fn new_with_origin<U>(x: U, y: U, z: U, origin: GridOrigin) -> Self
-    where
-        T: PrimInt + FromPrimitive + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
-    {
+        let (x_len, y_len, z_len) = (shape_vec[0], shape_vec[1], shape_vec[2]);
+
+        let (x_half, y_half, z_half) = match origin {
+            GridOrigin::Zero => (T::zero(), T::zero(), T::zero()),
+            GridOrigin::Center => (
+                T::from_u64(x_len.to_u64().unwrap() / 2),
+                T::from_u64(y_len.to_u64().unwrap() / 2),
+                T::from_u64(z_len.to_u64().unwrap() / 2),
+            ),
+        };
+
         let mut indices = Vec::new();
-        for cur_x in 0..x.to_u64().unwrap() {
-            for cur_y in 0..y.to_u64().unwrap() {
-                for cur_z in 0..z.to_u64().unwrap() {
+        for cur_x in 0..x_len.to_u64().unwrap() {
+            for cur_y in 0..y_len.to_u64().unwrap() {
+                for cur_z in 0..z_len.to_u64().unwrap() {
                     indices.push(GridPoint3D {
                         x: T::from_u64(cur_x).unwrap(),
                         y: T::from_u64(cur_y).unwrap(),
