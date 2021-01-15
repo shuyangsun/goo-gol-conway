@@ -39,17 +39,17 @@ where
         }
     }
 
-    pub async fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>)
-    where
-        CI: 'static,
-        T: 'static,
-    {
-        let asdf: tokio::task::JoinHandle<()> =
-            tokio::spawn(async { self.callbacks[0].execute(next_states.into_par_iter()) });
-    }
-
-    pub fn block_until_finish(&mut self) {
-        // TODO: implementation
-        self.futures_res = Vec::new();
-    }
+    //     pub async fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>)
+    //     where
+    //         CI: 'static,
+    //         T: 'static,
+    //     {
+    //         let asdf: tokio::task::JoinHandle<()> =
+    //             tokio::spawn(async { self.callbacks[0].execute(next_states.into_par_iter()) });
+    //     }
+    //
+    //     pub fn block_until_finish(&mut self) {
+    //         // TODO: implementation
+    //         self.futures_res = Vec::new();
+    //     }
 }

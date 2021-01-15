@@ -3,7 +3,6 @@ use crate::{
     CellState, IndexedDataOwned, IndexedDataRef,
 };
 use rayon::prelude::*;
-use std::pin::Pin;
 
 pub trait Board<'data, 'dref, T, CI, I>
 where
@@ -71,7 +70,7 @@ where
         self.state_manager_mut()
             .update_cell_states_from_par_iter(next_states.clone().into_par_iter());
 
-        self.callback_manager().block_until_finish();
-        self.callback_manager().call(next_states);
+        //        self.callback_manager().block_until_finish();
+        //        self.callback_manager().call(next_states);
     }
 }
