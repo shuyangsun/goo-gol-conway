@@ -3,6 +3,15 @@ use num_traits::PrimInt;
 
 pub struct NeighborsGridSurroud {}
 
+fn calc_surrounding_points<T, I1, I2>(idx: I1) -> Vec::new()
+where
+    I1: Iterator<Item = T>,
+    I2: Iterator<Item = T>,
+{
+    let res = Vec::new();
+    res.into_iter()
+}
+
 impl<T> BoardNeighborManager<GridPointND<T>, std::vec::IntoIter<GridPointND<T>>>
     for NeighborsGridSurroud
 where
@@ -39,6 +48,16 @@ where
     T: Send + Sync + PrimInt,
 {
     fn get_neighbors_idx(&self, idx: GridPoint1D<T>) -> std::vec::IntoIter<GridPoint1D<T>> {
-        Vec::new().into_iter() // TODO
+        let mut res = Vec::new();
+        let one = T::one();
+        match idx.x.checked_sub(&one) {
+            Some(x) => res.push(GridPoint1D { x }),
+            None => (),
+        };
+        match idx.x.checked_add(&one) {
+            Some(x) => res.push(GridPoint1D { x }),
+            None => (),
+        };
+        res.into_iter()
     }
 }
