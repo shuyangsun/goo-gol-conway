@@ -51,20 +51,19 @@ where
     {
         let states = self.state_manager();
         let strat = self.strategy_manager();
-        let space = self.space_manager();
         let neighbor_manager = self.neighbor_manager();
         let next_states: Vec<IndexedDataOwned<CI, T>> = self
             .space_manager()
             .indices_par_iter()
             .map(|idx| {
-                let cur_state = states.get_cell_state(idx);
+                let cur_state = states.get_cell_state(idx.clone());
                 let neighbors: Vec<IndexedDataRef<'dref, CI, T>> = neighbor_manager
-                    .get_neighbors_idx(idx)
-                    .map(|neighbor_idx| (idx, states.get_cell_state(neighbor_idx)))
+                    .get_neighbors_idx(idx.clone())
+                    .map(|neighbor_idx| (idx.clone(), states.get_cell_state(neighbor_idx)))
                     .collect();
                 (
-                    idx,
-                    strat.get_strategy_at_index(idx).next_state(
+                    idx.clone(),
+                    strat.get_strategy_at_index(idx.clone()).next_state(
                         idx,
                         cur_state,
                         neighbors.into_iter(),
