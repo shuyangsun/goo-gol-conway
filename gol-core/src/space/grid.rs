@@ -116,7 +116,7 @@ impl<T> GridND<GridPoint1D<T>> {
 #[cfg(test)]
 mod grid_tests {
     use crate::{BoardSpaceManager, GridND, GridPoint1D};
-    use rayon;
+    use rayon::prelude::*;
 
     #[test]
     fn grid_1d_test() {
@@ -131,8 +131,8 @@ mod grid_tests {
                 >,
             >;
         let indices: Vec<Point> = grid.indices_iter().collect();
-        let indices_par = grid.indices_par_iter().cloned();
+        let indices_par: Vec<Point> = grid.indices_par_iter().collect();
         assert_eq!(indices.len(), 10);
-        // assert_eq!(indices_par.len(), 10);
+        assert_eq!(indices_par.len(), 10);
     }
 }
