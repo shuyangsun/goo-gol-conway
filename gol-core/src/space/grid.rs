@@ -3,7 +3,7 @@ use num_traits::{CheckedDiv, FromPrimitive, PrimInt, ToPrimitive, Unsigned};
 use rayon::prelude::*;
 
 pub struct GridND<T> {
-    indices_cache: Vec<GridPointND<T>>,
+    indices: Vec<GridPointND<T>>,
 }
 
 impl<T>
@@ -16,11 +16,11 @@ where
     T: PrimInt + Send + Sync,
 {
     fn indices_iter(&self) -> std::vec::IntoIter<GridPointND<T>> {
-        self.indices_cache.clone().into_iter()
+        self.indices.clone().into_iter()
     }
 
     fn indices_par_iter(&self) -> rayon::vec::IntoIter<GridPointND<T>> {
-        self.indices_cache.clone().into_par_iter()
+        self.indices.clone().into_par_iter()
     }
 }
 
@@ -32,8 +32,8 @@ impl<T> GridND<T> {
         I: Iterator<Item = U>,
     {
         let shape_vec: Vec<U> = shape.collect();
-        let indices_cache = Self::indices_vec(&shape_vec);
-        Self { indices_cache }
+        let indices = Self::indices_vec(&shape_vec);
+        Self { indices }
     }
 
     fn indices_vec<U>(shape: &Vec<U>) -> Vec<GridPointND<T>>
