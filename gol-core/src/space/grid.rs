@@ -7,11 +7,21 @@ pub enum GridOrigin {
     Zero,
 }
 
-pub struct GridND<T> {
+pub struct Grid<T> {
     indices: Vec<T>,
 }
 
-impl<T> BoardSpaceManager<T, std::vec::IntoIter<T>, rayon::vec::IntoIter<T>> for GridND<T>
+pub trait GridFactory<T, U, I>
+where
+    I: Iterator<Item = U>,
+{
+    fn new_with_origin(shape: I, origin: GridOrigin) -> Grid<T>;
+    fn new(shape: I) -> Grid<T> {
+        Self::new_with_origin(shape, GridOrigin::Center)
+    }
+}
+
+impl<T> BoardSpaceManager<T, std::vec::IntoIter<T>, rayon::vec::IntoIter<T>> for Grid<T>
 where
     T: Clone + Send + Sync,
 {
@@ -24,27 +34,20 @@ where
     }
 }
 
-impl<T> GridND<GridPointND<T>> {
-    pub fn new<U, I>(shape: I) -> Self
-    where
-        T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + FromPrimitive + Send + Sync,
-        I: Iterator<Item = U>,
-    {
-        Self::new_with_origin(shape, GridOrigin::Center)
-    }
-
-    pub fn new_with_origin<U, I>(shape: I, origin: GridOrigin) -> Self
-    where
-        T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + FromPrimitive + Send + Sync,
-        I: Iterator<Item = U>,
-    {
+impl<T, U, I> GridFactory<GridPointND<T>, U, I> for Grid<GridPointND<T>>
+where
+    T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
+    U: PrimInt + Unsigned + ToPrimitive + FromPrimitive + Send + Sync,
+    I: Iterator<Item = U>,
+{
+    fn new_with_origin(shape: I, origin: GridOrigin) -> Grid<GridPointND<T>> {
         let shape_vec: Vec<U> = shape.collect();
         let indices = Self::indices_vec(&shape_vec, origin);
         Self { indices }
     }
+}
 
+impl<T> Grid<GridPointND<T>> {
     fn indices_vec<U>(shape: &Vec<U>, origin: GridOrigin) -> Vec<GridPointND<T>>
     where
         T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
@@ -85,8 +88,16 @@ impl<T> GridND<GridPointND<T>> {
     }
 }
 
-impl<T> GridND<GridPoint3D<T>> {
+impl<T> Grid<GridPoint3D<T>> {
     pub fn new<U>(x: U, y: U, z: U) -> Self
+    where
+        T: PrimInt + FromPrimitive + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    {
+        Self::new_with_origin(x, y, z, GridOrigin::Center)
+    }
+
+    pub fn new_with_origin<U>(x: U, y: U, z: U, origin: GridOrigin) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
         U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
@@ -107,7 +118,7 @@ impl<T> GridND<GridPoint3D<T>> {
     }
 }
 
-impl<T> GridND<GridPoint2D<T>> {
+impl<T> Grid<GridPoint2D<T>> {
     pub fn new<U>(x: U, y: U) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
@@ -126,7 +137,7 @@ impl<T> GridND<GridPoint2D<T>> {
     }
 }
 
-impl<T> GridND<GridPoint1D<T>> {
+impl<T> Grid<GridPoint1D<T>> {
     pub fn new<U>(x: U) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
@@ -145,7 +156,8 @@ impl<T> GridND<GridPoint1D<T>> {
 #[cfg(test)]
 mod grid_tests {
     use crate::{
-        BoardSpaceManager, GridND, GridOrigin, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND,
+        BoardSpaceManager, Grid, GridFactory, GridOrigin, GridPoint1D, GridPoint2D, GridPoint3D,
+        GridPointND,
     };
     use rayon::prelude::*;
 
@@ -153,7 +165,7 @@ mod grid_tests {
     fn grid_1d_test_1() {
         type Point = GridPoint1D<i32>;
 
-        let grid = Box::new(GridND::<Point>::new(10u64))
+        let grid = Box::new(Grid::<Point>::new(10u64))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -171,7 +183,7 @@ mod grid_tests {
     fn grid_1d_test_2() {
         type Point = GridPoint1D<i32>;
 
-        let grid = Box::new(GridND::<Point>::new(10u64))
+        let grid = Box::new(Grid::<Point>::new(10u64))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -189,7 +201,7 @@ mod grid_tests {
     fn grid_2d_test_1() {
         type Point = GridPoint2D<i64>;
 
-        let grid = Box::new(GridND::<Point>::new(5u64, 10))
+        let grid = Box::new(Grid::<Point>::new(5u64, 10))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -207,7 +219,7 @@ mod grid_tests {
     fn grid_3d_test_1() {
         type Point = GridPoint3D<i32>;
 
-        let grid = Box::new(GridND::<Point>::new(5u64, 10, 6))
+        let grid = Box::new(Grid::<Point>::new(5u64, 10, 6))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -225,7 +237,7 @@ mod grid_tests {
     fn grid_nd_test_1() {
         type Point = GridPointND<i32>;
 
-        let grid = Box::new(GridND::<Point>::new(vec![5u64, 10, 6, 10].into_iter()))
+        let grid = Box::new(Grid::<Point>::new(vec![5u64, 10, 6, 10].into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -244,7 +256,7 @@ mod grid_tests {
         type Point = GridPointND<i32>;
         let board_size = vec![2u32, 2, 2, 2, 2];
 
-        let grid_1 = Box::new(GridND::<Point>::new(board_size.clone().into_iter()))
+        let grid_1 = Box::new(Grid::<Point>::new(board_size.clone().into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -252,7 +264,7 @@ mod grid_tests {
                     rayon::vec::IntoIter<Point>,
                 >,
             >;
-        let grid_2 = Box::new(GridND::<Point>::new_with_origin(
+        let grid_2 = Box::new(Grid::<Point>::new_with_origin(
             board_size.into_iter(),
             GridOrigin::Zero,
         ))

@@ -15,4 +15,4 @@ pub use cell::state::ConwayState;
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_conway::ConwayStrategy;
 pub use neighbors::grid_surround::NeighborsGridSurroud;
-pub use space::grid::{GridND, GridOrigin};
+pub use space::grid::{Grid, GridFactory, GridOrigin};
