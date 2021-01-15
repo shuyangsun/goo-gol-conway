@@ -125,18 +125,32 @@ where
     }
 }
 
-impl<T> Grid<GridPoint2D<T>> {
-    pub fn new<U>(x: U, y: U) -> Self
-    where
-        T: PrimInt + FromPrimitive + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
-    {
+impl<T, U, I> GridFactory<GridPoint2D<T>, U, I> for Grid<GridPoint2D<T>>
+where
+    T: PrimInt + FromPrimitive + Send + Sync,
+    U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    I: Iterator<Item = U>,
+{
+    fn new_with_origin(shape: I, origin: GridOrigin) -> Grid<GridPoint2D<T>> {
+        let shape_vec: Vec<U> = shape.collect();
+        assert_eq!(shape_vec.len(), 2);
+
+        let (x_len, y_len) = (shape_vec[0], shape_vec[1]);
+
+        let (x_half, y_half) = match origin {
+            GridOrigin::Zero => (T::zero(), T::zero()),
+            GridOrigin::Center => (
+                T::from_u64(x_len.to_u64().unwrap() / 2).unwrap(),
+                T::from_u64(y_len.to_u64().unwrap() / 2).unwrap(),
+            ),
+        };
+
         let mut indices = Vec::new();
-        for cur_x in 0..x.to_u64().unwrap() {
-            for cur_y in 0..y.to_u64().unwrap() {
+        for cur_x in 0..x_len.to_u64().unwrap() {
+            for cur_y in 0..y_len.to_u64().unwrap() {
                 indices.push(GridPoint2D {
-                    x: T::from_u64(cur_x).unwrap(),
-                    y: T::from_u64(cur_y).unwrap(),
+                    x: T::from_u64(cur_x).unwrap() - x_half,
+                    y: T::from_u64(cur_y).unwrap() - y_half,
                 });
             }
         }
@@ -144,16 +158,27 @@ impl<T> Grid<GridPoint2D<T>> {
     }
 }
 
-impl<T> Grid<GridPoint1D<T>> {
-    pub fn new<U>(x: U) -> Self
-    where
-        T: PrimInt + FromPrimitive + Send + Sync,
-        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
-    {
+impl<T, U, I> GridFactory<GridPoint1D<T>, U, I> for Grid<GridPoint1D<T>>
+where
+    T: PrimInt + FromPrimitive + Send + Sync,
+    U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    I: Iterator<Item = U>,
+{
+    fn new_with_origin(shape: I, origin: GridOrigin) -> Grid<GridPoint1D<T>> {
+        let shape_vec: Vec<U> = shape.collect();
+        assert_eq!(shape_vec.len(), 1);
+
+        let x_len = shape_vec[0];
+
+        let x_half = match origin {
+            GridOrigin::Zero => T::zero(),
+            GridOrigin::Center => T::from_u64(x_len.to_u64().unwrap() / 2).unwrap(),
+        };
+
         let mut indices = Vec::new();
-        for cur_x in 0..x.to_u64().unwrap() {
+        for cur_x in 0..x_len.to_u64().unwrap() {
             indices.push(GridPoint1D {
-                x: T::from_u64(cur_x).unwrap(),
+                x: T::from_u64(cur_x).unwrap() - x_half,
             });
         }
         Self { indices }
@@ -172,7 +197,7 @@ mod grid_tests {
     fn grid_1d_test_1() {
         type Point = GridPoint1D<i32>;
 
-        let grid = Box::new(Grid::<Point>::new(10u64))
+        let grid = Box::new(Grid::<Point>::new(vec![10u64].into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -190,7 +215,7 @@ mod grid_tests {
     fn grid_1d_test_2() {
         type Point = GridPoint1D<i32>;
 
-        let grid = Box::new(Grid::<Point>::new(10u64))
+        let grid = Box::new(Grid::<Point>::new(vec![10u64].into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -208,7 +233,7 @@ mod grid_tests {
     fn grid_2d_test_1() {
         type Point = GridPoint2D<i64>;
 
-        let grid = Box::new(Grid::<Point>::new(5u64, 10))
+        let grid = Box::new(Grid::<Point>::new(vec![5u64, 10].into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
