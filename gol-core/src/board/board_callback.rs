@@ -18,8 +18,7 @@ where
     CI: Send + Sync,
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
-    callbacks: Vec<Arc<Mutex<Box<dyn BoardCallback<T, CI, I>>>>>,
-    states_cache: Option<Vec<IndexedDataOwned<CI, T>>>,
+    callbacks: Arc<Mutex<Vec<Box<dyn BoardCallback<T, CI, I>>>>>,
     callback_handle: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
 
@@ -34,11 +33,7 @@ where
         >,
     ) -> Self {
         Self {
-            callbacks: callbacks
-                .into_iter()
-                .map(|ele| Arc::new(Mutex::new(ele)))
-                .collect(),
-            states_cache: None,
+            callbacks: Arc::new(Mutex::new(callbacks)),
             callback_handle: Arc::new(Mutex::new(None)),
         }
     }
@@ -47,19 +42,14 @@ where
         self.block_until_finish();
         debug_assert!(self.callback_handle.lock().unwrap().is_none());
 
-        let callbacks: Vec<
-            Arc<
-                Mutex<Box<dyn BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>>,
-            >,
-        > = self.callbacks.iter().map(|ele| Arc::clone(&ele)).collect();
-
         let mut handle = self.callback_handle.lock().unwrap();
+        let callbacks = Arc::clone(&self.callbacks);
         *handle = Some(thread::spawn(|| {
-            callbacks.par_iter().for_each(|ele| {
-                ele.lock()
-                    .unwrap()
-                    .execute(next_states.clone().into_par_iter())
-            });
+            Arc::clone(&callbacks)
+                .lock()
+                .unwrap()
+                .par_iter()
+                .for_each(|ele| ele.execute(next_states.clone().into_par_iter()));
         }));
     }
 
