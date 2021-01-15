@@ -44,7 +44,7 @@ where
 
         let mut handle = self.callback_handle.lock().unwrap();
         let callbacks = Arc::clone(&self.callbacks);
-        *handle = Some(thread::spawn(|| {
+        *handle = Some(thread::spawn(move || {
             Arc::clone(&callbacks)
                 .lock()
                 .unwrap()
@@ -54,12 +54,9 @@ where
     }
 
     pub fn block_until_finish(&self) {
-        self.callback_handle
-            .lock()
-            .unwrap()
-            .unwrap()
-            .join()
-            .unwrap();
+        if let Some(handle) = self.callback_handle.lock().unwrap().take() {
+            handle.join().unwrap();
+        }
         let mut handle = self.callback_handle.lock().unwrap();
         *handle = None;
     }
