@@ -1,30 +1,25 @@
-use crate::{BoardSpaceManager, GridPointND};
+use crate::{BoardSpaceManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use num_traits::{CheckedDiv, FromPrimitive, PrimInt, ToPrimitive, Unsigned};
 use rayon::prelude::*;
 
 pub struct GridND<T> {
-    indices: Vec<GridPointND<T>>,
+    indices: Vec<T>,
 }
 
-impl<T>
-    BoardSpaceManager<
-        GridPointND<T>,
-        std::vec::IntoIter<GridPointND<T>>,
-        rayon::vec::IntoIter<GridPointND<T>>,
-    > for GridND<T>
+impl<T> BoardSpaceManager<T, std::vec::IntoIter<T>, rayon::vec::IntoIter<T>> for GridND<T>
 where
     T: PrimInt + Send + Sync,
 {
-    fn indices_iter(&self) -> std::vec::IntoIter<GridPointND<T>> {
+    fn indices_iter(&self) -> std::vec::IntoIter<T> {
         self.indices.clone().into_iter()
     }
 
-    fn indices_par_iter(&self) -> rayon::vec::IntoIter<GridPointND<T>> {
+    fn indices_par_iter(&self) -> rayon::vec::IntoIter<T> {
         self.indices.clone().into_par_iter()
     }
 }
 
-impl<T> GridND<T> {
+impl<T> GridND<GridPointND<T>> {
     pub fn new<U, I>(shape: I) -> Self
     where
         T: PrimInt + CheckedDiv + std::convert::TryFrom<U> + Send + Sync,
@@ -58,5 +53,62 @@ impl<T> GridND<T> {
                 GridPointND { idx: res }
             })
             .collect()
+    }
+}
+
+impl<T> GridND<GridPoint3D<T>> {
+    pub fn new<U>(x: &U, y: &U, z: &U) -> Self
+    where
+        T: PrimInt + FromPrimitive + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    {
+        let mut indices = Vec::new();
+        for cur_x in 0..x.to_u64().unwrap() {
+            for cur_y in 0..y.to_u64().unwrap() {
+                for cur_z in 0..z.to_u64().unwrap() {
+                    indices.push(GridPoint3D {
+                        x: T::from_u64(cur_x).unwrap(),
+                        y: T::from_u64(cur_y).unwrap(),
+                        z: T::from_u64(cur_z).unwrap(),
+                    });
+                }
+            }
+        }
+        Self { indices }
+    }
+}
+
+impl<T> GridND<GridPoint2D<T>> {
+    pub fn new<U>(x: &U, y: &U) -> Self
+    where
+        T: PrimInt + FromPrimitive + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    {
+        let mut indices = Vec::new();
+        for cur_x in 0..x.to_u64().unwrap() {
+            for cur_y in 0..y.to_u64().unwrap() {
+                indices.push(GridPoint2D {
+                    x: T::from_u64(cur_x).unwrap(),
+                    y: T::from_u64(cur_y).unwrap(),
+                });
+            }
+        }
+        Self { indices }
+    }
+}
+
+impl<T> GridND<GridPoint1D<T>> {
+    pub fn new<U>(x: &U) -> Self
+    where
+        T: PrimInt + FromPrimitive + Send + Sync,
+        U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
+    {
+        let mut indices = Vec::new();
+        for cur_x in 0..x.to_u64().unwrap() {
+            indices.push(GridPoint1D {
+                x: T::from_u64(cur_x).unwrap(),
+            });
+        }
+        Self { indices }
     }
 }
