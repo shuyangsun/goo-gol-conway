@@ -1,6 +1,5 @@
 use crate::{CellIndex, CellState, IndexedDataOwned};
 use rayon::prelude::*;
-use tokio;
 
 pub trait BoardCallback<T, CI, I>: Send + Sync
 where
