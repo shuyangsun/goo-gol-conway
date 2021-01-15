@@ -8,7 +8,7 @@ pub struct GridND<T> {
 
 impl<T> BoardSpaceManager<T, std::vec::IntoIter<T>, rayon::vec::IntoIter<T>> for GridND<T>
 where
-    T: PrimInt + Send + Sync,
+    T: Clone + Send + Sync,
 {
     fn indices_iter(&self) -> std::vec::IntoIter<T> {
         self.indices.clone().into_iter()
@@ -57,7 +57,7 @@ impl<T> GridND<GridPointND<T>> {
 }
 
 impl<T> GridND<GridPoint3D<T>> {
-    pub fn new<U>(x: &U, y: &U, z: &U) -> Self
+    pub fn new<U>(x: U, y: U, z: U) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
         U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
@@ -79,7 +79,7 @@ impl<T> GridND<GridPoint3D<T>> {
 }
 
 impl<T> GridND<GridPoint2D<T>> {
-    pub fn new<U>(x: &U, y: &U) -> Self
+    pub fn new<U>(x: U, y: U) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
         U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
@@ -98,7 +98,7 @@ impl<T> GridND<GridPoint2D<T>> {
 }
 
 impl<T> GridND<GridPoint1D<T>> {
-    pub fn new<U>(x: &U) -> Self
+    pub fn new<U>(x: U) -> Self
     where
         T: PrimInt + FromPrimitive + Send + Sync,
         U: PrimInt + Unsigned + ToPrimitive + Send + Sync,
@@ -110,5 +110,29 @@ impl<T> GridND<GridPoint1D<T>> {
             });
         }
         Self { indices }
+    }
+}
+
+#[cfg(test)]
+mod grid_tests {
+    use crate::{BoardSpaceManager, GridND, GridPoint1D};
+    use rayon;
+
+    #[test]
+    fn grid_1d_test() {
+        type Point = GridPoint1D<u64>;
+
+        let grid = Box::new(GridND::<Point>::new(10u64))
+            as Box<
+                dyn BoardSpaceManager<
+                    Point,
+                    std::vec::IntoIter<Point>,
+                    rayon::vec::IntoIter<Point>,
+                >,
+            >;
+        let indices = grid.indices_iter().collect();
+        let indices_par = grid.indices_par_iter().collect();
+        assert_eq!(indices.len(), 10);
+        assert_eq!(indices_par.len(), 10);
     }
 }

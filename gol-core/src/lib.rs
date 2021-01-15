@@ -13,4 +13,4 @@ pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::ConwayState;
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_conway::ConwayStrategy;
-pub use space::grid as grid_space;
+pub use space::grid::GridND;
