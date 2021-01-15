@@ -8,5 +8,4 @@ where
 {
     fn indices_iter(&self) -> I1;
     fn indices_par_iter(&self) -> I2;
-    fn get_neighbors_idx(&self, idx: CI) -> I1;
 }

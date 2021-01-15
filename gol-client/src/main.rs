@@ -15,4 +15,7 @@ fn main() {
         thread::sleep(Duration::from_millis(1));
     }
     handle.join().unwrap();
+    for i in (0..3).zip(2..3).zip(1..2) {
+        // println!("{}", i.flatten());
+    }
 }

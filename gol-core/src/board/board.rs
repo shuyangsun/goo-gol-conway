@@ -1,6 +1,6 @@
 use crate::{
-    BoardCallbackManager, BoardSpaceManager, BoardStateManager, BoardStrategyManager, CellIndex,
-    CellState, IndexedDataOwned, IndexedDataRef,
+    BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
+    BoardStrategyManager, CellIndex, CellState, IndexedDataOwned, IndexedDataRef,
 };
 use rayon::prelude::*;
 
@@ -12,6 +12,7 @@ where
     I: Iterator<Item = CI>,
 {
     fn space_manager(&self) -> &dyn BoardSpaceManager<CI, I, rayon::vec::IntoIter<CI>>;
+    fn neighbor_manager(&self) -> &dyn BoardNeighborManager<CI, I>;
 
     fn state_manager(
         &self,
@@ -51,12 +52,13 @@ where
         let states = self.state_manager();
         let strat = self.strategy_manager();
         let space = self.space_manager();
+        let neighbor_manager = self.neighbor_manager();
         let next_states: Vec<IndexedDataOwned<CI, T>> = self
             .space_manager()
             .indices_par_iter()
             .map(|idx| {
                 let cur_state = states.get_cell_state(idx);
-                let neighbors: Vec<IndexedDataRef<'dref, CI, T>> = space
+                let neighbors: Vec<IndexedDataRef<'dref, CI, T>> = neighbor_manager
                     .get_neighbors_idx(idx)
                     .map(|neighbor_idx| (idx, states.get_cell_state(neighbor_idx)))
                     .collect();
