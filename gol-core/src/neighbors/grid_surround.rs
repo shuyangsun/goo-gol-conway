@@ -224,7 +224,8 @@ impl<T> PointPrimInt for T where T: Send + Sync + PrimInt + CheckedAdd + Checked
 #[cfg(test)]
 mod grid_surrounding_neighbor_test {
     use crate::{
-        BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, NeighborsGridSurround,
+        BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND,
+        NeighborsGridSurround,
     };
 
     #[test]
@@ -311,5 +312,42 @@ mod grid_surrounding_neighbor_test {
         assert!(!neighbors_1.contains(&point_1));
         assert!(!neighbors_2.contains(&point_2));
         assert!(!neighbors_3.contains(&point_3));
+    }
+
+    #[test]
+    fn grid_surrounding_test_4d_1() {
+        let neighbor_calc = NeighborsGridSurround::new(2);
+        let point = GridPointND::new(vec![0, 0, 0, 0].iter());
+        let neighbors: Vec<GridPointND<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 80);
+        assert!(!neighbors.contains(&point));
+    }
+
+    #[test]
+    fn grid_surrounding_test_4d_2() {
+        let mut margins = Vec::new();
+        margins.push((100, 2)); // dim_len = 3
+        margins.push((50, 1)); // dim_len = 2
+        margins.push((10, 2)); // dim_len = 4
+        margins.push((0, 9)); // dim_len = 10
+        let neighbor_calc = NeighborsGridSurround::new_with_variable_margin(margins.iter());
+        let point = GridPointND::new(vec![0, 0, 1, 0].iter());
+        let neighbors: Vec<GridPointND<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 239);
+        assert!(!neighbors.contains(&point));
+    }
+
+    #[test]
+    fn grid_surrounding_test_4d_3() {
+        let mut margins = Vec::new();
+        margins.push((100, 2)); // dim_len = 103
+        margins.push((50, 1)); // dim_len = 52
+        margins.push((10, 2)); // dim_len = 13
+        margins.push((0, 9)); // dim_len = 10
+        let neighbor_calc = NeighborsGridSurround::new_with_variable_margin(margins.iter());
+        let point = GridPointND::new(vec![0, 0, 1, 0].iter());
+        let neighbors: Vec<GridPointND<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 696279);
+        assert!(!neighbors.contains(&point));
     }
 }
