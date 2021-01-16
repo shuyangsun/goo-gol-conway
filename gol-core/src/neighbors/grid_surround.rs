@@ -30,12 +30,15 @@ impl<T> NeighborsGridSurround<T> {
     /// in the vector represents different dimensions, the two values inside the vector represents
     /// margin on the negative and positive side along that dimension.
     /// ```rust
-    /// use gol_core::NeighborsGridSurround;
+    /// use gol_core::{GridPoint2D, NeighborsGridSurround};
     ///
     /// // Create 2D margin with 2 on all sides but positive y-axis.
     /// let margins = [(2, 2), (2, 1)];
     /// let neighbor_calc =
     ///     NeighborsGridSurround::new_with_variable_margin(margins.iter());
+    ///
+    /// let cur_point = GridPoint2D{ x: 10, y: 5 };
+    /// let neighbors = neighbor_calc.get.get_neighbors_idx(&cur_point);
     /// ```
     pub fn new_with_variable_margin<'a, 'b, I>(margins: I) -> Self
     where
@@ -65,8 +68,8 @@ impl<T> BoardNeighborManager<GridPointND<T>, std::vec::IntoIter<GridPointND<T>>>
 where
     T: Send + Sync + PrimInt,
 {
-    fn get_neighbors_idx(&self, idx: GridPointND<T>) -> std::vec::IntoIter<GridPointND<T>> {
-        self.calc_grid_point_surrounding(&idx).into_iter()
+    fn get_neighbors_idx(&self, idx: &GridPointND<T>) -> std::vec::IntoIter<GridPointND<T>> {
+        self.calc_grid_point_surrounding(idx).into_iter()
     }
 }
 
@@ -75,7 +78,7 @@ impl<T> BoardNeighborManager<GridPoint3D<T>, std::vec::IntoIter<GridPoint3D<T>>>
 where
     T: Send + Sync + PrimInt,
 {
-    fn get_neighbors_idx(&self, idx: GridPoint3D<T>) -> std::vec::IntoIter<GridPoint3D<T>> {
+    fn get_neighbors_idx(&self, idx: &GridPoint3D<T>) -> std::vec::IntoIter<GridPoint3D<T>> {
         let res: Vec<GridPoint3D<T>> = self
             .calc_grid_point_surrounding(&idx.to_nd())
             .iter()
@@ -90,7 +93,7 @@ impl<T> BoardNeighborManager<GridPoint2D<T>, std::vec::IntoIter<GridPoint2D<T>>>
 where
     T: Send + Sync + PrimInt,
 {
-    fn get_neighbors_idx(&self, idx: GridPoint2D<T>) -> std::vec::IntoIter<GridPoint2D<T>> {
+    fn get_neighbors_idx(&self, idx: &GridPoint2D<T>) -> std::vec::IntoIter<GridPoint2D<T>> {
         let res: Vec<GridPoint2D<T>> = self
             .calc_grid_point_surrounding(&idx.to_nd())
             .iter()
@@ -105,7 +108,7 @@ impl<T> BoardNeighborManager<GridPoint1D<T>, std::vec::IntoIter<GridPoint1D<T>>>
 where
     T: Send + Sync + PrimInt,
 {
-    fn get_neighbors_idx(&self, idx: GridPoint1D<T>) -> std::vec::IntoIter<GridPoint1D<T>> {
+    fn get_neighbors_idx(&self, idx: &GridPoint1D<T>) -> std::vec::IntoIter<GridPoint1D<T>> {
         let res: Vec<GridPoint1D<T>> = self
             .calc_grid_point_surrounding(&idx.to_nd())
             .iter()

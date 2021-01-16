@@ -3,5 +3,5 @@ where
     CI: Send + Sync,
     I: Iterator<Item = CI>,
 {
-    fn get_neighbors_idx(&self, idx: CI) -> I;
+    fn get_neighbors_idx(&self, idx: &CI) -> I;
 }

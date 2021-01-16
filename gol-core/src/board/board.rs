@@ -58,7 +58,7 @@ where
             .map(|idx| {
                 let cur_state = states.get_cell_state(idx.clone());
                 let neighbors: Vec<IndexedDataRef<'dref, CI, T>> = neighbor_manager
-                    .get_neighbors_idx(idx.clone())
+                    .get_neighbors_idx(&idx)
                     .map(|neighbor_idx| (idx.clone(), states.get_cell_state(neighbor_idx)))
                     .collect();
                 (
