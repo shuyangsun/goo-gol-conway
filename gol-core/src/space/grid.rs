@@ -82,7 +82,7 @@ impl<T> Grid<GridPointND<T>> {
                     res.push(dim_idx);
                     cur = cur % *dim;
                 }
-                GridPointND { idx: res }
+                GridPointND::new(res.iter())
             })
             .collect()
     }

@@ -56,7 +56,6 @@ impl<T> NeighborsGridSurround<T> {
         T: std::convert::TryFrom<U>,
     {
         let res = Vec::new();
-        // TODO
         res
     }
 }

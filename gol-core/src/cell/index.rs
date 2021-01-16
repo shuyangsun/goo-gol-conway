@@ -25,7 +25,7 @@ pub struct GridPoint3D<T> {
 
 #[derive(Clone)]
 pub struct GridPointND<T> {
-    pub idx: Vec<T>,
+    indices: Vec<T>,
 }
 
 impl<T> ToGridPointND<T> for GridPoint1D<T>
@@ -33,9 +33,7 @@ where
     T: Clone,
 {
     fn to_nd(&self) -> GridPointND<T> {
-        GridPointND {
-            idx: vec![self.x.clone()],
-        }
+        GridPointND::new(vec![self.x.clone()].iter())
     }
 }
 
@@ -44,9 +42,7 @@ where
     T: Clone,
 {
     fn to_nd(&self) -> GridPointND<T> {
-        GridPointND {
-            idx: vec![self.x.clone(), self.y.clone()],
-        }
+        GridPointND::new(vec![self.x.clone(), self.y.clone()].iter())
     }
 }
 
@@ -55,22 +51,40 @@ where
     T: Clone,
 {
     fn to_nd(&self) -> GridPointND<T> {
-        GridPointND {
-            idx: vec![self.x.clone(), self.y.clone(), self.z.clone()],
-        }
+        GridPointND::new(vec![self.x.clone(), self.y.clone(), self.y.clone()].iter())
     }
 }
 
 impl<T> GridPointND<T> {
+    pub fn new<'a, 'b, I>(indices: I) -> Self
+    where
+        'a: 'b,
+        T: 'a + Clone,
+        I: Iterator<Item = &'b T>,
+    {
+        Self {
+            indices: indices.map(|ele| ele.clone()).collect(),
+        }
+    }
+
+    pub fn indices<'a>(&'a self) -> std::slice::Iter<'a, T> {
+        self.indices.iter()
+    }
+
     pub fn to_1d(&self) -> Option<GridPoint1D<T>>
     where
         T: Clone,
     {
-        match self.idx.len() {
-            1 => Some(GridPoint1D {
-                x: self.idx[0].clone(),
+        let mut iter = self.indices();
+        let x = iter.next();
+        if x.is_none() {
+            return None;
+        }
+        match iter.next() {
+            Some(_) => None,
+            None => Some(GridPoint1D {
+                x: x.unwrap().clone(),
             }),
-            _ => None,
         }
     }
 
@@ -78,12 +92,21 @@ impl<T> GridPointND<T> {
     where
         T: Clone,
     {
-        match self.idx.len() {
-            2 => Some(GridPoint2D {
-                x: self.idx[0].clone(),
-                y: self.idx[1].clone(),
+        let mut iter = self.indices();
+        let x = iter.next();
+        if x.is_none() {
+            return None;
+        }
+        let y = iter.next();
+        if y.is_none() {
+            return None;
+        }
+        match iter.next() {
+            Some(_) => None,
+            None => Some(GridPoint2D {
+                x: x.unwrap().clone(),
+                y: y.unwrap().clone(),
             }),
-            _ => None,
         }
     }
 
@@ -91,13 +114,26 @@ impl<T> GridPointND<T> {
     where
         T: Clone,
     {
-        match self.idx.len() {
-            3 => Some(GridPoint3D {
-                x: self.idx[0].clone(),
-                y: self.idx[1].clone(),
-                z: self.idx[2].clone(),
+        let mut iter = self.indices();
+        let x = iter.next();
+        if x.is_none() {
+            return None;
+        }
+        let y = iter.next();
+        if y.is_none() {
+            return None;
+        }
+        let z = iter.next();
+        if z.is_none() {
+            return None;
+        }
+        match iter.next() {
+            Some(_) => None,
+            None => Some(GridPoint3D {
+                x: x.unwrap().clone(),
+                y: y.unwrap().clone(),
+                z: z.unwrap().clone(),
             }),
-            _ => None,
         }
     }
 }
