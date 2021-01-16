@@ -1,5 +1,6 @@
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
+use itertools::izip;
 use num_traits::{CheckedAdd, CheckedSub, FromPrimitive, PrimInt, ToPrimitive};
 
 pub trait MarginPrimInt: Send + Sync + PrimInt + ToPrimitive {}
@@ -76,41 +77,79 @@ impl<T> NeighborsGridSurround<T> {
         T: MarginPrimInt,
         U: PointPrimInt,
     {
+        let (dim_ranges, dim_lens, volume) = self.calc_dim_ranges(idx);
+
+        // Calculate the flattened index of idx to exclude itself from its neighbors.
+        let mut i_exclude = 0usize;
+        let idx_indices: Vec<&U> = idx.indices().collect();
+        let mut cur_volume = volume;
+        for (cur_idx, dim_len, (dim_min, _)) in izip!(&idx_indices, &dim_lens, &dim_ranges).rev() {
+            cur_volume /= dim_len;
+            i_exclude += (**cur_idx - *dim_min).to_usize().unwrap() * cur_volume;
+        }
+
+        let mut res = Vec::new();
+        for i in 0..volume {
+            let (mut cur_i, mut cur_vol) = (i, 1);
+            let mut cur_indices = Vec::with_capacity(dim_lens.len());
+            if i == i_exclude {
+                continue;
+            }
+            for ((dim_min, _), dim_len) in dim_ranges.iter().zip(dim_lens.iter()) {
+                let dim_idx = cur_i % dim_len;
+                cur_indices.push(U::from_usize(dim_idx).unwrap() + *dim_min);
+                cur_i -= cur_vol * dim_idx;
+                cur_vol *= dim_len;
+            }
+            res.push(GridPointND::new(cur_indices.iter()));
+        }
+        res
+    }
+
+    fn calc_dim_ranges<U>(&self, idx: &GridPointND<U>) -> (Vec<(U, U)>, Vec<usize>, usize)
+    where
+        T: MarginPrimInt,
+        U: PointPrimInt,
+    {
         let mut ranges = Vec::new();
+        let mut dim_lens = Vec::new();
+        let mut volume = 1;
         for (i, dim_idx) in idx.indices().enumerate() {
-            let mut cur_dim_indices = Vec::new();
             let (neg, pos) = if self.is_infinite {
                 self.margins.first().unwrap()
             } else {
                 self.margins.get(i).unwrap()
             };
 
-            for n in 0..neg.to_usize().unwrap() {
+            let mut dim_idx_min = *dim_idx;
+            for n in (1..neg.to_usize().unwrap() + 1).rev() {
                 let n_u = U::from_usize(n).unwrap();
                 match dim_idx.checked_sub(&n_u) {
-                    Some(true_neg) => {
-                        cur_dim_indices.push(true_neg);
+                    Some(val) => {
+                        dim_idx_min = val;
                         break;
                     }
                     None => continue,
                 }
             }
 
-            for n in 1..pos.to_usize().unwrap() + 1 {
+            let mut dim_idx_max = *dim_idx + U::one();
+            for n in (0..pos.to_usize().unwrap() + 1).rev() {
                 let n_u = U::from_usize(n).unwrap();
                 match dim_idx.checked_add(&n_u) {
-                    Some(true_pos) => {
-                        cur_dim_indices.push(true_pos);
+                    Some(val) => {
+                        dim_idx_max = val + U::one();
                         break;
                     }
                     None => continue,
                 }
             }
-            ranges.push(cur_dim_indices);
+            ranges.push((dim_idx_min, dim_idx_max));
+            let dim_len = (dim_idx_max - dim_idx_min).to_usize().unwrap();
+            dim_lens.push(dim_len);
+            volume *= dim_len;
         }
-        let res = Vec::new();
-        // TODO
-        res
+        (ranges, dim_lens, volume)
     }
 }
 
