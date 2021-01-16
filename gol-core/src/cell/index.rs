@@ -1,3 +1,5 @@
+use std::cmp::PartialEq;
+
 pub trait ToGridPointND<T>
 where
     T: Clone,
@@ -134,6 +136,46 @@ impl<T> GridPointND<T> {
                 y: y.unwrap().clone(),
                 z: z.unwrap().clone(),
             }),
+        }
+    }
+}
+
+impl<T> PartialEq for GridPoint1D<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x
+    }
+}
+
+impl<T> PartialEq for GridPoint2D<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+impl<T> PartialEq for GridPoint3D<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
+impl<T> PartialEq for GridPointND<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        let mut not_eq_res = self.indices().zip(other.indices()).filter(|(a, b)| a != b);
+        match not_eq_res.next() {
+            Some(_) => false,
+            None => true,
         }
     }
 }

@@ -214,3 +214,21 @@ where
 
 impl<T> MarginPrimInt for T where T: Send + Sync + PrimInt + ToPrimitive {}
 impl<T> PointPrimInt for T where T: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
+
+#[cfg(test)]
+mod grid_surrounding_neighbor_test {
+    use crate::{BoardNeighborManager, GridPoint2D, GridPoint3D, NeighborsGridSurround};
+
+    #[test]
+    fn grid_surrounding_test_1d_1() {
+        let neighbor_calc = NeighborsGridSurround::new(1);
+        let point = GridPoint2D { x: 10, y: 5 };
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 8);
+        assert!(neighbors
+            .iter()
+            .filter(|ele| *ele == &point)
+            .next()
+            .is_none());
+    }
+}
