@@ -1,6 +1,6 @@
 use crate::{
     BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
-    BoardStrategyManager, CellIndex, CellState, IndexedDataOwned, IndexedDataRef,
+    BoardStrategyManager, CellIndex, CellState, IndexedDataOwned,
 };
 use rayon::prelude::*;
 
@@ -16,27 +16,15 @@ where
 
     fn state_manager(
         &self,
-    ) -> &dyn BoardStateManager<'data, 'dref, T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
+    ) -> &dyn BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn state_manager_mut(
         &mut self,
-    ) -> &mut dyn BoardStateManager<
-        'data,
-        'dref,
-        T,
-        CI,
-        rayon::vec::IntoIter<IndexedDataOwned<CI, T>>,
-    >;
+    ) -> &mut dyn BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn strategy_manager(
         &self,
-    ) -> &dyn BoardStrategyManager<
-        'data,
-        'dref,
-        CI,
-        T,
-        std::vec::IntoIter<IndexedDataRef<'dref, CI, T>>,
-    >;
+    ) -> &dyn BoardStrategyManager<CI, T, std::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn iter_count(&self) -> usize;
 
@@ -52,14 +40,15 @@ where
         let states = self.state_manager();
         let strat = self.strategy_manager();
         let neighbor_manager = self.neighbor_manager();
+
         let next_states: Vec<IndexedDataOwned<CI, T>> = self
             .space_manager()
             .indices_par_iter()
             .map(|idx| {
-                let cur_state = states.get_cell_state(idx.clone());
-                let neighbors: Vec<IndexedDataRef<'dref, CI, T>> = neighbor_manager
+                let cur_state = states.get_cell_state(&idx.clone());
+                let neighbors: Vec<IndexedDataOwned<CI, T>> = neighbor_manager
                     .get_neighbors_idx(&idx)
-                    .map(|neighbor_idx| (idx.clone(), states.get_cell_state(neighbor_idx)))
+                    .map(|neighbor_idx| (idx.clone(), states.get_cell_state(&neighbor_idx)))
                     .collect();
                 (
                     idx.clone(),

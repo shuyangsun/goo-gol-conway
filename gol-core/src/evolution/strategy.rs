@@ -1,10 +1,8 @@
-use crate::IndexedDataRef;
+use crate::IndexedDataOwned;
 
-pub trait EvolutionStrategy<'data, 'dref, CI, T, I>: Send + Sync
+pub trait EvolutionStrategy<CI, T, I>: Send + Sync
 where
-    'data: 'dref,
-    T: 'data,
-    I: Iterator<Item = IndexedDataRef<'dref, CI, T>>,
+    I: Iterator<Item = IndexedDataOwned<CI, T>>,
 {
-    fn next_state(&self, idx: CI, cur_state: &'dref T, neighbors: I) -> T;
+    fn next_state(&self, idx: CI, cur_state: T, neighbors: I) -> T;
 }
