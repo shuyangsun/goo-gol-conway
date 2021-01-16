@@ -87,15 +87,16 @@ impl<T> NeighborsGridSurround<T> {
             cur_volume /= dim_len;
             i_exclude += (**cur_idx - *dim_min).to_usize().unwrap() * cur_volume;
         }
-        eprintln!("i_exclude = {}", i_exclude);
+        eprintln!("volume = {}, i_exclude = {}", volume, i_exclude);
 
         let mut res = Vec::new();
         for i in 0..volume {
-            let (mut cur_i, mut cur_vol) = (i, volume);
-            let mut cur_indices = Vec::with_capacity(dim_lens.len());
             if i == i_exclude {
                 continue;
             }
+
+            let (mut cur_i, mut cur_vol) = (i, volume);
+            let mut cur_indices = Vec::with_capacity(dim_lens.len());
 
             for ((dim_min, _), dim_len) in dim_ranges.iter().zip(dim_lens.iter()).rev() {
                 cur_vol /= dim_len;
@@ -135,19 +136,20 @@ impl<T> NeighborsGridSurround<T> {
                 }
             }
 
-            let mut dim_idx_max = *dim_idx + U::one();
-            for n in (0..pos.to_usize().unwrap() + 1).rev() {
+            let mut dim_idx_max = *dim_idx;
+            for n in (0..=pos.to_usize().unwrap()).rev() {
                 let n_u = U::from_usize(n).unwrap();
                 match dim_idx.checked_add(&n_u) {
                     Some(val) => {
-                        dim_idx_max = val + U::one();
+                        dim_idx_max = val;
                         break;
                     }
                     None => continue,
                 }
             }
+
             ranges.push((dim_idx_min, dim_idx_max));
-            let dim_len = (dim_idx_max - dim_idx_min).to_usize().unwrap();
+            let dim_len = (dim_idx_max - dim_idx_min + U::one()).to_usize().unwrap();
             dim_lens.push(dim_len);
             volume *= dim_len;
         }
@@ -302,8 +304,8 @@ mod grid_surrounding_neighbor_test {
         let neighbors_3: Vec<GridPoint3D<usize>> =
             neighbor_calc.get_neighbors_idx(&point_3).collect();
         assert_eq!(neighbors_1.len(), 47);
-        assert_eq!(neighbors_1.len(), neighbors_2.len());
-        assert_eq!(neighbors_1.len(), neighbors_3.len());
+        assert_eq!(neighbors_2.len(), neighbors_1.len());
+        assert_eq!(neighbors_3.len(), neighbors_1.len());
         assert!(!neighbors_1.contains(&point_1));
         assert!(!neighbors_2.contains(&point_2));
         assert!(!neighbors_3.contains(&point_3));
