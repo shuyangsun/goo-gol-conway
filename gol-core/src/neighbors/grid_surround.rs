@@ -87,7 +87,6 @@ impl<T> NeighborsGridSurround<T> {
             cur_volume /= dim_len;
             i_exclude += (**cur_idx - *dim_min).to_usize().unwrap() * cur_volume;
         }
-        eprintln!("volume = {}, i_exclude = {}", volume, i_exclude);
 
         let mut res = Vec::new();
         for i in 0..volume {
@@ -124,29 +123,32 @@ impl<T> NeighborsGridSurround<T> {
                 self.margins.get(i).unwrap()
             };
 
-            let mut dim_idx_min = *dim_idx;
-            for n in (1..neg.to_usize().unwrap() + 1).rev() {
+            let mut dim_idx_min = None;
+            for n in (0..=neg.to_usize().unwrap()).rev() {
                 let n_u = U::from_usize(n).unwrap();
                 match dim_idx.checked_sub(&n_u) {
                     Some(val) => {
-                        dim_idx_min = val;
+                        dim_idx_min = Some(val);
                         break;
                     }
                     None => continue,
                 }
             }
 
-            let mut dim_idx_max = *dim_idx;
+            let mut dim_idx_max = None;
             for n in (0..=pos.to_usize().unwrap()).rev() {
                 let n_u = U::from_usize(n).unwrap();
                 match dim_idx.checked_add(&n_u) {
                     Some(val) => {
-                        dim_idx_max = val;
+                        dim_idx_max = Some(val);
                         break;
                     }
                     None => continue,
                 }
             }
+
+            let dim_idx_min = dim_idx_min.unwrap();
+            let dim_idx_max = dim_idx_max.unwrap();
 
             ranges.push((dim_idx_min, dim_idx_max));
             let dim_len = (dim_idx_max - dim_idx_min + U::one()).to_usize().unwrap();

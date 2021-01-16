@@ -53,7 +53,7 @@ where
     T: Clone,
 {
     fn to_nd(&self) -> GridPointND<T> {
-        GridPointND::new(vec![self.x.clone(), self.y.clone(), self.y.clone()].iter())
+        GridPointND::new(vec![self.x.clone(), self.y.clone(), self.z.clone()].iter())
     }
 }
 
