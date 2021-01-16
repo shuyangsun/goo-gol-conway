@@ -2,8 +2,8 @@ use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use num_traits::{CheckedAdd, CheckedSub, FromPrimitive, PrimInt, ToPrimitive};
 
-pub trait MarginIndexType: Send + Sync + PrimInt + ToPrimitive {}
-pub trait PointIndexType: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
+pub trait MarginPrimInt: Send + Sync + PrimInt + ToPrimitive {}
+pub trait PointPrimInt: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
 
 pub struct NeighborsGridSurround<T> {
     is_infinite: bool,
@@ -13,13 +13,22 @@ pub struct NeighborsGridSurround<T> {
 impl<T> NeighborsGridSurround<T> {
     /// Creates a new neighbor calculator with equal margin on all sides and dimensions.
     /// ```rust
-    /// use gol_core::{NeighborsGridSurround, BoardNeighborManager, GridPoint2D};
+    /// use gol_core::{
+    ///     NeighborsGridSurround, BoardNeighborManager, GridPoint2D, GridPoint3D
+    /// };
     ///
     /// // Create Conway's Game of Life margin: 1 on each side.
     /// let neighbor_calc = NeighborsGridSurround::new(1);
-    ///
     /// let cur_point = GridPoint2D{ x: 10, y: 5 };
-    /// let neighbors = neighbor_calc.get_neighbors_idx(&cur_point);
+    /// let neighbors: Vec<GridPoint2D<i32>> =
+    ///     neighbor_calc.get_neighbors_idx(&cur_point).collect();
+    /// assert_eq!(neighbors.len(), 8);
+    ///
+    /// let neighbor_calc_2 = NeighborsGridSurround::new(1);
+    /// let cur_point = GridPoint3D{ x: 10, y: 5, z: 9};
+    /// let neighbors_2: Vec<GridPoint3D<usize>> =
+    ///     neighbor_calc_2.get_neighbors_idx(&cur_point).collect();
+    /// assert_eq!(neighbors_2.len(), 26);
     /// ```
     pub fn new(margin: T) -> Self
     where
@@ -44,7 +53,9 @@ impl<T> NeighborsGridSurround<T> {
     ///     NeighborsGridSurround::new_with_variable_margin(margins.iter());
     ///
     /// let cur_point = GridPoint2D{ x: 10, y: 5 };
-    /// let neighbors = neighbor_calc.get_neighbors_idx(&cur_point);
+    /// let neighbors: Vec<GridPoint2D<i32>> =
+    ///     neighbor_calc.get_neighbors_idx(&cur_point).collect();
+    /// assert_eq!(neighbors.len(), 19);
     /// ```
     pub fn new_with_variable_margin<'a, 'b, I>(margins: I) -> Self
     where
@@ -62,8 +73,8 @@ impl<T> NeighborsGridSurround<T> {
 
     fn calc_grid_point_surrounding<U>(&self, idx: &GridPointND<U>) -> Vec<GridPointND<U>>
     where
-        T: MarginIndexType,
-        U: PointIndexType,
+        T: MarginPrimInt,
+        U: PointPrimInt,
     {
         let mut ranges = Vec::new();
         for (i, dim_idx) in idx.indices().enumerate() {
@@ -98,6 +109,7 @@ impl<T> NeighborsGridSurround<T> {
             ranges.push(cur_dim_indices);
         }
         let res = Vec::new();
+        // TODO
         res
     }
 }
@@ -105,8 +117,8 @@ impl<T> NeighborsGridSurround<T> {
 impl<T, U> BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>
     for NeighborsGridSurround<T>
 where
-    T: MarginIndexType,
-    U: PointIndexType,
+    T: MarginPrimInt,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPointND<U>) -> std::vec::IntoIter<GridPointND<U>> {
         self.calc_grid_point_surrounding(idx).into_iter()
@@ -116,8 +128,8 @@ where
 impl<T, U> BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>
     for NeighborsGridSurround<T>
 where
-    T: MarginIndexType,
-    U: PointIndexType,
+    T: MarginPrimInt,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
         let res: Vec<GridPoint3D<U>> = self
@@ -132,8 +144,8 @@ where
 impl<T, U> BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>
     for NeighborsGridSurround<T>
 where
-    T: MarginIndexType,
-    U: PointIndexType,
+    T: MarginPrimInt,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
         let res: Vec<GridPoint2D<U>> = self
@@ -148,8 +160,8 @@ where
 impl<T, U> BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>
     for NeighborsGridSurround<T>
 where
-    T: MarginIndexType,
-    U: PointIndexType,
+    T: MarginPrimInt,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
         let res: Vec<GridPoint1D<U>> = self
@@ -160,3 +172,6 @@ where
         res.into_iter()
     }
 }
+
+impl<T> MarginPrimInt for T where T: Send + Sync + PrimInt + ToPrimitive {}
+impl<T> PointPrimInt for T where T: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
