@@ -87,6 +87,7 @@ impl<T> NeighborsGridSurround<T> {
             cur_volume /= dim_len;
             i_exclude += (**cur_idx - *dim_min).to_usize().unwrap() * cur_volume;
         }
+        eprintln!("i_exclude = {}", i_exclude);
 
         let mut res = Vec::new();
         for i in 0..volume {
