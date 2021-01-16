@@ -7,25 +7,25 @@ where
     fn to_nd(&self) -> GridPointND<T>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GridPoint1D<T> {
     pub x: T,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GridPoint2D<T> {
     pub x: T,
     pub y: T,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GridPoint3D<T> {
     pub x: T,
     pub y: T,
     pub z: T,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GridPointND<T> {
     indices: Vec<T>,
 }
