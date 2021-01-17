@@ -1,4 +1,4 @@
-use crate::{CellIndex, CellState, IndexedDataOwned};
+use crate::IndexedDataOwned;
 use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
@@ -24,8 +24,8 @@ where
 
 impl<T, CI> BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
 where
-    T: 'static + CellState,
-    CI: 'static + CellIndex,
+    T: Send + Sync + Clone,
+    CI: Send + Sync + Clone,
 {
     pub fn new(
         callbacks: Vec<
@@ -53,7 +53,7 @@ where
         }));
     }
 
-    pub fn block_until_finish(&self) {
+    fn block_until_finish(&self) {
         if let Some(handle) = self.callback_handle.lock().unwrap().take() {
             handle.join().unwrap();
         }
