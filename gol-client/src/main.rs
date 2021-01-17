@@ -5,11 +5,15 @@ use gol_core::{
 use gol_renderer::TextRendererGrid2D;
 use rayon::prelude::*;
 use std::collections::HashMap;
+use std::time::Duration;
 
 fn main() {
     let strategy = Box::new(ConwayStrategy::new());
     let mut alive_cells = HashMap::new();
     alive_cells.insert(GridPoint2D { x: 0, y: 0 }, ConwayState::Alive);
+    alive_cells.insert(GridPoint2D { x: 0, y: 1 }, ConwayState::Alive);
+    alive_cells.insert(GridPoint2D { x: -1, y: 0 }, ConwayState::Alive);
+    alive_cells.insert(GridPoint2D { x: 1, y: 0 }, ConwayState::Alive);
     let renderer = Box::new(TextRendererGrid2D::new(true))
         as Box<
             dyn BoardCallback<
@@ -33,5 +37,5 @@ fn main() {
         callbacks,
     );
 
-    board.advance(Some(10), None);
+    board.advance(Some(20), Some(Duration::new(1, 0)));
 }
