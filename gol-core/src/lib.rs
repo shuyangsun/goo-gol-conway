@@ -10,6 +10,7 @@ pub use board::board_neighbor::BoardNeighborManager;
 pub use board::board_space::BoardSpaceManager;
 pub use board::board_state::BoardStateManager;
 pub use board::board_strategy::BoardStrategyManager;
+pub use board::standard::StandardBoard;
 pub use board_states::sparse::SparseStates;
 pub use board_states::sparse_binary::SparseBinaryStates;
 pub use cell::common::{CellIndex, CellState, IndexedDataOwned, IndexedDataRef};
