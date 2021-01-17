@@ -13,7 +13,7 @@ pub use board::board_strategy::BoardStrategyManager;
 pub use board::standard::StandardBoard;
 pub use board_states::sparse::SparseStates;
 pub use board_states::sparse_binary::SparseBinaryStates;
-pub use cell::common::{CellIndex, CellState, IndexedDataOwned, IndexedDataRef};
+pub use cell::common::{IndexedDataOwned, IndexedDataRef};
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::ConwayState;
 pub use evolution::strategy::EvolutionStrategy;
