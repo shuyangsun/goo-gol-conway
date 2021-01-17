@@ -26,8 +26,6 @@ where
         &self,
     ) -> &dyn BoardStrategyManager<CI, T, std::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
-    fn iter_count(&self) -> usize;
-
     fn callback_manager(
         &self,
     ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
