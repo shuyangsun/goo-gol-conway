@@ -136,7 +136,7 @@ impl StandardBoardFactory {
         )
     }
 
-    pub fn new_standard_3d_grid<T, U, S, I>(
+    pub fn new_standard_3d_grid<T, U, S>(
         shape: (S, S, S),
         default_state: T,
         neighbor_margin: S,
@@ -162,7 +162,6 @@ impl StandardBoardFactory {
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
-        I: Iterator<Item = S>,
     {
         let space_manager =
             Grid::<GridPoint3D<U>>::new(vec![shape.0, shape.1, shape.2].into_iter());
@@ -178,7 +177,7 @@ impl StandardBoardFactory {
         )
     }
 
-    pub fn new_standard_2d_grid<T, U, S, I>(
+    pub fn new_standard_2d_grid<T, U, S>(
         shape: (S, S),
         default_state: T,
         neighbor_margin: S,
@@ -204,7 +203,6 @@ impl StandardBoardFactory {
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
-        I: Iterator<Item = S>,
     {
         let space_manager = Grid::<GridPoint2D<U>>::new(vec![shape.0, shape.1].into_iter());
         let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
@@ -219,7 +217,7 @@ impl StandardBoardFactory {
         )
     }
 
-    pub fn new_standard_1d_grid<T, U, S, I>(
+    pub fn new_standard_1d_grid<T, U, S>(
         shape: (S, S),
         default_state: T,
         neighbor_margin: S,
@@ -245,7 +243,6 @@ impl StandardBoardFactory {
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
-        I: Iterator<Item = S>,
     {
         let space_manager = Grid::<GridPoint1D<U>>::new(vec![shape.0, shape.1].into_iter());
         let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
