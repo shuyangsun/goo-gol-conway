@@ -24,8 +24,8 @@ where
         let (x_min, y_max) = (first.x.clone(), first.y.clone());
         let (x_max, y_min) = (last.x.clone(), last.y.clone());
 
-        let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap();
-        let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap();
+        let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
+        let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
 
         initscr();
         raw();
@@ -40,18 +40,17 @@ where
         getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
         /* Start in the center. */
-        let mut start_y = (max_y - win_height) / 2;
-        let mut start_x = (max_x - win_width) / 2;
-        // let mut win = create_win(start_y, start_x, win_height, win_width);
+        let start_y = (max_y - win_height) / 2;
+        let start_x = (max_x - win_width) / 2;
+        let win = create_win(start_y, start_x, win_height, win_width);
 
         for (idx, state) in states.iter() {
-            let cur_x = start_x + idx.x.checked_sub(&x_min).unwrap().to_i32().unwrap();
-            let cur_y = start_y + y_max.checked_sub(&idx.y).unwrap().to_i32().unwrap();
+            let cur_x = idx.x.checked_sub(&x_min).unwrap().to_i32().unwrap() + 1;
+            let cur_y = y_max.checked_sub(&idx.y).unwrap().to_i32().unwrap() + 2;
             let ch: char = state.clone().into();
-            mvprintw(cur_y, cur_x, ch.to_string().as_str());
+            mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
         }
-        refresh();
-        // wrefresh(win);
+        wrefresh(win);
 
         // TODO: store window.
         // destroy_win(win);
