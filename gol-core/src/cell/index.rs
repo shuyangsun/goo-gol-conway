@@ -1,4 +1,4 @@
-use std::cmp::PartialEq;
+use std::hash::{Hash, Hasher};
 
 pub trait ToGridPointND<T>
 where
@@ -176,6 +176,52 @@ where
         match not_eq_res.next() {
             Some(_) => false,
             None => true,
+        }
+    }
+}
+
+impl<T> Eq for GridPoint1D<T> where T: PartialEq {}
+impl<T> Eq for GridPoint2D<T> where T: PartialEq {}
+impl<T> Eq for GridPoint3D<T> where T: PartialEq {}
+impl<T> Eq for GridPointND<T> where T: PartialEq {}
+
+impl<T> Hash for GridPoint1D<T>
+where
+    T: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+    }
+}
+
+impl<T> Hash for GridPoint2D<T>
+where
+    T: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+        self.y.hash(state);
+    }
+}
+
+impl<T> Hash for GridPoint3D<T>
+where
+    T: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+        self.y.hash(state);
+        self.z.hash(state);
+    }
+}
+
+impl<T> Hash for GridPointND<T>
+where
+    T: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        for idx in self.indices() {
+            idx.hash(state)
         }
     }
 }
