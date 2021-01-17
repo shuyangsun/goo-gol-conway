@@ -1,6 +1,6 @@
 use gol_core::{
-    BoardCallback, ConwayState, ConwayStrategy, EvolutionStrategy, GridPoint2D, IndexedDataOwned,
-    StandardBoard, StandardBoardFactory,
+    Board, BoardCallback, ConwayState, ConwayStrategy, EvolutionStrategy, GridPoint2D,
+    IndexedDataOwned, StandardBoard, StandardBoardFactory,
 };
 use gol_renderer::TextRendererGrid2D;
 use rayon::prelude::*;
@@ -20,13 +20,18 @@ fn main() {
         >;
     let mut callbacks = Vec::new();
     callbacks.push(renderer);
-    let board: StandardBoard<ConwayState, GridPoint2D<i32>, std::vec::IntoIter<GridPoint2D<i32>>> =
-        StandardBoardFactory::new_standard_2d_grid(
-            (10usize, 10),
-            ConwayState::Dead,
-            1,
-            &alive_cells,
-            strategy,
-            callbacks,
-        );
+    let mut board: StandardBoard<
+        ConwayState,
+        GridPoint2D<i32>,
+        std::vec::IntoIter<GridPoint2D<i32>>,
+    > = StandardBoardFactory::new_standard_2d_grid(
+        (10usize, 10),
+        ConwayState::Dead,
+        1,
+        &alive_cells,
+        strategy,
+        callbacks,
+    );
+
+    board.advance(Some(10), None);
 }
