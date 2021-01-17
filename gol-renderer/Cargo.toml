@@ -1,6 +1,6 @@
 [package]
 name = "gol-renderer"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Shuyang Sun <shuyangsun10@gmail.com>"]
 edition = "2018"
 description = "Renderer for gol-client."
