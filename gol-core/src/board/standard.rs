@@ -1,6 +1,6 @@
 use crate::{
-    Board, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
-    BoardStrategyManager, IndexedDataOwned,
+    Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
+    BoardStateManager, BoardStrategyManager, IndexedDataOwned,
 };
 use rayon;
 
@@ -54,5 +54,34 @@ where
         &self,
     ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>> {
         &self.callback_manager
+    }
+}
+
+impl<T, CI, I> StandardBoard<T, CI, I>
+where
+    T: 'static + Send + Sync + Clone,
+    CI: 'static + Send + Sync + Clone,
+    I: Iterator<Item = CI>,
+{
+    pub fn new(
+        space_manager: Box<dyn BoardSpaceManager<CI, I, rayon::vec::IntoIter<CI>>>,
+        neighbor_manager: Box<dyn BoardNeighborManager<CI, I>>,
+        state_manager: Box<
+            dyn BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>,
+        >,
+        strategy_manager: Box<
+            dyn BoardStrategyManager<CI, T, std::vec::IntoIter<IndexedDataOwned<CI, T>>>,
+        >,
+        callbacks: Vec<
+            Box<dyn BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>,
+        >,
+    ) -> Self {
+        Self {
+            space_manager,
+            neighbor_manager,
+            state_manager,
+            strategy_manager,
+            callback_manager: BoardCallbackManager::new(callbacks),
+        }
     }
 }
