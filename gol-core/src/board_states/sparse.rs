@@ -2,13 +2,22 @@ use crate::{BoardStateManager, IndexedDataOwned};
 use rayon::prelude::*;
 use std::collections::HashMap;
 
-pub struct StateLookup<T, CI> {
+pub struct SparseStates<T, CI> {
     default_state: T,
     lookup: HashMap<CI, T>,
 }
 
+impl<T, CI> SparseStates<T, CI> {
+    pub fn new(default_state: T, initial_states: HashMap<CI, T>) -> Self {
+        Self {
+            default_state,
+            lookup: initial_states,
+        }
+    }
+}
+
 impl<T, CI> BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
-    for StateLookup<T, CI>
+    for SparseStates<T, CI>
 where
     T: Send + Sync + Clone + std::cmp::PartialEq,
     CI: Send + Sync + std::hash::Hash + std::cmp::Eq + Clone,
@@ -30,3 +39,6 @@ where
             .collect();
     }
 }
+
+#[cfg(test)]
+mod sparse_state_manager_test {}

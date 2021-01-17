@@ -10,7 +10,7 @@ pub use board::board_neighbor::BoardNeighborManager;
 pub use board::board_space::BoardSpaceManager;
 pub use board::board_state::BoardStateManager;
 pub use board::board_strategy::BoardStrategyManager;
-pub use board_states::hashmap_storage::StateLookup;
+pub use board_states::sparse::SparseStates;
 pub use cell::common::{CellIndex, CellState, IndexedDataOwned, IndexedDataRef};
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::ConwayState;
