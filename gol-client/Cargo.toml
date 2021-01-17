@@ -9,6 +9,8 @@ license = "Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+gol-core = "0.3.0"
+gol-renderer = "0.2.0"
 
 #[[bench]]
 #name = "gol_client_benchmark"
