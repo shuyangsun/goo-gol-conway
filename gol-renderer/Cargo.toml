@@ -10,4 +10,4 @@ license = "Apache-2.0"
 
 [dependencies]
 rayon = "1.5.0"
-gol-core = "0.3.0"
+gol-core = "0.2.0"
