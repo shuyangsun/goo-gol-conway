@@ -1,8 +1,15 @@
+use crate::neighbors::grid_surround::{MarginPrimInt, PointPrimInt};
 use crate::{
     Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
-    BoardStateManager, BoardStrategyManager, IndexedDataOwned,
+    BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPointND,
+    IndexedDataOwned, NeighborsGridSurround, SharedStrategyManager, SparseStates,
 };
+use num_traits::{CheckedDiv, FromPrimitive, PrimInt, Unsigned};
 use rayon;
+use std::collections::HashMap;
+use std::hash::Hash;
+
+pub struct StandardBoardFactory {}
 
 pub struct StandardBoard<T, CI, I>
 where
@@ -83,5 +90,48 @@ where
             strategy_manager,
             callback_manager: BoardCallbackManager::new(callbacks),
         }
+    }
+}
+
+impl StandardBoardFactory {
+    pub fn new_standard_nd_grid<T, U, K, I>(
+        shape: I,
+        default_state: &T,
+        neighbor_margin: &K,
+        initial_states: &HashMap<GridPointND<U>, T>,
+        strategy: Box<
+            dyn EvolutionStrategy<
+                GridPointND<U>,
+                T,
+                std::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
+            >,
+        >,
+        callbacks: Vec<
+            Box<
+                dyn BoardCallback<
+                    T,
+                    GridPointND<U>,
+                    rayon::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
+                >,
+            >,
+        >,
+    ) -> StandardBoard<T, GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>
+    where
+        T: 'static + Send + Sync + Clone + PartialEq,
+        U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<K> + PointPrimInt,
+        K: 'static + Unsigned + FromPrimitive + MarginPrimInt,
+        I: Iterator<Item = K>,
+    {
+        let space_manager = Grid::<GridPointND<U>>::new(shape);
+        let neighbor_manager = NeighborsGridSurround::new(*neighbor_margin);
+        let state_manager = SparseStates::new(default_state.clone(), initial_states);
+        let strategy_manger = SharedStrategyManager::new(strategy);
+        StandardBoard::new(
+            Box::new(space_manager),
+            Box::new(neighbor_manager),
+            Box::new(state_manager),
+            Box::new(strategy_manger),
+            callbacks,
+        )
     }
 }

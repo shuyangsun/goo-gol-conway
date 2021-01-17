@@ -29,8 +29,8 @@ impl<T, CI> SparseStates<T, CI> {
 impl<T, CI> BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
     for SparseStates<T, CI>
 where
-    T: Send + Sync + Clone + std::cmp::PartialEq,
-    CI: Send + Sync + std::hash::Hash + std::cmp::Eq + Clone,
+    T: Send + Sync + Clone + PartialEq,
+    CI: Send + Sync + std::hash::Hash + Eq + Clone,
 {
     fn get_cell_state(&self, idx: &CI) -> T {
         match self.lookup.get(idx) {
