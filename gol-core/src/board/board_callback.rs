@@ -24,8 +24,8 @@ where
 
 impl<T, CI> BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
 where
-    T: Send + Sync + Clone,
-    CI: Send + Sync + Clone,
+    T: 'static + Send + Sync + Clone,
+    CI: 'static + Send + Sync + Clone,
 {
     pub fn new(
         callbacks: Vec<
