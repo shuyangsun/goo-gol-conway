@@ -10,8 +10,8 @@ pub struct StateLookup<T, CI> {
 impl<T, CI> BoardStateManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>
     for StateLookup<T, CI>
 where
-    T: Send + Sync + Clone,
-    CI: Send + Sync + std::hash::Hash + std::cmp::Eq,
+    T: Send + Sync + Clone + std::cmp::PartialEq,
+    CI: Send + Sync + std::hash::Hash + std::cmp::Eq + Clone,
 {
     fn get_cell_state(&self, idx: &CI) -> T {
         match self.lookup.get(idx) {
@@ -24,5 +24,9 @@ where
         &mut self,
         new_states: rayon::vec::IntoIter<IndexedDataOwned<CI, T>>,
     ) {
+        self.lookup = new_states
+            .filter(|ele| ele.1 != self.default_state)
+            .map(|ele| (ele.0.clone(), ele.1.clone()))
+            .collect();
     }
 }
