@@ -1,6 +1,6 @@
 [package]
 name = "gol-renderer"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Shuyang Sun <shuyangsun10@gmail.com>"]
 edition = "2018"
 description = "Renderer for gol-client."
@@ -10,4 +10,5 @@ license = "Apache-2.0"
 
 [dependencies]
 rayon = "1.5.0"
+num-traits = "0.2"
 gol-core = "0.4.0"
