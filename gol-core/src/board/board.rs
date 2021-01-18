@@ -29,7 +29,12 @@ where
         &mut self,
     ) -> &mut BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
-    fn advance(&mut self, max_iter: Option<usize>, interval: Option<Duration>) {
+    fn advance(
+        &mut self,
+        max_iter: Option<usize>,
+        initial_delay: Option<Duration>,
+        interval: Option<Duration>,
+    ) {
         let mut cur_iter = 0usize;
         let state_manager = self.state_manager();
         let cur_states = self
@@ -38,24 +43,29 @@ where
             .map(|idx| (idx.clone(), state_manager.get_cell_state(&idx)))
             .collect();
 
-        let mut last_start = Instant::now();
         self.callback_manager().setup_all();
         self.callback_manager().call(cur_states);
+        let mut last_start = Instant::now();
 
         loop {
             let next_states = self.advance_one_generation();
-
-            match interval {
-                Some(val) => {
-                    let now = Instant::now();
-                    let time_elapsed = now - last_start;
-                    if time_elapsed < val {
-                        let sleep_dur = val - time_elapsed;
-                        std::thread::sleep(sleep_dur);
-                    }
-                }
-                None => (),
+            let init_delay = match initial_delay {
+                Some(val) => val,
+                None => Duration::from_nanos(0),
             };
+            let interval = match interval {
+                Some(val) => val,
+                None => Duration::from_nanos(0),
+            };
+            let sleep_interval = if cur_iter <= 0 { init_delay } else { interval };
+
+            let now = Instant::now();
+            let time_elapsed = now - last_start;
+            if time_elapsed < sleep_interval {
+                let sleep_dur = sleep_interval - time_elapsed;
+                std::thread::sleep(sleep_dur);
+            }
+
             last_start = Instant::now();
             self.callback_manager().call(next_states);
 

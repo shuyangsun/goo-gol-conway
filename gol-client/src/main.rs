@@ -33,5 +33,9 @@ fn main() {
         callbacks,
     );
 
-    board.advance(Some(300), Some(Duration::from_millis(50)));
+    board.advance(
+        Some(300),
+        Some(Duration::from_secs(5)),
+        Some(Duration::from_millis(50)),
+    );
 }
