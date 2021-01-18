@@ -1,4 +1,5 @@
+#[cfg(feature = "ascii")]
 pub mod text;
 
-#[cfg(ascii)]
+#[cfg(feature = "ascii")]
 pub use text::grid_2d::TextRendererGrid2D;
