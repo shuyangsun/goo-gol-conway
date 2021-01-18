@@ -4,6 +4,7 @@ use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, ToPrimitive};
 use rayon::prelude::*;
+use std::cmp::{max, min};
 
 pub struct TextRendererGrid2D {}
 
@@ -28,12 +29,8 @@ where
     }
 
     fn execute(&mut self, states: I) {
-        let mut states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
-        states.par_sort_by(|a, b| b.0.y.cmp(&a.0.y).then(a.0.x.cmp(&b.0.x)));
-
-        let (first, last) = (&states.first().unwrap().0, &states.last().unwrap().0);
-        let (x_min, y_max) = (first.x.clone(), first.y.clone());
-        let (x_max, y_min) = (last.x.clone(), last.y.clone());
+        let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
+        let (x_min, x_max, y_min, y_max) = find_2d_bounds(&states);
 
         let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
         let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
@@ -71,60 +68,62 @@ fn create_win(start_y: i32, start_x: i32, win_height: i32, win_width: i32) -> WI
     win
 }
 
-// fn find_2d_bounds<T, U>(
-//     idx_and_state_vec: &Vec<IndexedDataOwned<GridPoint2D<U>, T>>,
-// ) -> (U, U, U, U)
-// where
-//     T: Send + Sync,
-//     U: Send + Sync + Ord + Clone,
-// {
-//     let xy_bounds = idx_and_state_vec
-//         .par_iter()
-//         .fold(
-//             || None,
-//             |res, ele: &IndexedDataOwned<GridPoint2D<U>, T>| {
-//                 let (x, y) = (&ele.0.x, &ele.0.y);
-//                 match res {
-//                     None => Some([x.clone(), x.clone(), y.clone(), y.clone()]),
-//                     Some(val) => {
-//                         let (x_min, x_max) = (
-//                             min(val[0].clone(), x.clone()),
-//                             max(val[1].clone(), x.clone()),
-//                         );
-//                         let (y_min, y_max) = (
-//                             min(val[2].clone(), y.clone()),
-//                             max(val[3].clone(), y.clone()),
-//                         );
-//                         Some([x_min, x_max, y_min, y_max])
-//                     }
-//                 }
-//             },
-//         )
-//         .reduce(
-//             || None,
-//             |res, ele| {
-//                 if res.is_none() && ele.is_none() {
-//                     None
-//                 } else if res.is_none() {
-//                     ele
-//                 } else if ele.is_none() {
-//                     res
-//                 } else {
-//                     let (a, b) = (res.unwrap(), ele.unwrap());
-//                     Some([
-//                         min(a[0].clone(), b[0].clone()),
-//                         max(a[0].clone(), b[0].clone()),
-//                         min(a[0].clone(), b[0].clone()),
-//                         max(a[0].clone(), b[0].clone()),
-//                     ])
-//                 }
-//             },
-//         )
-//         .unwrap();
-//     (
-//         xy_bounds[0].clone(),
-//         xy_bounds[1].clone(),
-//         xy_bounds[2].clone(),
-//         xy_bounds[3].clone(),
-//     )
-// }
+fn find_2d_bounds<T, U>(
+    idx_and_state_vec: &Vec<IndexedDataOwned<GridPoint2D<U>, T>>,
+) -> (U, U, U, U)
+where
+    T: Send + Sync,
+    U: Send + Sync + Ord + Clone,
+{
+    // Another simpler but slower way:
+    // idx_and_state_vec.par_sort_by(|a, b| b.0.y.cmp(&a.0.y).then(a.0.x.cmp(&b.0.x)));
+    let xy_bounds = idx_and_state_vec
+        .par_iter()
+        .fold(
+            || None,
+            |res, ele: &IndexedDataOwned<GridPoint2D<U>, T>| {
+                let (x, y) = (&ele.0.x, &ele.0.y);
+                match res {
+                    None => Some([x.clone(), x.clone(), y.clone(), y.clone()]),
+                    Some(val) => {
+                        let (x_min, x_max) = (
+                            min(val[0].clone(), x.clone()),
+                            max(val[1].clone(), x.clone()),
+                        );
+                        let (y_min, y_max) = (
+                            min(val[2].clone(), y.clone()),
+                            max(val[3].clone(), y.clone()),
+                        );
+                        Some([x_min, x_max, y_min, y_max])
+                    }
+                }
+            },
+        )
+        .reduce(
+            || None,
+            |res, ele| {
+                if res.is_none() && ele.is_none() {
+                    None
+                } else if res.is_none() {
+                    ele
+                } else if ele.is_none() {
+                    res
+                } else {
+                    let (a, b) = (res.unwrap(), ele.unwrap());
+                    Some([
+                        min(a[0].clone(), b[0].clone()),
+                        max(a[1].clone(), b[1].clone()),
+                        min(a[2].clone(), b[2].clone()),
+                        max(a[3].clone(), b[3].clone()),
+                    ])
+                }
+            },
+        )
+        .unwrap();
+    (
+        xy_bounds[0].clone(),
+        xy_bounds[1].clone(),
+        xy_bounds[2].clone(),
+        xy_bounds[3].clone(),
+    )
+}
