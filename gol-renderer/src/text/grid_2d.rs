@@ -6,7 +6,10 @@ use num_traits::{CheckedSub, ToPrimitive};
 use rayon::prelude::*;
 use std::cmp::{max, min};
 
-pub struct TextRendererGrid2D {}
+pub struct TextRendererGrid2D {
+    title: String,
+    is_enabled: bool,
+}
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
 where
@@ -19,45 +22,57 @@ where
         raw();
         curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
-        addstr("John Conway's Game of Life");
+        addstr(self.title.as_str());
         refresh();
     }
 
     fn cleanup(&mut self) {
-        curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
-        endwin();
+        if self.is_enabled {
+            curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+            endwin();
+        }
+        self.is_enabled = false;
     }
 
     fn execute(&mut self, states: I) {
-        let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
-        let (x_min, x_max, y_min, y_max) = find_2d_bounds(&states);
+        if self.is_enabled {
+            let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
+            let (x_min, x_max, y_min, y_max) = find_2d_bounds(&states);
 
-        let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
-        let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
+            let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
+            let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
 
-        /* Get the screen bounds. */
-        let mut max_x = 0;
-        let mut max_y = 0;
-        getmaxyx(stdscr(), &mut max_y, &mut max_x);
+            /* Get the screen bounds. */
+            let mut max_x = 0;
+            let mut max_y = 0;
+            getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
-        /* Start in the center. */
-        let start_y = (max_y - win_height) / 2;
-        let start_x = (max_x - win_width) / 2;
-        let win = create_win(start_y, start_x, win_height, win_width);
+            /* Start in the center. */
+            let start_y = (max_y - win_height) / 2;
+            let start_x = (max_x - win_width) / 2;
+            let win = create_win(start_y, start_x, win_height, win_width);
 
-        for (idx, state) in states.iter() {
-            let cur_x = idx.x.checked_sub(&x_min).unwrap().to_i32().unwrap() + 1;
-            let cur_y = y_max.checked_sub(&idx.y).unwrap().to_i32().unwrap() + 2;
-            let ch: char = state.clone().into();
-            mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
+            for (idx, state) in states.iter() {
+                let cur_x = idx.x.checked_sub(&x_min).unwrap().to_i32().unwrap() + 1;
+                let cur_y = y_max.checked_sub(&idx.y).unwrap().to_i32().unwrap() + 2;
+                let ch: char = state.clone().into();
+                mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
+            }
+            wrefresh(win);
         }
-        wrefresh(win);
     }
 }
 
 impl TextRendererGrid2D {
     pub fn new() -> Self {
-        Self {}
+        Self::new_with_title(String::from(""))
+    }
+
+    pub fn new_with_title(title: String) -> Self {
+        Self {
+            title,
+            is_enabled: true,
+        }
     }
 }
 
