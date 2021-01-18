@@ -10,7 +10,7 @@ where
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
     fn setup(&mut self) {}
-    fn execute(&self, states: I);
+    fn execute(&mut self, states: I);
     fn cleanup(&mut self) {}
 }
 
@@ -58,7 +58,7 @@ where
             Arc::clone(&callbacks)
                 .lock()
                 .unwrap()
-                .par_iter()
+                .par_iter_mut()
                 .for_each(|ele| ele.execute(next_states.clone().into_par_iter()));
         }));
     }

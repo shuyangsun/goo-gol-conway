@@ -4,11 +4,8 @@ use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, ToPrimitive};
 use rayon::prelude::*;
-use std::cmp::{max, min};
 
-pub struct TextRendererGrid2D {
-    has_cell_boarder: bool,
-}
+pub struct TextRendererGrid2D {}
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
 where
@@ -16,7 +13,21 @@ where
     U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive,
     I: ParallelIterator<Item = IndexedDataOwned<GridPoint2D<U>, T>>,
 {
-    fn execute(&self, states: I) {
+    fn setup(&mut self) {
+        initscr();
+        raw();
+        curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+
+        addstr("John Conway's Game of Life");
+        refresh();
+    }
+
+    fn cleanup(&mut self) {
+        curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+        endwin();
+    }
+
+    fn execute(&mut self, states: I) {
         let mut states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
         states.par_sort_by(|a, b| b.0.y.cmp(&a.0.y).then(a.0.x.cmp(&b.0.x)));
 
@@ -26,13 +37,6 @@ where
 
         let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
         let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
-
-        initscr();
-        raw();
-        curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
-        // addstr("John Conway's Game of Life"); // TODO: call in setup.
-        // refresh();
 
         /* Get the screen bounds. */
         let mut max_x = 0;
@@ -51,15 +55,12 @@ where
             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
         }
         wrefresh(win);
-
-        // TODO: store window.
-        // destroy_win(win);
     }
 }
 
 impl TextRendererGrid2D {
-    pub fn new(has_cell_boarder: bool) -> Self {
-        Self { has_cell_boarder }
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
@@ -68,13 +69,6 @@ fn create_win(start_y: i32, start_x: i32, win_height: i32, win_width: i32) -> WI
     box_(win, 0, 0);
     wrefresh(win);
     win
-}
-
-fn destroy_win(win: WINDOW) {
-    let ch = ' ' as chtype;
-    wborder(win, ch, ch, ch, ch, ch, ch, ch, ch);
-    wrefresh(win);
-    delwin(win);
 }
 
 // fn find_2d_bounds<T, U>(

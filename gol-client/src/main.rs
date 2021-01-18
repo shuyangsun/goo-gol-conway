@@ -1,9 +1,8 @@
 use gol_core::{
-    Board, BoardCallback, ConwayState, ConwayStrategy, EvolutionStrategy, GridPoint2D,
-    IndexedDataOwned, StandardBoard, StandardBoardFactory,
+    Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D, IndexedDataOwned,
+    StandardBoard, StandardBoardFactory,
 };
 use gol_renderer::TextRendererGrid2D;
-use rayon::prelude::*;
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -14,7 +13,7 @@ fn main() {
     alive_cells.insert(GridPoint2D { x: 0, y: 1 }, ConwayState::Alive);
     alive_cells.insert(GridPoint2D { x: -1, y: 0 }, ConwayState::Alive);
     alive_cells.insert(GridPoint2D { x: 1, y: 0 }, ConwayState::Alive);
-    let renderer = Box::new(TextRendererGrid2D::new(true))
+    let renderer = Box::new(TextRendererGrid2D::new())
         as Box<
             dyn BoardCallback<
                 ConwayState,
@@ -37,5 +36,5 @@ fn main() {
         callbacks,
     );
 
-    board.advance(Some(20), Some(Duration::new(1, 0)));
+    board.advance(Some(20), Some(Duration::from_millis(350)));
 }
