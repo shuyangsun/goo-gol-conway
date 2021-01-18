@@ -14,3 +14,77 @@ where
     res.insert(GridPoint2D::new(T::one().neg(), T::zero()));
     res
 }
+
+pub fn conway_2d_glider<T>() -> HashSet<GridPoint2D<T>>
+where
+    T: Hash + PrimInt + Signed,
+{
+    let mut res = HashSet::new();
+    res.insert(GridPoint2D::new(T::one().neg(), T::zero()));
+    res.insert(GridPoint2D::new(T::one(), T::zero()));
+    res.insert(GridPoint2D::new(T::one(), T::one()));
+    res.insert(GridPoint2D::new(T::zero(), T::one().neg()));
+    res.insert(GridPoint2D::new(T::one(), T::one().neg()));
+    res
+}
+
+pub fn conway_2d_glider_gun<T>() -> HashSet<GridPoint2D<T>>
+where
+    T: Hash + PrimInt + Signed,
+{
+    // Predefine some numbers
+    let zero = T::zero();
+    let one = T::one();
+    let two = one + one;
+    let four = two * two;
+    let pos_18 = four * four + two; // x-axis max
+    let neg_17 = (four * four + one).neg(); // x-axis min
+
+    let mut res = HashSet::new();
+
+    // Left Square
+    res.insert(GridPoint2D::new(neg_17, zero));
+    res.insert(GridPoint2D::new(neg_17 + one, zero));
+    res.insert(GridPoint2D::new(neg_17, one));
+    res.insert(GridPoint2D::new(neg_17 + one, one));
+
+    // Right Square
+    res.insert(GridPoint2D::new(pos_18, two));
+    res.insert(GridPoint2D::new(pos_18 - one, two));
+    res.insert(GridPoint2D::new(pos_18, two + one));
+    res.insert(GridPoint2D::new(pos_18 - one, two + one));
+
+    // Center Left
+    res.insert(GridPoint2D::new(zero, zero));
+    res.insert(GridPoint2D::new(one.neg(), zero));
+    res.insert(GridPoint2D::new(one.neg(), one));
+    res.insert(GridPoint2D::new(one.neg(), one.neg()));
+    res.insert(GridPoint2D::new(two.neg(), two));
+    res.insert(GridPoint2D::new(two.neg(), two.neg()));
+    res.insert(GridPoint2D::new((two + one).neg(), zero));
+    res.insert(GridPoint2D::new(four.neg(), one + two));
+    res.insert(GridPoint2D::new(four.neg(), (one + two).neg()));
+    res.insert(GridPoint2D::new((one + four).neg(), one + two));
+    res.insert(GridPoint2D::new((one + four).neg(), (one + two).neg()));
+    res.insert(GridPoint2D::new((two + four).neg(), two));
+    res.insert(GridPoint2D::new((two + four).neg(), two.neg()));
+    res.insert(GridPoint2D::new((one + two + four).neg(), zero));
+    res.insert(GridPoint2D::new((one + two + four).neg(), one));
+    res.insert(GridPoint2D::new((one + two + four).neg(), one.neg()));
+
+    // Center Right
+    res.insert(GridPoint2D::new(two + one, one));
+    res.insert(GridPoint2D::new(two + one, two));
+    res.insert(GridPoint2D::new(two + one, one + two));
+    res.insert(GridPoint2D::new(four, one));
+    res.insert(GridPoint2D::new(four, two));
+    res.insert(GridPoint2D::new(four, one + two));
+    res.insert(GridPoint2D::new(four + one, zero));
+    res.insert(GridPoint2D::new(four + one, four));
+    res.insert(GridPoint2D::new(four + two + one, one.neg()));
+    res.insert(GridPoint2D::new(four + two + one, zero));
+    res.insert(GridPoint2D::new(four + two + one, four));
+    res.insert(GridPoint2D::new(four + two + one, four + one));
+
+    res
+}

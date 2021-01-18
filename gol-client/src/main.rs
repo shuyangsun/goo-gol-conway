@@ -24,14 +24,14 @@ fn main() {
         GridPoint2D<i32>,
         std::vec::IntoIter<GridPoint2D<i32>>,
     > = StandardBoardFactory::new_binary_2d_grid(
-        (200usize, 40),
+        (200usize, 50),
         ConwayState::Dead,
         ConwayState::Alive,
         1,
-        &predefined_states::conway_2d_tetris(),
+        &predefined_states::conway_2d_glider_gun(),
         strategy,
         callbacks,
     );
 
-    board.advance(Some(20), Some(Duration::from_millis(350)));
+    board.advance(Some(300), Some(Duration::from_millis(50)));
 }
