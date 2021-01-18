@@ -6,9 +6,14 @@ use num_traits::{CheckedSub, ToPrimitive};
 use rayon::prelude::*;
 use std::cmp::{max, min};
 
+const TITLE_ROW: i32 = 1;
+const GENERATION_ROW: i32 = 3;
+
 pub struct TextRendererGrid2D {
     title: String,
+    iter: usize,
     is_enabled: bool,
+    screen_dim: (i32, i32),
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
@@ -22,7 +27,18 @@ where
         raw();
         curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
-        addstr(self.title.as_str());
+        /* Get the screen bounds. */
+        let mut max_x = 0;
+        let mut max_y = 0;
+        getmaxyx(stdscr(), &mut max_y, &mut max_x);
+        self.screen_dim = (max_y, max_x);
+
+        mvprintw(
+            TITLE_ROW,
+            (max_x as usize - self.title.len()) as i32 / 2,
+            self.title.as_str(),
+        );
+
         refresh();
     }
 
@@ -36,20 +52,25 @@ where
 
     fn execute(&mut self, states: I) {
         if self.is_enabled {
+            mv(GENERATION_ROW, 0);
+            clrtoeol();
+            let iter_msg = format!("Generation {}", self.iter);
+            mvprintw(
+                GENERATION_ROW,
+                (self.screen_dim.1 as usize - iter_msg.len()) as i32 / 2,
+                iter_msg.as_str(),
+            );
+            refresh();
+
             let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
             let (x_min, x_max, y_min, y_max) = find_2d_bounds(&states);
 
             let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
             let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
 
-            /* Get the screen bounds. */
-            let mut max_x = 0;
-            let mut max_y = 0;
-            getmaxyx(stdscr(), &mut max_y, &mut max_x);
-
             /* Start in the center. */
-            let start_y = (max_y - win_height) / 2;
-            let start_x = (max_x - win_width) / 2;
+            let start_y = (self.screen_dim.0 - win_height) / 2;
+            let start_x = (self.screen_dim.1 - win_width) / 2;
             let win = create_win(start_y, start_x, win_height, win_width);
 
             for (idx, state) in states.iter() {
@@ -58,6 +79,8 @@ where
                 let ch: char = state.clone().into();
                 mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
             }
+
+            self.iter += 1;
             wrefresh(win);
         }
     }
@@ -71,7 +94,9 @@ impl TextRendererGrid2D {
     pub fn new_with_title(title: String) -> Self {
         Self {
             title,
+            iter: 0,
             is_enabled: true,
+            screen_dim: (0, 0),
         }
     }
 }

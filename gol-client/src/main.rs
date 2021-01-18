@@ -13,7 +13,9 @@ fn main() {
     alive_cells.insert(GridPoint2D { x: 0, y: 1 }, ConwayState::Alive);
     alive_cells.insert(GridPoint2D { x: -1, y: 0 }, ConwayState::Alive);
     alive_cells.insert(GridPoint2D { x: 1, y: 0 }, ConwayState::Alive);
-    let renderer = Box::new(TextRendererGrid2D::new())
+    let renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(
+        "John Conway's Original Game of Life",
+    )))
         as Box<
             dyn BoardCallback<
                 ConwayState,
