@@ -1,41 +1,10 @@
-use gol_core::{
-    predefined_states, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D,
-    IndexedDataOwned, StandardBoard, StandardBoardFactory,
-};
-use gol_renderer::TextRendererGrid2D;
-use std::time::Duration;
+#[cfg(any(feature = "ascii"))]
+use gol_client::demo::glider_gun_2d;
 
 fn main() {
-    let strategy = Box::new(ConwayStrategy::new());
-    let renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(
-        "John Conway's Original Game of Life",
-    )))
-        as Box<
-            dyn BoardCallback<
-                ConwayState,
-                GridPoint2D<i32>,
-                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<i32>, ConwayState>>,
-            >,
-        >;
-    let mut callbacks = Vec::new();
-    callbacks.push(renderer);
-    let mut board: StandardBoard<
-        ConwayState,
-        GridPoint2D<i32>,
-        std::vec::IntoIter<GridPoint2D<i32>>,
-    > = StandardBoardFactory::new_binary_2d_grid(
-        (200usize, 50),
-        ConwayState::Dead,
-        ConwayState::Alive,
-        1,
-        &predefined_states::conway_2d_glider_gun(),
-        strategy,
-        callbacks,
-    );
+    #[cfg(not(any(feature = "ascii")))]
+    panic!("No render engine backend specified. Specify \"--features [ascii, gl, vulkan, metal, dx11, dx12]\" at compile time to enable render endinges.");
 
-    board.advance(
-        Some(300),
-        Some(Duration::from_secs(5)),
-        Some(Duration::from_millis(50)),
-    );
+    #[cfg(any(feature = "ascii"))]
+    glider_gun_2d::run_demo(300, 3.0, 0.1);
 }

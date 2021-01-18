@@ -22,7 +22,7 @@ rayon = "1.5.0"
 # gol-core = "0.4.0"
 gol-core = { path = "../gol-core" }
 # gol-renderer = "0.3.0"
-gol-renderer = { path = "../gol-renderer" }
+gol-renderer = { path = "../gol-renderer", default-features = false }
 
 #[[bench]]
 #name = "gol_client_benchmark"
