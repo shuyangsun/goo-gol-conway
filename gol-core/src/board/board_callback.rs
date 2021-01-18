@@ -9,7 +9,9 @@ where
     CI: Send + Sync,
     I: ParallelIterator<Item = IndexedDataOwned<CI, T>>,
 {
+    fn setup(&mut self) {}
     fn execute(&self, states: I);
+    fn cleanup(&mut self) {}
 }
 
 pub struct BoardCallbackManager<T, CI, I>
@@ -38,6 +40,14 @@ where
         }
     }
 
+    pub fn setup_all(&mut self) {
+        self.callbacks
+            .lock()
+            .unwrap()
+            .iter_mut()
+            .for_each(|ele| ele.setup());
+    }
+
     pub fn call(&self, next_states: Vec<IndexedDataOwned<CI, T>>) {
         self.block_until_finish();
         debug_assert!(self.callback_handle.lock().unwrap().is_none());
@@ -51,6 +61,14 @@ where
                 .par_iter()
                 .for_each(|ele| ele.execute(next_states.clone().into_par_iter()));
         }));
+    }
+
+    pub fn cleanup_all(&mut self) {
+        self.callbacks
+            .lock()
+            .unwrap()
+            .iter_mut()
+            .for_each(|ele| ele.cleanup());
     }
 
     fn block_until_finish(&self) {

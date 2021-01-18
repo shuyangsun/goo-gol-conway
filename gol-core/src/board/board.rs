@@ -4,7 +4,6 @@ use crate::{
 };
 use rayon::prelude::*;
 use std::time::{Duration, Instant};
-
 pub trait Board<T, CI, I>
 where
     T: 'static + Send + Sync + Clone,
@@ -27,8 +26,8 @@ where
     ) -> &dyn BoardStrategyManager<CI, T, std::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn callback_manager(
-        &self,
-    ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
+        &mut self,
+    ) -> &mut BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>;
 
     fn advance(&mut self, max_iter: Option<usize>, interval: Option<Duration>) {
         let mut cur_iter = 0usize;
@@ -40,6 +39,7 @@ where
             .collect();
 
         let mut last_start = Instant::now();
+        self.callback_manager().setup_all();
         self.callback_manager().call(cur_states);
 
         loop {
@@ -69,6 +69,7 @@ where
                 None => continue,
             }
         }
+        self.callback_manager().cleanup_all();
     }
 
     fn advance_one_generation(&mut self) -> Vec<IndexedDataOwned<CI, T>> {

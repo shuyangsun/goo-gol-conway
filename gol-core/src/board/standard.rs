@@ -59,9 +59,9 @@ where
     }
 
     fn callback_manager(
-        &self,
-    ) -> &BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>> {
-        &self.callback_manager
+        &mut self,
+    ) -> &mut BoardCallbackManager<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>> {
+        &mut self.callback_manager
     }
 }
 
