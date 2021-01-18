@@ -36,6 +36,7 @@ where
     let zero = T::zero();
     let one = T::one();
     let two = one + one;
+    let three = one + two;
     let four = two * two;
     let pos_18 = four * four + two; // x-axis max
     let neg_17 = (four * four + one).neg(); // x-axis min
@@ -62,23 +63,23 @@ where
     res.insert(GridPoint2D::new(two.neg(), two));
     res.insert(GridPoint2D::new(two.neg(), two.neg()));
     res.insert(GridPoint2D::new((two + one).neg(), zero));
-    res.insert(GridPoint2D::new(four.neg(), one + two));
-    res.insert(GridPoint2D::new(four.neg(), (one + two).neg()));
-    res.insert(GridPoint2D::new((one + four).neg(), one + two));
-    res.insert(GridPoint2D::new((one + four).neg(), (one + two).neg()));
+    res.insert(GridPoint2D::new(four.neg(), three));
+    res.insert(GridPoint2D::new(four.neg(), (three).neg()));
+    res.insert(GridPoint2D::new((one + four).neg(), three));
+    res.insert(GridPoint2D::new((one + four).neg(), (three).neg()));
     res.insert(GridPoint2D::new((two + four).neg(), two));
     res.insert(GridPoint2D::new((two + four).neg(), two.neg()));
-    res.insert(GridPoint2D::new((one + two + four).neg(), zero));
-    res.insert(GridPoint2D::new((one + two + four).neg(), one));
-    res.insert(GridPoint2D::new((one + two + four).neg(), one.neg()));
+    res.insert(GridPoint2D::new((three + four).neg(), zero));
+    res.insert(GridPoint2D::new((three + four).neg(), one));
+    res.insert(GridPoint2D::new((three + four).neg(), one.neg()));
 
     // Center Right
     res.insert(GridPoint2D::new(two + one, one));
     res.insert(GridPoint2D::new(two + one, two));
-    res.insert(GridPoint2D::new(two + one, one + two));
+    res.insert(GridPoint2D::new(two + one, three));
     res.insert(GridPoint2D::new(four, one));
     res.insert(GridPoint2D::new(four, two));
-    res.insert(GridPoint2D::new(four, one + two));
+    res.insert(GridPoint2D::new(four, three));
     res.insert(GridPoint2D::new(four + one, zero));
     res.insert(GridPoint2D::new(four + one, four));
     res.insert(GridPoint2D::new(four + two + one, one.neg()));
@@ -86,5 +87,9 @@ where
     res.insert(GridPoint2D::new(four + two + one, four));
     res.insert(GridPoint2D::new(four + two + one, four + one));
 
+    res = res
+        .iter()
+        .map(|ele| GridPoint2D::new(ele.x - three * three, ele.y + three * four))
+        .collect();
     res
 }
