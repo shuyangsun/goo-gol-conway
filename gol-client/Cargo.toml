@@ -11,6 +11,11 @@ license = "Apache-2.0"
 [features]
 default = []
 ascii = ["gol-renderer/ascii"]
+vulkan = ["gol-renderer/vulkan"]
+metal = ["gol-renderer/metal"]
+dx12 = ["gol-renderer/dx12"]
+dx11 = ["gol-renderer/dx11"]
+gl = ["gol-renderer/gl"]
 
 [dependencies]
 rayon = "1.5.0"
