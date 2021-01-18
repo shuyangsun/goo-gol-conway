@@ -225,3 +225,21 @@ where
         }
     }
 }
+
+impl<T> GridPoint3D<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self { x, y, z }
+    }
+}
+
+impl<T> GridPoint2D<T> {
+    pub fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+
+impl<T> GridPoint1D<T> {
+    pub fn new(x: T) -> Self {
+        Self { x }
+    }
+}

@@ -1,18 +1,12 @@
 use gol_core::{
-    Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D, IndexedDataOwned,
-    StandardBoard, StandardBoardFactory,
+    predefined_states, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D,
+    IndexedDataOwned, StandardBoard, StandardBoardFactory,
 };
 use gol_renderer::TextRendererGrid2D;
-use std::collections::HashMap;
 use std::time::Duration;
 
 fn main() {
     let strategy = Box::new(ConwayStrategy::new());
-    let mut alive_cells = HashMap::new();
-    alive_cells.insert(GridPoint2D { x: 0, y: 0 }, ConwayState::Alive);
-    alive_cells.insert(GridPoint2D { x: 0, y: 1 }, ConwayState::Alive);
-    alive_cells.insert(GridPoint2D { x: -1, y: 0 }, ConwayState::Alive);
-    alive_cells.insert(GridPoint2D { x: 1, y: 0 }, ConwayState::Alive);
     let renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(
         "John Conway's Original Game of Life",
     )))
@@ -29,11 +23,12 @@ fn main() {
         ConwayState,
         GridPoint2D<i32>,
         std::vec::IntoIter<GridPoint2D<i32>>,
-    > = StandardBoardFactory::new_standard_2d_grid(
-        (10usize, 10),
+    > = StandardBoardFactory::new_binary_2d_grid(
+        (200usize, 40),
         ConwayState::Dead,
+        ConwayState::Alive,
         1,
-        &alive_cells,
+        &predefined_states::conway_2d_tetris(),
         strategy,
         callbacks,
     );
