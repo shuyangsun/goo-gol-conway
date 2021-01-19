@@ -48,39 +48,39 @@ fn main() {
                     .takes_value(true),
             )
             .arg(
-                Arg::with_name("iter")
-                    .short("i")
-                    .long("iter")
-                    .value_name("MAX_ITER")
+                Arg::with_name("gen_count")
+                    .short("g")
+                    .long("gen_count")
+                    .value_name("GEN_COUNT")
                     .help("Specify the maximum number of simulation generation.")
                     .takes_value(true),
             )
             .arg(
-                Arg::with_name("initial_delay")
+                Arg::with_name("delay")
                     .short("d")
                     .long("delay")
-                    .value_name("INITIAL_DELAY")
+                    .value_name("DELAY")
                     .help("Sets initial delay in seconds before evolution starts.")
                     .takes_value(true),
             )
             .arg(
                 Arg::with_name("interval")
-                    .short("g")
+                    .short("i")
                     .long("interval")
                     .value_name("INTERVAL")
-                    .help("Sets initial delay in seconds before evolution starts.")
+                    .help("Sets delay in seconds in-between generations.")
                     .takes_value(true),
             )
             .get_matches();
 
         let demo_name = matches.value_of("demo").unwrap();
         let max_iter: usize = matches
-            .value_of("iter")
+            .value_of("gen_count")
             .unwrap()
             .parse()
             .expect("Cannot parse max iteration count to integer.");
         let delay: f64 = matches
-            .value_of("initial_delay")
+            .value_of("delay")
             .unwrap()
             .parse()
             .expect("Cannot parse initial delay seconds to float.");

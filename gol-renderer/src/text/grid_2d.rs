@@ -2,7 +2,7 @@ extern crate ncurses;
 
 use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
-use num_traits::{CheckedSub, ToPrimitive};
+use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use std::cmp::{max, min};
 
@@ -14,12 +14,13 @@ pub struct TextRendererGrid2D {
     iter: usize,
     is_enabled: bool,
     screen_dim: (i32, i32),
+    window_dim: Option<(i32, i32, i32, i32)>,
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
 where
     T: Send + Sync + Clone + std::convert::Into<char>,
-    U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive,
+    U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive,
     I: ParallelIterator<Item = IndexedDataOwned<GridPoint2D<U>, T>>,
 {
     fn setup(&mut self) {
@@ -63,10 +64,19 @@ where
             refresh();
 
             let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
-            let (x_min, x_max, y_min, y_max) = find_2d_bounds(&states);
+            if self.window_dim.is_none() {
+                let window_dim = find_2d_bounds(&states);
+                self.window_dim = Some((
+                    window_dim.0.to_i32().unwrap(),
+                    window_dim.1.to_i32().unwrap(),
+                    window_dim.2.to_i32().unwrap(),
+                    window_dim.3.to_i32().unwrap(),
+                ));
+            }
+            let (x_min, x_max, y_min, y_max) = self.window_dim.unwrap();
 
-            let win_width = x_max.checked_sub(&x_min).unwrap().to_i32().unwrap() + 4;
-            let win_height = y_max.checked_sub(&y_min).unwrap().to_i32().unwrap() + 4;
+            let win_width = x_max.checked_sub(x_min).unwrap().to_i32().unwrap() + 4;
+            let win_height = y_max.checked_sub(y_min).unwrap().to_i32().unwrap() + 4;
 
             /* Start in the center. */
             let start_y = (self.screen_dim.0 - win_height) / 2;
@@ -74,8 +84,19 @@ where
             let win = create_win(start_y, start_x, win_height, win_width);
 
             for (idx, state) in states.iter() {
-                let cur_x = idx.x.checked_sub(&x_min).unwrap().to_i32().unwrap() + 1;
-                let cur_y = y_max.checked_sub(&idx.y).unwrap().to_i32().unwrap() + 2;
+                let cur_x = idx
+                    .x
+                    .checked_sub(&(U::from_i32(x_min).unwrap()))
+                    .unwrap()
+                    .to_i32()
+                    .unwrap()
+                    + 1;
+                let cur_y = y_max
+                    .checked_sub(idx.y.to_i32().unwrap())
+                    .unwrap()
+                    .to_i32()
+                    .unwrap()
+                    + 2;
                 let ch: char = state.clone().into();
                 mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
             }
@@ -97,6 +118,7 @@ impl TextRendererGrid2D {
             iter: 0,
             is_enabled: true,
             screen_dim: (0, 0),
+            window_dim: None,
         }
     }
 }
