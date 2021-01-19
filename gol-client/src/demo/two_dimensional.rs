@@ -2,10 +2,6 @@ use gol_core::{
     self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
 };
 
-#[cfg(feature = "ascii")]
-use super::util::get_ncurses_win_height_width;
-#[cfg(feature = "ascii")]
-use gol_renderer::TextRendererGrid2D;
 use std::collections::HashSet;
 use std::time::Duration;
 
@@ -16,6 +12,12 @@ pub fn run_demo(
     initial_delay_secs: f64,
     interval_secs: f64,
 ) {
+    #[cfg(not(any(feature = "ascii")))]
+    eprintln!(
+        "Attempting to render \"{}\" when there was no render engine specified at compile-time.",
+        title
+    );
+
     let strategy = Box::new(ConwayStrategy::new());
 
     #[cfg(any(feature = "ascii"))]
@@ -26,6 +28,7 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     {
+        use gol_renderer::TextRendererGrid2D;
         let text_renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(title)))
             as Box<
                 dyn gol_core::BoardCallback<
@@ -42,8 +45,11 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     let win_size = {
+        use super::util::get_ncurses_win_height_width;
         let (height, width) = get_ncurses_win_height_width();
-        (width - 10, height - 15)
+        let height_new = height - 15;
+        let width_new = width * height_new / height;
+        (width_new, height_new)
     };
 
     let mut board: StandardBoard<
