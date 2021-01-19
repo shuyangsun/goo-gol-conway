@@ -43,7 +43,7 @@ pub fn run_demo(
     #[cfg(feature = "ascii")]
     let win_size = {
         let (height, width) = get_ncurses_win_height_width();
-        (width - 10, height - 15)
+        (width - 30, height - 15)
     };
 
     let mut board: StandardBoard<

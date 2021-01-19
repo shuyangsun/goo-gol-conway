@@ -13,8 +13,8 @@ pub struct TextRendererGrid2D {
     title: String,
     iter: usize,
     is_enabled: bool,
-    screen_dim: (i32, i32),
-    window_dim: Option<(i32, i32, i32, i32)>,
+    pub screen_dim: (i32, i32),
+    pub window_dim: Option<(i32, i32, i32, i32)>,
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
