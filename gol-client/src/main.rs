@@ -22,11 +22,31 @@ fn main() {
             ),
         );
         demos.insert(
+            "eater",
+            (predefined_states::conway_2d_eater(), "Glider Eater"),
+        );
+        demos.insert(
             "generator_and_eater",
             (
                 predefined_states::conway_2d_glider_gun_with_eater(),
                 "Glider Generator and Eater",
             ),
+        );
+        demos.insert(
+            "and_gate_00",
+            (predefined_states::conway_2d_and_gate_00(), "AND Gate 00"),
+        );
+        demos.insert(
+            "and_gate_01",
+            (predefined_states::conway_2d_and_gate_01(), "AND Gate 01"),
+        );
+        demos.insert(
+            "and_gate_10",
+            (predefined_states::conway_2d_and_gate_10(), "AND Gate 10"),
+        );
+        demos.insert(
+            "and_gate_11",
+            (predefined_states::conway_2d_and_gate_11(), "AND Gate 11"),
         );
 
         let mut demos_description = String::from("Runs demo, available demos: ");
