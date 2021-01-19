@@ -1,5 +1,6 @@
 use super::util::{MarginPrimInt, PointPrimInt};
-use crate::{GridPoint2D, GridPointND};
+use crate::cell::index::ToGridPointND;
+use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::Itertools;
 
 pub struct NeighborsGridDonut<T> {
@@ -66,6 +67,7 @@ impl<T> NeighborsGridDonut<T> {
             .into_iter()
             .multi_cartesian_product()
             .map(|ele| GridPointND::new(ele.iter()))
+            .filter(|ele| ele != idx)
             .collect();
         res
     }
@@ -160,5 +162,102 @@ impl<T> NeighborsGridDonut<T> {
             ranges.push(((dim_idx_min, dim_idx_max), wrapping_range));
         }
         ranges
+    }
+}
+
+impl<T, U> BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>
+    for NeighborsGridDonut<T>
+where
+    T: MarginPrimInt,
+    U: PointPrimInt,
+{
+    fn get_neighbors_idx(&self, idx: &GridPointND<U>) -> std::vec::IntoIter<GridPointND<U>> {
+        self.calc_grid_point_surrounding(idx).into_iter()
+    }
+}
+
+impl<T, U> BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>
+    for NeighborsGridDonut<T>
+where
+    T: MarginPrimInt,
+    U: PointPrimInt,
+{
+    fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
+        let res: Vec<GridPoint3D<U>> = self
+            .calc_grid_point_surrounding(&idx.to_nd())
+            .iter()
+            .map(|ele| ele.to_3d().unwrap())
+            .collect();
+        res.into_iter()
+    }
+}
+
+impl<T, U> BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>
+    for NeighborsGridDonut<T>
+where
+    T: MarginPrimInt,
+    U: PointPrimInt,
+{
+    fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
+        let res: Vec<GridPoint2D<U>> = self
+            .calc_grid_point_surrounding(&idx.to_nd())
+            .iter()
+            .map(|ele| ele.to_2d().unwrap())
+            .collect();
+        res.into_iter()
+    }
+}
+
+impl<T, U> BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>
+    for NeighborsGridDonut<T>
+where
+    T: MarginPrimInt,
+    U: PointPrimInt,
+{
+    fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
+        let res: Vec<GridPoint1D<U>> = self
+            .calc_grid_point_surrounding(&idx.to_nd())
+            .iter()
+            .map(|ele| ele.to_1d().unwrap())
+            .collect();
+        res.into_iter()
+    }
+}
+
+#[cfg(test)]
+mod grid_donut_neighbor_test {
+    use crate::{
+        BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND,
+        NeighborsGridDonut,
+    };
+
+    #[test]
+    fn grid_donut_test_1d_1() {
+        let board_shape = vec![100];
+        let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
+        let point = GridPoint1D { x: 10 };
+        let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            println!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 2);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint1D { x: 9 }));
+        assert!(neighbors.contains(&GridPoint1D { x: 11 }));
+    }
+
+    #[test]
+    fn grid_donut_test_1d_2() {
+        let board_shape = vec![3];
+        let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
+        let point = GridPoint1D { x: 0usize };
+        let neighbors: Vec<GridPoint1D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            println!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 2);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint1D { x: 1 }));
+        assert!(neighbors.contains(&GridPoint1D { x: 2 }));
     }
 }
