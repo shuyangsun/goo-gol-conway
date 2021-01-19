@@ -4,7 +4,7 @@ pub enum ConwayState {
     Dead,
 }
 
-const CONWAY_STATE_ALIVE_CHAR: char = 'O';
+const CONWAY_STATE_ALIVE_CHAR: char = '0';
 const CONWAY_STATE_DEAD_CHAR: char = ' ';
 
 impl std::convert::Into<char> for ConwayState {
