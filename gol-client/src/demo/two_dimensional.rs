@@ -11,6 +11,7 @@ use std::time::Duration;
 
 pub fn run_demo(
     initial_states: &HashSet<GridPoint2D<i32>>,
+    title: &str,
     max_iter: usize,
     initial_delay_secs: f64,
     interval_secs: f64,
@@ -25,9 +26,7 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     {
-        let text_renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(
-            "John Conway's Original Game of Life",
-        )))
+        let text_renderer = Box::new(TextRendererGrid2D::new_with_title(String::from(title)))
             as Box<
                 dyn gol_core::BoardCallback<
                     ConwayState,

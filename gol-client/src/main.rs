@@ -12,12 +12,21 @@ fn main() {
         const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
         let mut demos = HashMap::new();
-        demos.insert("tetris", predefined_states::conway_2d_tetris());
-        demos.insert("glider", predefined_states::conway_2d_glider());
-        demos.insert("generator", predefined_states::conway_2d_glider_gun());
+        demos.insert("tetris", (predefined_states::conway_2d_tetris(), "Tetris"));
+        demos.insert("glider", (predefined_states::conway_2d_glider(), "Glider"));
+        demos.insert(
+            "generator",
+            (
+                predefined_states::conway_2d_glider_gun(),
+                "Glider Generator",
+            ),
+        );
         demos.insert(
             "generator_and_eater",
-            predefined_states::conway_2d_glider_gun_with_eater(),
+            (
+                predefined_states::conway_2d_glider_gun_with_eater(),
+                "Glider Generator and Eater",
+            ),
         );
 
         let mut demos_description = String::from("Runs demo, available demos: ");
@@ -80,6 +89,7 @@ fn main() {
             .unwrap()
             .parse()
             .expect("Cannot parse interval seconds to float.");
-        demo::two_dimensional::run_demo(demos.get(demo_name).unwrap(), max_iter, delay, interval);
+        let (initial_states, title) = demos.get(demo_name).unwrap();
+        demo::two_dimensional::run_demo(initial_states, title, max_iter, delay, interval);
     }
 }
