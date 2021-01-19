@@ -1,13 +1,20 @@
 use gol_core::{
-    self, predefined_states, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard,
-    StandardBoardFactory,
+    self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
 };
 
 #[cfg(feature = "ascii")]
+use super::util::get_ncurses_win_height_width;
+#[cfg(feature = "ascii")]
 use gol_renderer::TextRendererGrid2D;
+use std::collections::HashSet;
 use std::time::Duration;
 
-pub fn run_demo(max_iter: usize, initial_delay_secs: f64, interval_secs: f64) {
+pub fn run_demo(
+    initial_states: &HashSet<GridPoint2D<i32>>,
+    max_iter: usize,
+    initial_delay_secs: f64,
+    interval_secs: f64,
+) {
     let strategy = Box::new(ConwayStrategy::new());
 
     #[cfg(any(feature = "ascii"))]
@@ -31,16 +38,25 @@ pub fn run_demo(max_iter: usize, initial_delay_secs: f64, interval_secs: f64) {
         callbacks.push(text_renderer);
     }
 
+    #[cfg(not(any(feature = "ascii")))]
+    let win_size = (200usize, 50);
+
+    #[cfg(feature = "ascii")]
+    let win_size = {
+        let (height, width) = get_ncurses_win_height_width();
+        (width - 10, height - 15)
+    };
+
     let mut board: StandardBoard<
         ConwayState,
         GridPoint2D<i32>,
         std::vec::IntoIter<GridPoint2D<i32>>,
     > = StandardBoardFactory::new_binary_2d_grid(
-        (200usize, 50),
+        win_size,
         ConwayState::Dead,
         ConwayState::Alive,
         1,
-        &predefined_states::conway_2d_glider_gun(),
+        initial_states,
         strategy,
         callbacks,
     );

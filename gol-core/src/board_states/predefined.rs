@@ -87,9 +87,34 @@ where
     res.insert(GridPoint2D::new(four + two + one, four));
     res.insert(GridPoint2D::new(four + two + one, four + one));
 
+    res
+}
+
+pub fn conway_2d_glider_gun_with_eater<T>() -> HashSet<GridPoint2D<T>>
+where
+    T: Hash + PrimInt + Signed,
+{
+    let mut res = conway_2d_glider_gun();
+
+    let one = T::one();
+    let two = one + one;
+    let five = two * two + one;
+    let pos_25 = five * five;
+    let neg_23 = (pos_25 - two).neg();
+
+    // Eater:
+    res.insert(GridPoint2D::new(pos_25, neg_23));
+    res.insert(GridPoint2D::new(pos_25, neg_23 - one));
+    res.insert(GridPoint2D::new(pos_25 + one, neg_23));
+    res.insert(GridPoint2D::new(pos_25 + two, neg_23 - one));
+    res.insert(GridPoint2D::new(pos_25 + two, pos_25.neg()));
+    res.insert(GridPoint2D::new(pos_25 + two, pos_25.neg() - one));
+    res.insert(GridPoint2D::new(pos_25 + two + one, pos_25.neg() - one));
+
     res = res
         .iter()
-        .map(|ele| GridPoint2D::new(ele.x - three * three, ele.y + three * four))
+        .map(|ele| GridPoint2D::new(ele.x - five, ele.y + five * two))
         .collect();
+
     res
 }

@@ -1,1 +1,2 @@
-pub mod glider_gun_2d;
+pub mod two_dimensional;
+mod util;
