@@ -1,13 +1,10 @@
+use super::util::{MarginPrimInt, PointPrimInt};
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::izip;
-use num_traits::{CheckedAdd, CheckedSub, FromPrimitive, PrimInt, ToPrimitive};
-
-pub trait MarginPrimInt: Send + Sync + PrimInt + ToPrimitive {}
-pub trait PointPrimInt: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
 
 pub struct NeighborsGridSurround<T> {
-    is_infinite: bool,
+    should_repeat_margin: bool,
     margins: Vec<(T, T)>,
 }
 
@@ -37,7 +34,7 @@ impl<T> NeighborsGridSurround<T> {
     {
         let margin_two_sides = vec![(margin.clone(), margin)];
         Self {
-            is_infinite: true,
+            should_repeat_margin: true,
             margins: margin_two_sides,
         }
     }
@@ -67,7 +64,7 @@ impl<T> NeighborsGridSurround<T> {
         let vec: Vec<(T, T)> = margins.map(|ele| (ele.0.clone(), ele.1.clone())).collect();
         assert!(!vec.is_empty());
         Self {
-            is_infinite: false,
+            should_repeat_margin: false,
             margins: vec,
         }
     }
@@ -117,7 +114,7 @@ impl<T> NeighborsGridSurround<T> {
         let mut dim_lens = Vec::new();
         let mut volume = 1;
         for (i, dim_idx) in idx.indices().enumerate() {
-            let (neg, pos) = if self.is_infinite {
+            let (neg, pos) = if self.should_repeat_margin {
                 self.margins.first().unwrap()
             } else {
                 self.margins.get(i).unwrap()
@@ -217,9 +214,6 @@ where
         res.into_iter()
     }
 }
-
-impl<T> MarginPrimInt for T where T: Send + Sync + PrimInt + ToPrimitive {}
-impl<T> PointPrimInt for T where T: Send + Sync + PrimInt + CheckedAdd + CheckedSub + FromPrimitive {}
 
 #[cfg(test)]
 mod grid_surrounding_neighbor_test {

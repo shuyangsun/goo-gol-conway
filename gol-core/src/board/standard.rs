@@ -1,4 +1,4 @@
-use crate::neighbors::grid_surround::{MarginPrimInt, PointPrimInt};
+use crate::neighbors::util::{MarginPrimInt, PointPrimInt};
 use crate::{
     Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint1D,
