@@ -2,6 +2,7 @@ use gol_core::{
     self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
 };
 
+use rand::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
 
@@ -14,6 +15,7 @@ pub fn run_demo(
     initial_delay_secs: f64,
     interval_secs: f64,
     is_board_donut: bool,
+    alive_ratio: f64,
 ) {
     #[cfg(not(any(feature = "ascii")))]
     eprintln!(
@@ -57,6 +59,11 @@ pub fn run_demo(
         (width_new, height_new)
     };
 
+    let random_init_state = if alive_ratio <= 0.0 {
+        HashSet::new()
+    } else {
+        gen_random_initial_positions(win_size, alive_ratio)
+    };
     let mut board: StandardBoard<
         ConwayState,
         GridPoint2D<i32>,
@@ -66,7 +73,11 @@ pub fn run_demo(
         ConwayState::Dead,
         ConwayState::Alive,
         1,
-        initial_states,
+        if initial_states.is_empty() {
+            &random_init_state
+        } else {
+            initial_states
+        },
         strategy,
         callbacks,
         is_board_donut,
@@ -80,4 +91,23 @@ pub fn run_demo(
         Some(Duration::from_nanos(initial_delay_nano_sec)),
         Some(Duration::from_nanos(interval_nano_sec)),
     );
+}
+
+fn gen_random_initial_positions(
+    board_shape: (usize, usize),
+    alive_ratio: f64,
+) -> HashSet<GridPoint2D<i32>> {
+    let mut rng = rand::thread_rng();
+    let mut res = HashSet::new();
+    for x in 0..board_shape.0 {
+        for y in 0..board_shape.1 {
+            if rng.gen::<f64>() < alive_ratio {
+                res.insert(GridPoint2D::new(
+                    (x as i64 - (board_shape.0 / 2) as i64) as i32,
+                    (y as i64 - (board_shape.1 / 2) as i64) as i32,
+                ));
+            }
+        }
+    }
+    res
 }

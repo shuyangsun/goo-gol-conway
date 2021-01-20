@@ -7,7 +7,7 @@ fn main() {
         use clap::{App, Arg};
         use gol_client::demo;
         use gol_core::predefined_states;
-        use std::collections::HashMap;
+        use std::collections::{HashMap, HashSet};
 
         const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -68,6 +68,13 @@ fn main() {
                     .takes_value(true),
             )
             .arg(
+                Arg::with_name("random")
+                    .long("random")
+                    .value_name("RANDOM_ALIVE_RATIO")
+                    .help("Generates a random 2D Game of Life board, specify the ratio of alive cells with value between 0 and 1.")
+                    .takes_value(true),
+            )
+            .arg(
                 Arg::with_name("gen_count")
                     .short("g")
                     .long("gen_count")
@@ -114,7 +121,6 @@ fn main() {
             )
             .get_matches();
 
-        let demo_name = matches.value_of("demo").unwrap();
         let max_iter: usize = matches
             .value_of("gen_count")
             .unwrap()
@@ -130,6 +136,11 @@ fn main() {
             .unwrap()
             .parse()
             .expect("Cannot parse interval seconds to float.");
+        let alive_ratio: f64 = matches
+            .value_of("random")
+            .unwrap_or("0.0")
+            .parse()
+            .expect("Cannot parse alive ratio to float.");
         let width: Option<usize> = match matches.value_of("width") {
             Some(val) => Some(
                 val.parse::<usize>()
@@ -144,7 +155,12 @@ fn main() {
             ),
             None => None,
         };
-        let (initial_states, title) = demos.get(demo_name).unwrap();
+
+        let random_states = (HashSet::new(), "Random Game of Life");
+        let (initial_states, title) = match matches.value_of("demo") {
+            Some(demo_name) => demos.get(demo_name).unwrap(),
+            None => &random_states,
+        };
         let is_donut = match matches.occurrences_of("donut") {
             0 => false,
             _ => true,
@@ -158,6 +174,7 @@ fn main() {
             delay,
             interval,
             is_donut,
+            alive_ratio,
         );
     }
 }
