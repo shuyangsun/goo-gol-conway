@@ -11,6 +11,7 @@ pub fn run_demo(
     max_iter: usize,
     initial_delay_secs: f64,
     interval_secs: f64,
+    is_board_donut: bool,
 ) {
     #[cfg(not(any(feature = "ascii")))]
     eprintln!(
@@ -64,6 +65,7 @@ pub fn run_demo(
         initial_states,
         strategy,
         callbacks,
+        is_board_donut,
     );
 
     let one_billion_nano_sec: f64 = 1_000_000_000f64;

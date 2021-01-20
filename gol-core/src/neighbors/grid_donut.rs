@@ -43,13 +43,9 @@ impl<T> NeighborsGridDonut<T> {
     fn calc_grid_point_surrounding<U>(&self, idx: &GridPointND<U>) -> Vec<GridPointND<U>>
     where
         T: MarginPrimInt,
-        U: PointPrimInt + std::fmt::Debug,
+        U: PointPrimInt,
     {
         let dim_ranges = self.calc_dim_ranges(idx);
-        for n in dim_ranges.iter() {
-            eprint!("{:?}, ", n);
-        }
-        eprintln!();
 
         // Expand dim ranges.
         let mut indices_each_dim = Vec::with_capacity(dim_ranges.len());
@@ -67,10 +63,6 @@ impl<T> NeighborsGridDonut<T> {
             }
             indices_each_dim.push(cur.into_iter());
         }
-        for n in indices_each_dim.iter() {
-            eprint!("{:?}, ", n);
-        }
-        eprintln!();
 
         let res = indices_each_dim
             .into_iter()
@@ -84,7 +76,7 @@ impl<T> NeighborsGridDonut<T> {
     fn calc_dim_ranges<U>(&self, idx: &GridPointND<U>) -> Vec<((U, U), Option<(U, U)>)>
     where
         T: MarginPrimInt,
-        U: PointPrimInt + std::fmt::Debug,
+        U: PointPrimInt,
     {
         let mut ranges = Vec::new();
         for (i, dim_idx) in idx.indices().enumerate() {
@@ -137,7 +129,7 @@ impl<T, U> BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt + std::fmt::Debug,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPointND<U>) -> std::vec::IntoIter<GridPointND<U>> {
         self.calc_grid_point_surrounding(idx).into_iter()
@@ -148,7 +140,7 @@ impl<T, U> BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt + std::fmt::Debug,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
         let res: Vec<GridPoint3D<U>> = self
@@ -164,7 +156,7 @@ impl<T, U> BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt + std::fmt::Debug,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
         let res: Vec<GridPoint2D<U>> = self
@@ -180,7 +172,7 @@ impl<T, U> BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt + std::fmt::Debug,
+    U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
         let res: Vec<GridPoint1D<U>> = self

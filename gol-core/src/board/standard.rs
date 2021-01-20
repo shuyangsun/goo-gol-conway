@@ -2,8 +2,8 @@ use crate::neighbors::util::{MarginPrimInt, PointPrimInt};
 use crate::{
     Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint1D,
-    GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned, NeighborsGridSurround,
-    SharedStrategyManager, SparseBinaryStates, SparseStates,
+    GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned, NeighborsGridDonut,
+    NeighborsGridSurround, SharedStrategyManager, SparseBinaryStates, SparseStates,
 };
 use num_traits::{CheckedDiv, FromPrimitive, PrimInt, Unsigned};
 use rayon;
@@ -116,20 +116,28 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
-        S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
+        S: 'static + FromPrimitive + MarginPrimInt,
         I: Iterator<Item = S>,
     {
-        let space_manager = Grid::<GridPointND<U>>::new(shape);
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape: Vec<S> = shape.collect();
+        let space_manager = Grid::<GridPointND<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>>
+        };
         let state_manager = SparseStates::new(default_state, initial_states);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -158,6 +166,7 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
@@ -165,14 +174,21 @@ impl StandardBoardFactory {
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
         I: Iterator<Item = S>,
     {
-        let space_manager = Grid::<GridPointND<U>>::new(shape);
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape: Vec<S> = shape.collect();
+        let space_manager = Grid::<GridPointND<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U>>>>
+        };
         let state_manager =
             SparseBinaryStates::new(default_state, non_default_state, non_default_indices);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -200,20 +216,27 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager =
-            Grid::<GridPoint3D<U>>::new(vec![shape.0, shape.1, shape.2].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape.0, shape.1, shape.2];
+        let space_manager = Grid::<GridPoint3D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>>
+        };
         let state_manager = SparseStates::new(default_state, initial_states);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -242,21 +265,28 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager =
-            Grid::<GridPoint3D<U>>::new(vec![shape.0, shape.1, shape.2].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape.0, shape.1, shape.2];
+        let space_manager = Grid::<GridPoint3D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U>>>>
+        };
         let state_manager =
             SparseBinaryStates::new(default_state, non_default_state, non_default_indices);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -284,19 +314,27 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager = Grid::<GridPoint2D<U>>::new(vec![shape.0, shape.1].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape.0, shape.1];
+        let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+        };
         let state_manager = SparseStates::new(default_state, initial_states);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -325,20 +363,28 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager = Grid::<GridPoint2D<U>>::new(vec![shape.0, shape.1].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape.0, shape.1];
+        let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+        };
         let state_manager =
             SparseBinaryStates::new(default_state, non_default_state, non_default_indices);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -346,7 +392,7 @@ impl StandardBoardFactory {
     }
 
     pub fn new_standard_1d_grid<T, U, S>(
-        shape: (S, S),
+        shape: S,
         default_state: T,
         neighbor_margin: S,
         initial_states: &HashMap<GridPoint1D<U>, T>,
@@ -366,19 +412,27 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager = Grid::<GridPoint1D<U>>::new(vec![shape.0, shape.1].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape];
+        let space_manager = Grid::<GridPoint1D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>>
+        };
         let state_manager = SparseStates::new(default_state, initial_states);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,
@@ -386,7 +440,7 @@ impl StandardBoardFactory {
     }
 
     pub fn new_binary_1d_grid<T, U, S>(
-        shape: (S, S),
+        shape: S,
         default_state: T,
         non_default_state: T,
         neighbor_margin: S,
@@ -407,20 +461,28 @@ impl StandardBoardFactory {
                 >,
             >,
         >,
+        is_donut: bool,
     ) -> StandardBoard<T, GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>
     where
         T: 'static + Send + Sync + Clone + PartialEq,
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let space_manager = Grid::<GridPoint1D<U>>::new(vec![shape.0, shape.1].into_iter());
-        let neighbor_manager = NeighborsGridSurround::new(neighbor_margin);
+        let shape = vec![shape];
+        let space_manager = Grid::<GridPoint1D<U>>::new(shape.clone().into_iter());
+        let neighbor_manager = if is_donut {
+            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                as Box<dyn BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>>
+        } else {
+            Box::new(NeighborsGridSurround::new(neighbor_margin))
+                as Box<dyn BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U>>>>
+        };
         let state_manager =
             SparseBinaryStates::new(default_state, non_default_state, non_default_indices);
         let strategy_manger = SharedStrategyManager::new(strategy);
         StandardBoard::new(
             Box::new(space_manager),
-            Box::new(neighbor_manager),
+            neighbor_manager,
             Box::new(state_manager),
             Box::new(strategy_manger),
             callbacks,

@@ -91,6 +91,13 @@ fn main() {
                     .help("Sets delay in seconds in-between generations.")
                     .takes_value(true),
             )
+            .arg(
+                Arg::with_name("donut")
+                    .long("donut")
+                    .value_name("IS_DONUT")
+                    .help("Make your board a donut!")
+                    .takes_value(false),
+            )
             .get_matches();
 
         let demo_name = matches.value_of("demo").unwrap();
@@ -110,6 +117,10 @@ fn main() {
             .parse()
             .expect("Cannot parse interval seconds to float.");
         let (initial_states, title) = demos.get(demo_name).unwrap();
-        demo::two_dimensional::run_demo(initial_states, title, max_iter, delay, interval);
+        let is_donut = match matches.occurrences_of("donut") {
+            0 => false,
+            _ => true,
+        };
+        demo::two_dimensional::run_demo(initial_states, title, max_iter, delay, interval, is_donut);
     }
 }
