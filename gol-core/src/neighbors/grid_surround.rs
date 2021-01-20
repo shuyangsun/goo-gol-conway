@@ -2,7 +2,6 @@ use super::util::{MarginPrimInt, PointPrimInt};
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::izip;
-use std::convert::TryFrom;
 
 pub struct NeighborsGridSurround<T> {
     should_repeat_margin: bool,
@@ -25,7 +24,7 @@ impl<T> NeighborsGridSurround<T> {
     ///
     /// let neighbor_calc_2 = NeighborsGridSurround::new(1usize);
     /// let cur_point = GridPoint3D{ x: 10, y: 5, z: 9};
-    /// let neighbors_2: Vec<GridPoint3D<usize>> =
+    /// let neighbors_2: Vec<GridPoint3D<i32>> =
     ///     neighbor_calc_2.get_neighbors_idx(&cur_point).collect();
     /// assert_eq!(neighbors_2.len(), 26);
     /// ```
@@ -47,7 +46,7 @@ impl<T> NeighborsGridSurround<T> {
     /// use gol_core::{GridPoint2D, NeighborsGridSurround, BoardNeighborManager};
     ///
     /// // Create 2D margin with 2 on all sides but positive y-axis.
-    /// let margins = [(2, 2), (2, 1)];
+    /// let margins = [(2usize, 2), (2usize, 1)];
     /// let neighbor_calc =
     ///     NeighborsGridSurround::new_with_variable_margin(margins.iter());
     ///
@@ -145,6 +144,9 @@ impl<T> NeighborsGridSurround<T> {
                 }
             }
 
+            // let dim_idx_min = dim_idx
+            //     .checked_sub(&U::from_usize(neg.to_usize().unwrap()).unwrap())
+            //     .expect("Cannot subtract point by margin.");
             let dim_idx_min = dim_idx_min.unwrap();
             let dim_idx_max = dim_idx_max.unwrap();
 

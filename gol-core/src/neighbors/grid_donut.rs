@@ -2,6 +2,7 @@ use super::util::{MarginPrimInt, PointPrimInt};
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::Itertools;
+use std::cmp::{max, min};
 
 pub struct NeighborsGridDonut<T> {
     board_shape: Vec<T>,
@@ -77,8 +78,6 @@ impl<T> NeighborsGridDonut<T> {
         T: MarginPrimInt,
         U: PointPrimInt,
     {
-        let is_point_origin_center = T::zero().checked_sub(&T::one()).is_some();
-
         let mut ranges = Vec::new();
         for (i, dim_idx) in idx.indices().enumerate() {
             let (neg, pos) = if self.should_repeat_margin {
@@ -86,6 +85,10 @@ impl<T> NeighborsGridDonut<T> {
             } else {
                 self.margins.get(i).unwrap()
             };
+            let neg = U::from_usize(neg.to_usize().unwrap())
+                .expect("Index type too small to hold neighbor margin value.");
+            let pos = U::from_usize(pos.to_usize().unwrap())
+                .expect("Index type too small to hold neighbor margin value.");
             let u_two = U::one() + U::one();
 
             let board_dim_len = U::from_usize(self.board_shape[i].to_usize().unwrap()).unwrap();
@@ -94,70 +97,27 @@ impl<T> NeighborsGridDonut<T> {
                     >= neg.to_usize().unwrap() + pos.to_usize().unwrap() + 1
             );
 
-            let board_min = if is_point_origin_center {
-                board_dim_len / u_two - board_dim_len + U::one()
-            } else {
-                U::zero()
-            };
-
-            let board_max = if is_point_origin_center {
-                board_dim_len / u_two
-            } else {
-                board_dim_len
-            };
+            let board_min = board_dim_len / u_two - board_dim_len + U::one();
+            let board_max = board_dim_len / u_two;
 
             let mut wrapping_range: Option<(U, U)> = None;
 
-            let mut dim_idx_min = None;
-            for n in (0..=neg.to_usize().unwrap()).rev() {
-                let n_u = U::from_usize(n).unwrap();
-                match dim_idx.checked_sub(&n_u) {
-                    Some(val) => {
-                        if val < board_min {
-                            if wrapping_range.is_none() {
-                                let extension = board_min - val;
-                                wrapping_range = Some((board_max - extension, board_max));
-                            }
-                            continue;
-                        }
-                        dim_idx_min = Some(val);
-                        break;
-                    }
-                    None => {
-                        if wrapping_range.is_none() {
-                            let extension = n_u.checked_sub(dim_idx).unwrap();
-                            wrapping_range = Some((board_max - extension, board_max));
-                        }
-                    }
-                }
-            }
+            let dim_idx_min_unchecked = dim_idx
+                .checked_sub(&neg)
+                .expect("Could not subtract points by margin value.");
+            let dim_idx_max_unchecked = dim_idx
+                .checked_add(&pos)
+                .expect("Could not add points by margin value.");
+            let dim_idx_min = max(board_min, dim_idx_min_unchecked);
+            let dim_idx_max = min(board_max, dim_idx_max_unchecked) + U::one();
 
-            let mut dim_idx_max = None;
-            for n in (0..=pos.to_usize().unwrap()).rev() {
-                let n_u = U::from_usize(n).unwrap();
-                match dim_idx.checked_add(&n_u) {
-                    Some(val) => {
-                        if val > board_max {
-                            if wrapping_range.is_none() {
-                                let extension = val - board_max;
-                                wrapping_range = Some((board_min, board_min + extension));
-                            }
-                            continue;
-                        }
-                        dim_idx_max = Some(val);
-                        break;
-                    }
-                    None => {
-                        if wrapping_range.is_none() {
-                            let extension = n_u.checked_sub(dim_idx).unwrap();
-                            wrapping_range = Some((board_min, board_min + extension));
-                        }
-                    }
-                }
+            if dim_idx_min_unchecked < board_min {
+                let extension = dim_idx_min_unchecked - board_min;
+                wrapping_range = Some((board_max + extension, board_max + U::one()));
+            } else if dim_idx_max_unchecked > board_max {
+                let extension = dim_idx_max_unchecked - board_max;
+                wrapping_range = Some((board_min, board_min + extension + U::one()));
             }
-
-            let dim_idx_min = dim_idx_min.unwrap();
-            let dim_idx_max = dim_idx_max.unwrap();
 
             ranges.push(((dim_idx_min, dim_idx_max), wrapping_range));
         }
@@ -234,7 +194,7 @@ mod grid_donut_neighbor_test {
     #[test]
     fn grid_donut_test_1d_1() {
         let board_shape = vec![100usize];
-        let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint1D { x: 10 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         for n in neighbors.iter() {
@@ -249,7 +209,7 @@ mod grid_donut_neighbor_test {
     #[test]
     fn grid_donut_test_1d_2() {
         let board_shape = vec![3usize];
-        let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint1D { x: 0 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         for n in neighbors.iter() {
@@ -257,7 +217,7 @@ mod grid_donut_neighbor_test {
         }
         assert_eq!(neighbors.len(), 2);
         assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint1D { x: -1 }));
         assert!(neighbors.contains(&GridPoint1D { x: 1 }));
-        assert!(neighbors.contains(&GridPoint1D { x: 2 }));
     }
 }
