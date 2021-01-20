@@ -92,6 +92,20 @@ fn main() {
                     .takes_value(true),
             )
             .arg(
+                Arg::with_name("width")
+                    .long("width")
+                    .value_name("WINDOW_WIDTH")
+                    .help("Set window width.")
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::with_name("height")
+                    .long("height")
+                    .value_name("WINDOW_HEIGHT")
+                    .help("Set window height.")
+                    .takes_value(true),
+            )
+            .arg(
                 Arg::with_name("donut")
                     .long("donut")
                     .value_name("IS_DONUT")
@@ -116,11 +130,34 @@ fn main() {
             .unwrap()
             .parse()
             .expect("Cannot parse interval seconds to float.");
+        let width: Option<usize> = match matches.value_of("width") {
+            Some(val) => Some(
+                val.parse::<usize>()
+                    .expect("Height is not positive integer."),
+            ),
+            None => None,
+        };
+        let height: Option<usize> = match matches.value_of("height") {
+            Some(val) => Some(
+                val.parse::<usize>()
+                    .expect("Height is not positive integer."),
+            ),
+            None => None,
+        };
         let (initial_states, title) = demos.get(demo_name).unwrap();
         let is_donut = match matches.occurrences_of("donut") {
             0 => false,
             _ => true,
         };
-        demo::two_dimensional::run_demo(initial_states, title, max_iter, delay, interval, is_donut);
+        demo::two_dimensional::run_demo(
+            width,
+            height,
+            initial_states,
+            title,
+            max_iter,
+            delay,
+            interval,
+            is_donut,
+        );
     }
 }

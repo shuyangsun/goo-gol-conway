@@ -6,6 +6,8 @@ use std::collections::HashSet;
 use std::time::Duration;
 
 pub fn run_demo(
+    width: Option<usize>,
+    height: Option<usize>,
     initial_states: &HashSet<GridPoint2D<i32>>,
     title: &str,
     max_iter: usize,
@@ -42,10 +44,12 @@ pub fn run_demo(
     }
 
     #[cfg(not(any(feature = "ascii")))]
-    let win_size = (200usize, 50);
+    let win_size = (width.unwrap_or(200usize), height.unwrap_or(50));
 
     #[cfg(feature = "ascii")]
-    let win_size = {
+    let win_size = if width.is_some() && height.is_some() {
+        (width.unwrap(), height.unwrap())
+    } else {
         use super::util::get_ncurses_win_height_width;
         let (height, width) = get_ncurses_win_height_width();
         let height_new = height - 15;
