@@ -43,26 +43,34 @@ impl<T> NeighborsGridDonut<T> {
     fn calc_grid_point_surrounding<U>(&self, idx: &GridPointND<U>) -> Vec<GridPointND<U>>
     where
         T: MarginPrimInt,
-        U: PointPrimInt,
+        U: PointPrimInt + std::fmt::Debug,
     {
         let dim_ranges = self.calc_dim_ranges(idx);
+        for n in dim_ranges.iter() {
+            eprint!("{:?}, ", n);
+        }
+        eprintln!();
 
         // Expand dim ranges.
         let mut indices_each_dim = Vec::with_capacity(dim_ranges.len());
         for (ranges_1, ranges_2) in dim_ranges.iter() {
             let mut cur = Vec::new();
             let (cur_min, cur_max) = ranges_1;
-            for i in cur_min.to_i64().unwrap()..cur_max.to_i64().unwrap() {
+            for i in cur_min.to_i64().unwrap()..=cur_max.to_i64().unwrap() {
                 cur.push(U::from_i64(i).unwrap());
             }
             if ranges_2.is_some() {
                 let (cur_min, cur_max) = ranges_2.unwrap();
-                for i in cur_min.to_i64().unwrap()..cur_max.to_i64().unwrap() {
+                for i in cur_min.to_i64().unwrap()..=cur_max.to_i64().unwrap() {
                     cur.push(U::from_i64(i).unwrap());
                 }
             }
             indices_each_dim.push(cur.into_iter());
         }
+        for n in indices_each_dim.iter() {
+            eprint!("{:?}, ", n);
+        }
+        eprintln!();
 
         let res = indices_each_dim
             .into_iter()
@@ -76,7 +84,7 @@ impl<T> NeighborsGridDonut<T> {
     fn calc_dim_ranges<U>(&self, idx: &GridPointND<U>) -> Vec<((U, U), Option<(U, U)>)>
     where
         T: MarginPrimInt,
-        U: PointPrimInt,
+        U: PointPrimInt + std::fmt::Debug,
     {
         let mut ranges = Vec::new();
         for (i, dim_idx) in idx.indices().enumerate() {
@@ -109,14 +117,14 @@ impl<T> NeighborsGridDonut<T> {
                 .checked_add(&pos)
                 .expect("Could not add points by margin value.");
             let dim_idx_min = max(board_min, dim_idx_min_unchecked);
-            let dim_idx_max = min(board_max, dim_idx_max_unchecked) + U::one();
+            let dim_idx_max = min(board_max, dim_idx_max_unchecked);
 
             if dim_idx_min_unchecked < board_min {
                 let extension = dim_idx_min_unchecked - board_min;
-                wrapping_range = Some((board_max + extension, board_max + U::one()));
+                wrapping_range = Some((board_max + extension + U::one(), board_max));
             } else if dim_idx_max_unchecked > board_max {
                 let extension = dim_idx_max_unchecked - board_max;
-                wrapping_range = Some((board_min, board_min + extension + U::one()));
+                wrapping_range = Some((board_min, board_min + extension - U::one()));
             }
 
             ranges.push(((dim_idx_min, dim_idx_max), wrapping_range));
@@ -129,7 +137,7 @@ impl<T, U> BoardNeighborManager<GridPointND<U>, std::vec::IntoIter<GridPointND<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + std::fmt::Debug,
 {
     fn get_neighbors_idx(&self, idx: &GridPointND<U>) -> std::vec::IntoIter<GridPointND<U>> {
         self.calc_grid_point_surrounding(idx).into_iter()
@@ -140,7 +148,7 @@ impl<T, U> BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + std::fmt::Debug,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
         let res: Vec<GridPoint3D<U>> = self
@@ -156,7 +164,7 @@ impl<T, U> BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + std::fmt::Debug,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
         let res: Vec<GridPoint2D<U>> = self
@@ -172,7 +180,7 @@ impl<T, U> BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U
     for NeighborsGridDonut<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + std::fmt::Debug,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
         let res: Vec<GridPoint1D<U>> = self
@@ -186,10 +194,7 @@ where
 
 #[cfg(test)]
 mod grid_donut_neighbor_test {
-    use crate::{
-        BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND,
-        NeighborsGridDonut,
-    };
+    use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, NeighborsGridDonut};
 
     #[test]
     fn grid_donut_test_1d_1() {
@@ -197,9 +202,6 @@ mod grid_donut_neighbor_test {
         let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint1D { x: 10 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        for n in neighbors.iter() {
-            println!("{:?}", n);
-        }
         assert_eq!(neighbors.len(), 2);
         assert!(!neighbors.contains(&point));
         assert!(neighbors.contains(&GridPoint1D { x: 9 }));
@@ -212,12 +214,51 @@ mod grid_donut_neighbor_test {
         let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint1D { x: 0 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        for n in neighbors.iter() {
-            println!("{:?}", n);
-        }
         assert_eq!(neighbors.len(), 2);
         assert!(!neighbors.contains(&point));
         assert!(neighbors.contains(&GridPoint1D { x: -1 }));
         assert!(neighbors.contains(&GridPoint1D { x: 1 }));
+    }
+
+    #[test]
+    fn grid_donut_test_2d_1() {
+        let board_shape = vec![5usize, 5];
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
+        let point = GridPoint2D { x: -2, y: -2 };
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            eprintln!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 8);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint2D { x: -2, y: -1 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -1 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 2, y: -2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 2, y: -1 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -2, y: 2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: 2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 2, y: 2 }));
+    }
+
+    #[test]
+    fn grid_donut_test_2d_2() {
+        let board_shape = vec![5usize, 5];
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
+        let point = GridPoint2D { x: 2, y: 2 };
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            eprintln!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 8);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint2D { x: -2, y: -2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -2, y: 2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -2, y: 1 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 2, y: -2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: -2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: 2 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: 1 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 2, y: 1 }));
     }
 }
