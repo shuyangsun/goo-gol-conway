@@ -2,6 +2,7 @@ use super::util::{MarginPrimInt, PointPrimInt};
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::izip;
+use std::convert::TryFrom;
 
 pub struct NeighborsGridSurround<T> {
     should_repeat_margin: bool,
@@ -16,13 +17,13 @@ impl<T> NeighborsGridSurround<T> {
     /// };
     ///
     /// // Create Conway's Game of Life margin: 1 on each side.
-    /// let neighbor_calc = NeighborsGridSurround::new(1);
+    /// let neighbor_calc = NeighborsGridSurround::new(1usize);
     /// let cur_point = GridPoint2D{ x: 10, y: 5 };
     /// let neighbors: Vec<GridPoint2D<i32>> =
     ///     neighbor_calc.get_neighbors_idx(&cur_point).collect();
     /// assert_eq!(neighbors.len(), 8);
     ///
-    /// let neighbor_calc_2 = NeighborsGridSurround::new(1);
+    /// let neighbor_calc_2 = NeighborsGridSurround::new(1usize);
     /// let cur_point = GridPoint3D{ x: 10, y: 5, z: 9};
     /// let neighbors_2: Vec<GridPoint3D<usize>> =
     ///     neighbor_calc_2.get_neighbors_idx(&cur_point).collect();
@@ -224,7 +225,7 @@ mod grid_surrounding_neighbor_test {
 
     #[test]
     fn grid_surrounding_test_1d_1() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint1D { x: 10 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         assert_eq!(neighbors.len(), 2);
@@ -235,17 +236,17 @@ mod grid_surrounding_neighbor_test {
 
     #[test]
     fn grid_surrounding_test_1d_2() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint1D { x: 0 };
-        let neighbors: Vec<GridPoint1D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 1);
+        let neighbors: Vec<GridPoint1D<i64>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 2);
         assert!(!neighbors.contains(&point));
         assert!(neighbors.contains(&GridPoint1D { x: 1 }));
     }
 
     #[test]
     fn grid_surrounding_test_2d_1() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint2D { x: 10, y: 5 };
         let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         assert_eq!(neighbors.len(), 8);
@@ -254,53 +255,53 @@ mod grid_surrounding_neighbor_test {
 
     #[test]
     fn grid_surrounding_test_2d_2() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint2D { x: 0, y: 0 };
-        let neighbors: Vec<GridPoint2D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 3);
+        let neighbors: Vec<GridPoint2D<i64>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 8);
         assert!(!neighbors.contains(&point));
     }
 
     #[test]
     fn grid_surrounding_test_2d_3() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint2D { x: 0, y: 1 };
-        let neighbors: Vec<GridPoint2D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 5);
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 8);
         assert!(!neighbors.contains(&point));
     }
 
     #[test]
     fn grid_surrounding_test_3d_1() {
-        let neighbor_calc = NeighborsGridSurround::new(1);
+        let neighbor_calc = NeighborsGridSurround::new(1usize);
         let point = GridPoint3D { x: 3, y: 10, z: 5 };
-        let neighbors: Vec<GridPoint3D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        let neighbors: Vec<GridPoint3D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         assert_eq!(neighbors.len(), 26);
         assert!(!neighbors.contains(&point));
     }
 
     #[test]
     fn grid_surrounding_test_3d_2() {
-        let neighbor_calc = NeighborsGridSurround::new(2);
+        let neighbor_calc = NeighborsGridSurround::new(2usize);
         let point = GridPoint3D { x: 0, y: 0, z: 0 };
-        let neighbors: Vec<GridPoint3D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 26);
+        let neighbors: Vec<GridPoint3D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 124);
         assert!(!neighbors.contains(&point));
     }
 
     #[test]
     fn grid_surrounding_test_3d_3() {
-        let neighbor_calc = NeighborsGridSurround::new(2);
+        let neighbor_calc = NeighborsGridSurround::new(2usize);
         let point_1 = GridPoint3D { x: 0, y: 1, z: 1 };
         let point_2 = GridPoint3D { x: 1, y: 0, z: 1 };
         let point_3 = GridPoint3D { x: 1, y: 1, z: 0 };
-        let neighbors_1: Vec<GridPoint3D<usize>> =
+        let neighbors_1: Vec<GridPoint3D<i32>> =
             neighbor_calc.get_neighbors_idx(&point_1).collect();
-        let neighbors_2: Vec<GridPoint3D<usize>> =
+        let neighbors_2: Vec<GridPoint3D<i32>> =
             neighbor_calc.get_neighbors_idx(&point_2).collect();
-        let neighbors_3: Vec<GridPoint3D<usize>> =
+        let neighbors_3: Vec<GridPoint3D<i32>> =
             neighbor_calc.get_neighbors_idx(&point_3).collect();
-        assert_eq!(neighbors_1.len(), 47);
+        assert_eq!(neighbors_1.len(), 124);
         assert_eq!(neighbors_2.len(), neighbors_1.len());
         assert_eq!(neighbors_3.len(), neighbors_1.len());
         assert!(!neighbors_1.contains(&point_1));
@@ -310,31 +311,17 @@ mod grid_surrounding_neighbor_test {
 
     #[test]
     fn grid_surrounding_test_4d_1() {
-        let neighbor_calc = NeighborsGridSurround::new(2);
+        let neighbor_calc = NeighborsGridSurround::new(2usize);
         let point = GridPointND::new(vec![0, 0, 0, 0].iter());
-        let neighbors: Vec<GridPointND<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 80);
+        let neighbors: Vec<GridPointND<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        assert_eq!(neighbors.len(), 624);
         assert!(!neighbors.contains(&point));
     }
 
     #[test]
     fn grid_surrounding_test_4d_2() {
         let mut margins = Vec::new();
-        margins.push((100, 2)); // dim_len = 3
-        margins.push((50, 1)); // dim_len = 2
-        margins.push((10, 2)); // dim_len = 4
-        margins.push((0, 9)); // dim_len = 10
-        let neighbor_calc = NeighborsGridSurround::new_with_variable_margin(margins.iter());
-        let point = GridPointND::new(vec![0, 0, 1, 0].iter());
-        let neighbors: Vec<GridPointND<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        assert_eq!(neighbors.len(), 239);
-        assert!(!neighbors.contains(&point));
-    }
-
-    #[test]
-    fn grid_surrounding_test_4d_3() {
-        let mut margins = Vec::new();
-        margins.push((100, 2)); // dim_len = 103
+        margins.push((100usize, 2)); // dim_len = 103
         margins.push((50, 1)); // dim_len = 52
         margins.push((10, 2)); // dim_len = 13
         margins.push((0, 9)); // dim_len = 10

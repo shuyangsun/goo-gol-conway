@@ -233,7 +233,7 @@ mod grid_donut_neighbor_test {
 
     #[test]
     fn grid_donut_test_1d_1() {
-        let board_shape = vec![100];
+        let board_shape = vec![100usize];
         let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
         let point = GridPoint1D { x: 10 };
         let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
@@ -248,10 +248,10 @@ mod grid_donut_neighbor_test {
 
     #[test]
     fn grid_donut_test_1d_2() {
-        let board_shape = vec![3];
+        let board_shape = vec![3usize];
         let neighbor_calc = NeighborsGridDonut::new(1, board_shape.into_iter());
-        let point = GridPoint1D { x: 0usize };
-        let neighbors: Vec<GridPoint1D<usize>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        let point = GridPoint1D { x: 0 };
+        let neighbors: Vec<GridPoint1D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
         for n in neighbors.iter() {
             println!("{:?}", n);
         }
