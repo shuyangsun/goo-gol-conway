@@ -218,9 +218,6 @@ mod grid_donut_neighbor_test {
         let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint2D { x: -2, y: -2 };
         let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        for n in neighbors.iter() {
-            eprintln!("{:?}", n);
-        }
         assert_eq!(neighbors.len(), 8);
         assert!(!neighbors.contains(&point));
         assert!(neighbors.contains(&GridPoint2D { x: -2, y: -1 }));
@@ -239,9 +236,6 @@ mod grid_donut_neighbor_test {
         let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
         let point = GridPoint2D { x: 2, y: 2 };
         let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
-        for n in neighbors.iter() {
-            eprintln!("{:?}", n);
-        }
         assert_eq!(neighbors.len(), 8);
         assert!(!neighbors.contains(&point));
         assert!(neighbors.contains(&GridPoint2D { x: -2, y: -2 }));
@@ -252,5 +246,47 @@ mod grid_donut_neighbor_test {
         assert!(neighbors.contains(&GridPoint2D { x: 1, y: 2 }));
         assert!(neighbors.contains(&GridPoint2D { x: 1, y: 1 }));
         assert!(neighbors.contains(&GridPoint2D { x: 2, y: 1 }));
+    }
+
+    #[test]
+    fn grid_donut_test_2d_3() {
+        let board_shape = vec![100usize, 49];
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
+        let point = GridPoint2D { x: 0, y: -24 };
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            eprintln!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 8);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 0, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: -24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: 24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 0, y: 24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: 24 }));
+    }
+
+    #[test]
+    fn grid_donut_test_2d_4() {
+        let board_shape = vec![100usize, 50];
+        let neighbor_calc = NeighborsGridDonut::new(1usize, board_shape.into_iter());
+        let point = GridPoint2D { x: 0, y: -24 };
+        let neighbors: Vec<GridPoint2D<i32>> = neighbor_calc.get_neighbors_idx(&point).collect();
+        for n in neighbors.iter() {
+            eprintln!("{:?}", n);
+        }
+        assert_eq!(neighbors.len(), 8);
+        assert!(!neighbors.contains(&point));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 0, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: -24 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: -23 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 1, y: 25 }));
+        assert!(neighbors.contains(&GridPoint2D { x: 0, y: 25 }));
+        assert!(neighbors.contains(&GridPoint2D { x: -1, y: 25 }));
     }
 }
