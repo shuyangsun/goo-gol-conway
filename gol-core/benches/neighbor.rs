@@ -307,6 +307,7 @@ fn neighbor_benchmark_2d_large(c: &mut Criterion) {
 
 fn neighbor_benchmark_3d_small(c: &mut Criterion) {
     let mut group = c.benchmark_group("3D Board Small");
+    group.sample_size(20);
 
     for shape in SHAPES_3D_SMALL.iter() {
         let (surround, donut) = gen_board_3d(shape, 1);
