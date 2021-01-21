@@ -16,6 +16,7 @@ pub struct TextRendererGrid2D {
     title: String,
     iter: usize,
     is_enabled: bool,
+    is_paused: bool,
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
     rx: Arc<Mutex<Option<mpsc::Receiver<char>>>>,
@@ -44,9 +45,9 @@ where
             self.title.as_str(),
         );
 
-        let message = "Press 'q' to exist.";
+        let message = "Presee SPACE to pause/play, 'q' to exist.";
         mvprintw(
-            max_y - 1,
+            max_y - 2,
             (max_x as usize - message.len()) as i32 / 2,
             message,
         );
@@ -54,7 +55,7 @@ where
         refresh();
 
         let (tx, rx) = mpsc::channel();
-        thread::spawn(move || {
+        thread::spawn(move || loop {
             tx.send(char::from_u32(getch() as u32).unwrap()).unwrap();
         });
         *self.rx.lock().unwrap() = Some(rx);
@@ -121,19 +122,10 @@ where
             self.iter += 1;
             wrefresh(win);
 
-            let rx_new = Arc::clone(&self.rx);
-            match rx_new.lock().unwrap().as_ref().unwrap().try_recv() {
-                Ok(val) => {
-                    println!("Got {}", val);
-                    if val == 'q' {
-                        curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
-                        endwin();
-                        self.is_enabled = false;
-                        std::process::exit(0);
-                    }
-                }
-                Err(_) => (),
-            };
+            self.check_user_input(false);
+            while self.is_paused {
+                self.check_user_input(true);
+            }
         }
     }
 }
@@ -148,9 +140,41 @@ impl TextRendererGrid2D {
             title,
             iter: 0,
             is_enabled: true,
+            is_paused: false,
             screen_dim: (0, 0),
             window_dim: None,
             rx: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    fn check_user_input(&mut self, should_block: bool) {
+        let rx_new = Arc::clone(&self.rx);
+        if should_block {
+            match rx_new.lock().unwrap().as_ref().unwrap().recv() {
+                Ok(val) => self.execute_user_input(val),
+                Err(err) => panic!("Error getting user input: {}", err),
+            }
+        } else {
+            match rx_new.lock().unwrap().as_ref().unwrap().try_recv() {
+                Ok(val) => self.execute_user_input(val),
+                Err(err) => {
+                    // Do nothing for empty input, since it's expected for non-blocking.
+                    if err != mpsc::TryRecvError::Empty {
+                        panic!("Error getting user input: {}", err)
+                    }
+                }
+            }
+        };
+    }
+
+    fn execute_user_input(&mut self, input_ch: char) {
+        if input_ch == 'q' {
+            curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+            endwin();
+            self.is_enabled = false;
+            std::process::exit(0);
+        } else if input_ch == ' ' {
+            self.is_paused = !self.is_paused;
         }
     }
 }
