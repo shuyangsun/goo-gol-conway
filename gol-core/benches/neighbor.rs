@@ -1,7 +1,6 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use gol_core::{
-    Board, ConwayState, ConwayStrategy, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND,
-    StandardBoardFactory,
+    Board, ConwayState, ConwayStrategy, GridPoint1D, GridPoint2D, GridPoint3D, StandardBoardFactory,
 };
 use rayon::prelude::*;
 use std::collections::HashSet;

@@ -16,6 +16,6 @@ criterion = "0.3.3"
 tokio = { version = "1.0.2", features = ["sync"] }
 
 [[bench]]
-name = "neighbor_benchmark"
+name = "neighbor"
 harness = false
 
