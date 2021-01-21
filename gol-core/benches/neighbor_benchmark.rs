@@ -44,7 +44,7 @@ fn gen_board_1d(shape: &usize) -> (ConwayBoard<GridPoint1D<i32>>, ConwayBoard<Gr
     )
 }
 
-fn neighbor_benchmark_margin_1(c: &mut Criterion) {
+fn neighbor_benchmark_small_margin_1(c: &mut Criterion) {
     let mut group = c.benchmark_group("1D Small Board, Margin 1");
 
     for shape in SHAPES_1D_SMALL.iter() {
@@ -83,5 +83,48 @@ fn neighbor_benchmark_margin_1(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, neighbor_benchmark_margin_1);
+fn neighbor_benchmark_large_margin_1(c: &mut Criterion) {
+    let mut group = c.benchmark_group("1D Large Board, Margin 1");
+
+    for shape in SHAPES_1D_LARGE.iter() {
+        let (surround, donut) = gen_board_1d(shape);
+        group.bench_with_input(BenchmarkId::new("Surround", shape), shape, |b, _| {
+            b.iter(|| {
+                let unlocked = surround.lock().unwrap();
+                let space_manager = unlocked.space_manager();
+                let neighbor_manager = unlocked.neighbor_manager();
+                let _: Vec<GridPoint1D<i32>> = space_manager
+                    .indices_par_iter()
+                    .map(|idx| {
+                        let neighbors: Vec<GridPoint1D<i32>> =
+                            neighbor_manager.get_neighbors_idx(&idx).collect();
+                        neighbors.first().unwrap().clone()
+                    })
+                    .collect();
+            })
+        });
+        group.bench_with_input(BenchmarkId::new("Wrapping", shape), shape, |b, _| {
+            b.iter(|| {
+                let unlocked = donut.lock().unwrap();
+                let space_manager = unlocked.space_manager();
+                let neighbor_manager = unlocked.neighbor_manager();
+                let _: Vec<GridPoint1D<i32>> = space_manager
+                    .indices_par_iter()
+                    .map(|idx| {
+                        let neighbors: Vec<GridPoint1D<i32>> =
+                            neighbor_manager.get_neighbors_idx(&idx).collect();
+                        neighbors.first().unwrap().clone()
+                    })
+                    .collect();
+            })
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    neighbor_benchmark_small_margin_1,
+    neighbor_benchmark_large_margin_1
+);
 criterion_main!(benches);
