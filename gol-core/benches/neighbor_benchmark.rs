@@ -45,7 +45,7 @@ fn gen_board_1d(shape: &usize) -> (ConwayBoard<GridPoint1D<i32>>, ConwayBoard<Gr
 }
 
 fn neighbor_benchmark_margin_1(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Small 1");
+    let mut group = c.benchmark_group("1D Small Board, Margin 1");
 
     for shape in SHAPES_1D_SMALL.iter() {
         let (surround, donut) = gen_board_1d(shape);
