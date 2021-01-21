@@ -4,7 +4,10 @@ use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
+use std::char;
 use std::cmp::{max, min};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
@@ -15,6 +18,7 @@ pub struct TextRendererGrid2D {
     is_enabled: bool,
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
+    rx: Arc<Mutex<Option<mpsc::Receiver<char>>>>,
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
@@ -40,7 +44,20 @@ where
             self.title.as_str(),
         );
 
+        let message = "Press 'q' to exist.";
+        mvprintw(
+            max_y - 1,
+            (max_x as usize - message.len()) as i32 / 2,
+            message,
+        );
+
         refresh();
+
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || {
+            tx.send(char::from_u32(getch() as u32).unwrap()).unwrap();
+        });
+        *self.rx.lock().unwrap() = Some(rx);
     }
 
     fn cleanup(&mut self) {
@@ -103,6 +120,20 @@ where
 
             self.iter += 1;
             wrefresh(win);
+
+            let rx_new = Arc::clone(&self.rx);
+            match rx_new.lock().unwrap().as_ref().unwrap().try_recv() {
+                Ok(val) => {
+                    println!("Got {}", val);
+                    if val == 'q' {
+                        curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+                        endwin();
+                        self.is_enabled = false;
+                        std::process::exit(0);
+                    }
+                }
+                Err(_) => (),
+            };
         }
     }
 }
@@ -119,6 +150,7 @@ impl TextRendererGrid2D {
             is_enabled: true,
             screen_dim: (0, 0),
             window_dim: None,
+            rx: Arc::new(Mutex::new(None)),
         }
     }
 }

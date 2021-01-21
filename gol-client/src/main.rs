@@ -56,6 +56,9 @@ fn main() {
             demos_description.push_str(if i < demos.len() - 1 { ", " } else { "." });
         }
 
+        let default_delay = 2.0;
+        let default_interval = 1.0;
+
         let matches = App::new("Game of Life on Steriods")
             .version(VERSION)
             .author("Shuyang Sun <shuyangsun10@gmail.com>")
@@ -79,7 +82,7 @@ fn main() {
                     .short("g")
                     .long("gen_count")
                     .value_name("GEN_COUNT")
-                    .help("Specify the maximum number of simulation generation.")
+                    .help("Specify the maximum number of simulation generation, if unspecififed the simulation will continue running until user itervention.")
                     .takes_value(true),
             )
             .arg(
@@ -87,7 +90,7 @@ fn main() {
                     .short("d")
                     .long("delay")
                     .value_name("DELAY")
-                    .help("Sets initial delay in seconds before evolution starts.")
+                    .help(format!("Sets initial delay in seconds before evolution starts, default value {} second(s).", default_delay).as_str())
                     .takes_value(true),
             )
             .arg(
@@ -95,21 +98,21 @@ fn main() {
                     .short("i")
                     .long("interval")
                     .value_name("INTERVAL")
-                    .help("Sets delay in seconds in-between generations.")
+                    .help(format!("Sets delay in seconds in-between generations, default value {} second(s).", default_interval).as_str())
                     .takes_value(true),
             )
             .arg(
                 Arg::with_name("width")
                     .long("width")
                     .value_name("WINDOW_WIDTH")
-                    .help("Set window width.")
+                    .help("Optional value to set window width.")
                     .takes_value(true),
             )
             .arg(
                 Arg::with_name("height")
                     .long("height")
                     .value_name("WINDOW_HEIGHT")
-                    .help("Set window height.")
+                    .help("Optional value to set window height.")
                     .takes_value(true),
             )
             .arg(
@@ -121,19 +124,20 @@ fn main() {
             )
             .get_matches();
 
-        let max_iter: usize = matches
-            .value_of("gen_count")
-            .unwrap()
-            .parse()
-            .expect("Cannot parse max iteration count to integer.");
+        let max_iter: usize = match matches.value_of("gen_count") {
+            Some(val) => val
+                .parse()
+                .expect("Cannot parse max iteration count to integer."),
+            None => usize::MAX,
+        };
         let delay: f64 = matches
             .value_of("delay")
-            .unwrap()
+            .unwrap_or(format!("{}", default_delay).as_str())
             .parse()
             .expect("Cannot parse initial delay seconds to float.");
         let interval: f64 = matches
             .value_of("interval")
-            .unwrap()
+            .unwrap_or(format!("{}", default_interval).as_str())
             .parse()
             .expect("Cannot parse interval seconds to float.");
         let alive_ratio: f64 = matches
