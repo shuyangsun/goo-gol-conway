@@ -15,7 +15,6 @@ pub struct TextRendererGrid2D {
     title: String,
     iter: usize,
     is_enabled: bool,
-    is_paused: bool,
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
     rx: Option<Receiver<char>>,
@@ -44,7 +43,7 @@ where
             self.title.as_str(),
         );
 
-        let message = "Presee SPACE to play/pause, 'q' to exist.";
+        let message = "SPACE: play/pause, k/j: speed up/down, q: exit.";
         mvprintw(
             max_y - 2,
             (max_x as usize - message.len()) as i32 / 2,
@@ -116,9 +115,6 @@ where
             wrefresh(win);
 
             self.check_user_input(false);
-            while self.is_paused {
-                self.check_user_input(true);
-            }
         }
     }
 }
@@ -133,7 +129,6 @@ impl TextRendererGrid2D {
             title,
             iter: 0,
             is_enabled: true,
-            is_paused: true,
             screen_dim: (0, 0),
             window_dim: None,
             rx: None,
@@ -145,7 +140,6 @@ impl TextRendererGrid2D {
             title,
             iter: 0,
             is_enabled: true,
-            is_paused: true,
             screen_dim: (0, 0),
             window_dim: None,
             rx: Some(receiver),
@@ -174,15 +168,8 @@ impl TextRendererGrid2D {
         }
     }
 
-    fn execute_user_input(&mut self, input_ch: char) {
-        if input_ch == 'q' {
-            curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
-            endwin();
-            self.is_enabled = false;
-            std::process::exit(0);
-        } else if input_ch == ' ' {
-            self.is_paused = !self.is_paused;
-        }
+    fn execute_user_input(&mut self, _: char) {
+        // TODO: implement rewind
     }
 }
 

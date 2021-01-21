@@ -17,15 +17,16 @@ where
     I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
 {
     fn execute(&mut self, _: I) {
+        let old_execution = self.last_execution;
+        self.last_execution = Instant::now();
         self.check_user_input();
         // duration.is_zero() is unstable
         if self.duration.as_nanos() > 0 {
-            let diff = Instant::now() - self.last_execution;
+            let diff = Instant::now() - old_execution;
             if diff < self.duration {
                 thread::sleep(self.duration - diff);
             }
         }
-        self.last_execution = Instant::now();
     }
 }
 
@@ -48,8 +49,7 @@ impl Delay {
 
     fn check_user_input(&mut self) {
         if self.rx.is_some() {
-            let rx_new = self.rx.as_ref().unwrap().clone();
-            match rx_new.try_recv() {
+            match self.rx.as_ref().unwrap().try_recv() {
                 Ok(val) => {
                     if val == 'k' {
                         self.duration = Duration::from_nanos(self.duration.as_nanos() as u64 / 2);

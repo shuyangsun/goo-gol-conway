@@ -1,6 +1,5 @@
 use gol_core::{
-    self, Board, ConwayState, ConwayStrategy, Delay, GridPoint2D, KeyboardControl, StandardBoard,
-    StandardBoardFactory,
+    self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
 };
 
 use rand::prelude::*;
@@ -25,15 +24,17 @@ pub fn run_demo(
 
     let strategy = Box::new(ConwayStrategy::new());
 
-    let mut callbacks = Vec::new();
-    let keyboard_control = Box::new(KeyboardControl::new());
+    let one_billion_nano_sec: f64 = 1_000_000_000f64;
+    let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
+    let (mut callbacks, receiver) =
+        gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
 
     #[cfg(feature = "ascii")]
     {
         use gol_renderer::TextRendererGrid2D;
         let text_renderer = Box::new(TextRendererGrid2D::new_with_title_and_ch_receiver(
             String::from(title),
-            keyboard_control.get_receiver(),
+            receiver.clone(),
         ))
             as Box<
                 dyn gol_core::BoardCallback<
@@ -64,31 +65,6 @@ pub fn run_demo(
     } else {
         gen_random_initial_positions(win_size, alive_ratio)
     };
-
-    let one_billion_nano_sec: f64 = 1_000_000_000f64;
-    let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
-    callbacks.push(Box::new(Delay::new_with_ch_receiver(
-        Duration::from_nanos(interval_nano_sec),
-        keyboard_control.get_receiver(),
-    ))
-        as Box<
-            dyn gol_core::BoardCallback<
-                ConwayState,
-                GridPoint2D<i32>,
-                rayon::vec::IntoIter<gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>>,
-            >,
-        >);
-
-    callbacks.push(
-        keyboard_control
-            as Box<
-                dyn gol_core::BoardCallback<
-                    ConwayState,
-                    GridPoint2D<i32>,
-                    rayon::vec::IntoIter<gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>>,
-                >,
-            >,
-    );
 
     let mut board: StandardBoard<
         ConwayState,
