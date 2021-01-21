@@ -17,6 +17,7 @@ where
             match self.rx.try_recv() {
                 Ok(val) => {
                     if val == 'q' {
+                        std::thread::sleep(std::time::Duration::from_millis(500));
                         std::process::exit(0);
                     }
                     break;
