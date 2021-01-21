@@ -24,7 +24,9 @@ const SHAPES_2D_LARGE: [usize; 11] = [
 const SHAPES_3D_SMALL: [usize; 14] = [
     5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
 ];
-const SHAPES_3D_LARGE: [usize; 6] = [5, 10_000, 20_000, 30_000, 40_000, 50_000];
+const SHAPES_3D_LARGE: [usize; 9] = [
+    5, 2_500, 5_000, 7_500, 10_000, 12_500, 15_000, 17_500, 20_000,
+];
 
 type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<ConwayState, CI, std::vec::IntoIter<CI>>>>>;
 
@@ -380,6 +382,7 @@ fn neighbor_benchmark_3d_small(c: &mut Criterion) {
 
 fn neighbor_benchmark_3d_large(c: &mut Criterion) {
     let mut group = c.benchmark_group("3D Board Large");
+    group.sample_size(10);
 
     for shape in SHAPES_3D_LARGE.iter() {
         let (surround, donut) = gen_board_3d(shape, 1);
