@@ -1,11 +1,12 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::{bounded, Receiver};
+use crossbeam_channel::{bounded, Receiver, Sender};
 use rayon::prelude::*;
 use std::char;
 use std::io::Read;
 use std::thread;
 
 pub struct KeyboardControl {
+    tx: Sender<char>,
     rx: Receiver<char>,
 }
 
@@ -21,6 +22,7 @@ where
 impl KeyboardControl {
     pub fn new() -> Self {
         let (tx, rx) = bounded(0);
+        let tx_clone = tx.clone();
 
         thread::spawn(move || {
             let mut reader = std::io::stdin();
@@ -29,13 +31,13 @@ impl KeyboardControl {
             loop {
                 reader.read_exact(&mut buffer).unwrap();
                 let ch = char::from_u32(buffer[0] as u32).unwrap();
-                tx.send(ch).unwrap();
+                tx_clone.send(ch).unwrap();
             }
         });
-        Self { rx }
+        Self { tx, rx }
     }
 
-    pub fn get_receiver(&self) -> Receiver<char> {
-        self.rx.clone()
+    pub fn get_channel(&self) -> (Sender<char>, Receiver<char>) {
+        (self.tx.clone(), self.rx.clone())
     }
 }

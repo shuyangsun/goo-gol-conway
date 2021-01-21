@@ -1,5 +1,5 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, Sender};
 use rayon::prelude::*;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 pub struct Delay {
     last_execution: Instant,
     duration: Duration,
+    tx: Option<Sender<char>>,
     rx: Option<Receiver<char>>,
 }
 
@@ -39,7 +40,7 @@ impl Delay {
         }
     }
 
-    pub fn new_with_ch_receiver(duration: Duration, receiver: Receiver<char>) -> Self {
+    pub fn new_with_ch_receiver(duration: Duration, tx: Sender<char>, rx: Receiver<char>) -> Self {
         Self {
             last_execution: Instant::now(),
             duration,

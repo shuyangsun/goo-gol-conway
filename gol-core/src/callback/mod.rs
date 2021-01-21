@@ -7,6 +7,7 @@ pub fn standard_control_callbacks<T, U, I>(
     delay_interval: std::time::Duration,
 ) -> (
     Vec<Box<dyn crate::BoardCallback<T, U, I>>>,
+    crossbeam_channel::Sender<char>,
     crossbeam_channel::Receiver<char>,
 )
 where
@@ -21,7 +22,7 @@ where
 
     let mut res = Vec::new();
     let keyboard_control = Box::new(KeyboardControl::new());
-    let receiver = keyboard_control.get_receiver();
+    let (tx, rx) = keyboard_control.get_channel();
     let delay = Box::new(Delay::new_with_ch_receiver(
         delay_interval,
         receiver.clone(),
