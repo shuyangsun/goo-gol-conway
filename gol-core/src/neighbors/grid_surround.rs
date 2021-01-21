@@ -43,9 +43,7 @@ impl<T> NeighborsGridSurround<T> {
     /// in the vector represents different dimensions, the two values inside the vector represents
     /// margin on the negative and positive side along that dimension.
     /// ```rust
-    /// use gol_core::{GridPoint2D, NeighborsGridSurround, BoardNeighborManager};
-    ///
-    /// // Create 2D margin with 2 on all sides but positive y-axis.
+    /// use gol_core::{GridPoint2D, NeighborsGridSurround, BoardNeighborManager}; // Create 2D margin with 2 on all sides but positive y-axis.
     /// let margins = [(2usize, 2), (2usize, 1)];
     /// let neighbor_calc =
     ///     NeighborsGridSurround::new_with_variable_margin(margins.iter());
@@ -209,12 +207,8 @@ where
     U: PointPrimInt,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
-        let res: Vec<GridPoint1D<U>> = self
-            .calc_grid_point_surrounding(&idx.to_nd())
-            .iter()
-            .map(|ele| ele.to_1d().unwrap())
-            .collect();
-        res.into_iter()
+        let one = U::one();
+        vec![GridPoint1D::new(idx.x - one), GridPoint1D::new(idx.x + one)].into_iter()
     }
 }
 
