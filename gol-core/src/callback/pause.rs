@@ -1,6 +1,6 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::Receiver;
 use rayon::prelude::*;
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Pause {
     is_paused: bool,
@@ -35,19 +35,23 @@ impl Pause {
     }
 
     fn check_user_input(&mut self, should_block: bool) {
-        if should_block {
-            match self.rx.recv() {
-                Ok(val) => self.execute_user_input(val),
-                Err(err) => panic!("Error getting user input: {}", err),
-            }
-        } else {
+        loop {
             match self.rx.try_recv() {
-                Ok(val) => self.execute_user_input(val),
-                Err(err) => {
-                    if err != crossbeam_channel::TryRecvError::Empty {
-                        panic!("Error getting user input: {}", err)
-                    }
+                Ok(val) => {
+                    self.execute_user_input(val);
+                    break;
                 }
+                Err(err) => match err {
+                    TryRecvError::Empty => {
+                        if should_block {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    TryRecvError::Closed => panic!("Error getting user input: {}", err),
+                    TryRecvError::Lagged(_) => continue,
+                },
             }
         }
     }

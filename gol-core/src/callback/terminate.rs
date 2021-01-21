@@ -1,6 +1,6 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::Receiver;
 use rayon::prelude::*;
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Terminate {
     rx: Receiver<char>,
@@ -13,16 +13,19 @@ where
     I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
 {
     fn execute(&mut self, _: I) {
-        match self.rx.try_recv() {
-            Ok(val) => {
-                if val == 'q' {
-                    std::process::exit(0);
+        loop {
+            match self.rx.try_recv() {
+                Ok(val) => {
+                    if val == 'q' {
+                        std::process::exit(0);
+                    }
+                    break;
                 }
-            }
-            Err(err) => {
-                if err != crossbeam_channel::TryRecvError::Empty {
-                    panic!("Error getting user input: {}", err)
-                }
+                Err(err) => match err {
+                    TryRecvError::Empty => break,
+                    TryRecvError::Closed => panic!("Error getting user input: {}", err),
+                    TryRecvError::Lagged(_) => continue,
+                },
             }
         }
     }

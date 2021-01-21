@@ -26,7 +26,7 @@ pub fn run_demo(
 
     let one_billion_nano_sec: f64 = 1_000_000_000f64;
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
-    let (mut callbacks, receiver) =
+    let (mut callbacks, keyboard_control) =
         gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
 
     #[cfg(feature = "ascii")]
@@ -34,7 +34,7 @@ pub fn run_demo(
         use gol_renderer::TextRendererGrid2D;
         let text_renderer = Box::new(TextRendererGrid2D::new_with_title_and_ch_receiver(
             String::from(title),
-            receiver.clone(),
+            keyboard_control.get_receiver(),
         ))
             as Box<
                 dyn gol_core::BoardCallback<

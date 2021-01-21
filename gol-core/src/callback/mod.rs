@@ -7,8 +7,7 @@ pub fn standard_control_callbacks<T, U, I>(
     delay_interval: std::time::Duration,
 ) -> (
     Vec<Box<dyn crate::BoardCallback<T, U, I>>>,
-    crossbeam_channel::Sender<char>,
-    crossbeam_channel::Receiver<char>,
+    crate::callback::keyboard_control::KeyboardControl,
 )
 where
     T: Send + Sync + Clone,
@@ -21,19 +20,17 @@ where
     use terminate::Terminate;
 
     let mut res = Vec::new();
-    let keyboard_control = Box::new(KeyboardControl::new());
-    let (tx, rx) = keyboard_control.get_channel();
+    let keyboard_control = KeyboardControl::new();
     let delay = Box::new(Delay::new_with_ch_receiver(
         delay_interval,
-        receiver.clone(),
+        keyboard_control.get_receiver(),
     ));
-    let pause = Box::new(Pause::new(receiver.clone()));
-    let terminate = Box::new(Terminate::new(receiver.clone()));
+    let pause = Box::new(Pause::new(keyboard_control.get_receiver()));
+    let terminate = Box::new(Terminate::new(keyboard_control.get_receiver()));
 
-    res.push(keyboard_control as Box<dyn crate::BoardCallback<T, U, I>>);
     res.push(delay as Box<dyn crate::BoardCallback<T, U, I>>);
     res.push(pause as Box<dyn crate::BoardCallback<T, U, I>>);
     res.push(terminate as Box<dyn crate::BoardCallback<T, U, I>>);
 
-    (res, receiver)
+    (res, keyboard_control)
 }

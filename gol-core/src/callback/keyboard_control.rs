@@ -1,27 +1,15 @@
-use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::{bounded, Receiver, Sender};
-use rayon::prelude::*;
 use std::char;
 use std::io::Read;
 use std::thread;
+use tokio::sync::broadcast::{self, Receiver, Sender};
 
 pub struct KeyboardControl {
     tx: Sender<char>,
-    rx: Receiver<char>,
-}
-
-impl<T, U, I> BoardCallback<T, U, I> for KeyboardControl
-where
-    T: Send + Sync + Clone,
-    U: Send + Sync + Clone,
-    I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
-{
-    fn execute(&mut self, _: I) {}
 }
 
 impl KeyboardControl {
     pub fn new() -> Self {
-        let (tx, rx) = bounded(0);
+        let (tx, _) = broadcast::channel(1);
         let tx_clone = tx.clone();
 
         thread::spawn(move || {
@@ -34,10 +22,10 @@ impl KeyboardControl {
                 tx_clone.send(ch).unwrap();
             }
         });
-        Self { tx, rx }
+        Self { tx }
     }
 
-    pub fn get_channel(&self) -> (Sender<char>, Receiver<char>) {
-        (self.tx.clone(), self.rx.clone())
+    pub fn get_receiver(&self) -> Receiver<char> {
+        self.tx.subscribe()
     }
 }

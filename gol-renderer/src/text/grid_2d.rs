@@ -1,12 +1,12 @@
 extern crate ncurses;
 
-use crossbeam_channel::Receiver;
 use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use std::char;
 use std::cmp::{max, min};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
@@ -148,21 +148,23 @@ impl TextRendererGrid2D {
 
     fn check_user_input(&mut self, should_block: bool) {
         if self.rx.is_some() {
-            let rx_new = self.rx.as_ref().unwrap().clone();
-            if should_block {
-                match rx_new.recv() {
-                    Ok(val) => self.execute_user_input(val),
-                    Err(err) => panic!("Error getting user input: {}", err),
-                }
-            } else {
-                match rx_new.try_recv() {
-                    Ok(val) => self.execute_user_input(val),
-                    Err(err) => {
-                        // Do nothing for empty input, since it's expected for non-blocking.
-                        if err != crossbeam_channel::TryRecvError::Empty {
-                            panic!("Error getting user input: {}", err)
-                        }
+            loop {
+                match self.rx.as_mut().unwrap().try_recv() {
+                    Ok(val) => {
+                        self.execute_user_input(val);
+                        break;
                     }
+                    Err(err) => match err {
+                        TryRecvError::Empty => {
+                            if should_block {
+                                continue;
+                            } else {
+                                break;
+                            }
+                        }
+                        TryRecvError::Closed => panic!("Error getting user input: {}", err),
+                        TryRecvError::Lagged(_) => continue,
+                    },
                 }
             }
         }

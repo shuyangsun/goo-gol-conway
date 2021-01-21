@@ -1,13 +1,12 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::{Receiver, Sender};
 use rayon::prelude::*;
 use std::thread;
 use std::time::{Duration, Instant};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Delay {
     last_execution: Instant,
     duration: Duration,
-    tx: Option<Sender<char>>,
     rx: Option<Receiver<char>>,
 }
 
@@ -40,28 +39,33 @@ impl Delay {
         }
     }
 
-    pub fn new_with_ch_receiver(duration: Duration, tx: Sender<char>, rx: Receiver<char>) -> Self {
+    pub fn new_with_ch_receiver(duration: Duration, rx: Receiver<char>) -> Self {
         Self {
             last_execution: Instant::now(),
             duration,
-            rx: Some(receiver),
+            rx: Some(rx),
         }
     }
 
     fn check_user_input(&mut self) {
         if self.rx.is_some() {
-            match self.rx.as_ref().unwrap().try_recv() {
-                Ok(val) => {
-                    if val == 'k' {
-                        self.duration = Duration::from_nanos(self.duration.as_nanos() as u64 / 2);
-                    } else if val == 'j' {
-                        self.duration = Duration::from_nanos(self.duration.as_nanos() as u64 * 2);
+            loop {
+                match self.rx.as_mut().unwrap().try_recv() {
+                    Ok(val) => {
+                        if val == 'k' {
+                            self.duration =
+                                Duration::from_nanos(self.duration.as_nanos() as u64 / 2);
+                        } else if val == 'j' {
+                            self.duration =
+                                Duration::from_nanos(self.duration.as_nanos() as u64 * 2);
+                        }
+                        break;
                     }
-                }
-                Err(err) => {
-                    if err != crossbeam_channel::TryRecvError::Empty {
-                        panic!("Error getting user input: {}", err)
-                    }
+                    Err(err) => match err {
+                        TryRecvError::Empty => break,
+                        TryRecvError::Closed => panic!("Error getting user input: {}", err),
+                        TryRecvError::Lagged(_) => continue,
+                    },
                 }
             }
         }
