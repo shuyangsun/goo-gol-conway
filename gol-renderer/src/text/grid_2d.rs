@@ -6,6 +6,7 @@ use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use std::char;
 use std::cmp::{max, min};
+use std::time::Instant;
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 const TITLE_ROW: i32 = 1;
@@ -18,6 +19,8 @@ pub struct TextRendererGrid2D {
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
     rx: Option<Receiver<char>>,
+    speed_level: i32,
+    last_render_time: Option<Instant>,
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
@@ -59,15 +62,8 @@ where
 
     fn execute(&mut self, states: I) {
         if self.is_enabled {
-            mv(GENERATION_ROW, 0);
-            clrtoeol();
-            let iter_msg = format!("Generation {}", self.iter);
-            mvprintw(
-                GENERATION_ROW,
-                (self.screen_dim.1 as usize - iter_msg.len()) as i32 / 2,
-                iter_msg.as_str(),
-            );
-            refresh();
+            self.print_generation_and_speed();
+            self.last_render_time = Some(Instant::now());
 
             let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
             if self.window_dim.is_none() {
@@ -128,6 +124,8 @@ impl TextRendererGrid2D {
             screen_dim: (0, 0),
             window_dim: None,
             rx: None,
+            speed_level: 0,
+            last_render_time: None,
         }
     }
 
@@ -139,6 +137,8 @@ impl TextRendererGrid2D {
             screen_dim: (0, 0),
             window_dim: None,
             rx: Some(receiver),
+            speed_level: 0,
+            last_render_time: None,
         }
     }
 
@@ -170,6 +170,10 @@ impl TextRendererGrid2D {
         // TODO: implement rewind
         if ch == 'q' {
             self.cleanup_impl();
+        } else if ch == 'j' {
+            self.speed_level -= 1;
+        } else if ch == 'k' {
+            self.speed_level += 1;
         }
     }
 
@@ -179,6 +183,34 @@ impl TextRendererGrid2D {
             endwin();
         }
         self.is_enabled = false;
+    }
+
+    fn print_generation_and_speed(&self) {
+        mv(GENERATION_ROW, 0);
+        clrtoeol();
+        let speed = 2u32.pow(self.speed_level.abs() as u32);
+        let speed_str = if self.speed_level < 0 {
+            format!("1/{}", speed)
+        } else {
+            format!("{}", speed)
+        };
+        let fps = match self.last_render_time {
+            Some(val) => {
+                let time_diff = Instant::now() - val;
+                1.0 / time_diff.as_secs_f64()
+            }
+            None => 0.0,
+        };
+        let iter_msg = format!(
+            "Generation: {}, Speed: {}x, FPS: {:6.2}",
+            self.iter, speed_str, fps
+        );
+        mvprintw(
+            GENERATION_ROW,
+            (self.screen_dim.1 as usize - iter_msg.len()) as i32 / 2,
+            iter_msg.as_str(),
+        );
+        refresh();
     }
 }
 
