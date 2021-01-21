@@ -5,10 +5,10 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
 const SHAPES_1D_SMALL: [usize; 14] = [
-    3, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
+    5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
 ];
 const SHAPES_1D_LARGE: [usize; 11] = [
-    1, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000,
+    5, 10_000, 20_000, 30_000, 40_000, 50_000, 60_000, 70_000, 80_000, 90_000, 100_000,
 ];
 
 type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<ConwayState, CI, std::vec::IntoIter<CI>>>>>;
