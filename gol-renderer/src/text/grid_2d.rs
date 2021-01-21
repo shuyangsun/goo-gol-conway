@@ -54,11 +54,7 @@ where
     }
 
     fn cleanup(&mut self) {
-        if self.is_enabled {
-            curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
-            endwin();
-        }
-        self.is_enabled = false;
+        self.cleanup_impl();
     }
 
     fn execute(&mut self, states: I) {
@@ -170,8 +166,19 @@ impl TextRendererGrid2D {
         }
     }
 
-    fn execute_user_input(&mut self, _: char) {
+    fn execute_user_input(&mut self, ch: char) {
         // TODO: implement rewind
+        if ch == 'q' {
+            self.cleanup_impl();
+        }
+    }
+
+    fn cleanup_impl(&mut self) {
+        if self.is_enabled {
+            curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
+            endwin();
+        }
+        self.is_enabled = false;
     }
 }
 

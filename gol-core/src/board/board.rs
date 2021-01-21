@@ -2,6 +2,7 @@ use crate::{
     BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
     BoardStrategyManager, IndexedDataOwned,
 };
+
 use rayon::prelude::*;
 pub trait Board<T, CI, I>
 where
