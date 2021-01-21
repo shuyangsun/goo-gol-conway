@@ -2,6 +2,7 @@ use super::util::{MarginPrimInt, PointPrimInt};
 use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::izip;
+use std::convert::TryFrom;
 
 pub struct NeighborsGridSurround<T> {
     should_repeat_margin: bool,
@@ -204,11 +205,23 @@ impl<T, U> BoardNeighborManager<GridPoint1D<U>, std::vec::IntoIter<GridPoint1D<U
     for NeighborsGridSurround<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
-        let one = U::one();
-        vec![GridPoint1D::new(idx.x - one), GridPoint1D::new(idx.x + one)].into_iter()
+        let (left, right) = self.margins.first().unwrap();
+        let left = match U::try_from(*left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let right = match U::try_from(*right) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        vec![
+            GridPoint1D::new(idx.x - left),
+            GridPoint1D::new(idx.x + right),
+        ]
+        .into_iter()
     }
 }
 
