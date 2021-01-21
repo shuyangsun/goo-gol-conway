@@ -41,7 +41,6 @@ impl Pause {
                 Err(err) => panic!("Error getting user input: {}", err),
             }
         } else {
-            eprintln!("Checking...");
             match self.rx.try_recv() {
                 Ok(val) => self.execute_user_input(val),
                 Err(err) => {
@@ -54,7 +53,6 @@ impl Pause {
     }
 
     fn execute_user_input(&mut self, ch: char) {
-        eprintln!("Got {}", ch);
         if ch == ' ' {
             self.is_paused = !self.is_paused;
         }

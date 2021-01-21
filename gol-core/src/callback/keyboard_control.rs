@@ -1,5 +1,5 @@
 use crate::{BoardCallback, IndexedDataOwned};
-use crossbeam_channel::{unbounded, Receiver};
+use crossbeam_channel::{bounded, Receiver};
 use rayon::prelude::*;
 use std::char;
 use std::io::Read;
@@ -20,7 +20,7 @@ where
 
 impl KeyboardControl {
     pub fn new() -> Self {
-        let (tx, rx) = unbounded();
+        let (tx, rx) = bounded(0);
 
         thread::spawn(move || {
             let mut reader = std::io::stdin();
