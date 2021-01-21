@@ -56,7 +56,6 @@ fn main() {
             demos_description.push_str(if i < demos.len() - 1 { ", " } else { "." });
         }
 
-        let default_delay = 2.0;
         let default_interval = 1.0;
 
         let matches = App::new("Game of Life on Steriods")
@@ -86,19 +85,10 @@ fn main() {
                     .takes_value(true),
             )
             .arg(
-                Arg::with_name("delay")
-                    .short("d")
-                    .long("delay")
-                    .value_name("DELAY")
-                    .help(format!("Sets initial delay in seconds before evolution starts, default value {} second(s).", default_delay).as_str())
-                    .takes_value(true),
-            )
-            .arg(
                 Arg::with_name("interval")
                     .short("i")
                     .long("interval")
-                    .value_name("INTERVAL")
-                    .help(format!("Sets delay in seconds in-between generations, default value {} second(s).", default_interval).as_str())
+                    .value_name("INTERVAL") .help(format!("Sets delay in seconds in-between generations, default value {} second(s).", default_interval).as_str())
                     .takes_value(true),
             )
             .arg(
@@ -130,11 +120,6 @@ fn main() {
                 .expect("Cannot parse max iteration count to integer."),
             None => usize::MAX,
         };
-        let delay: f64 = matches
-            .value_of("delay")
-            .unwrap_or(format!("{}", default_delay).as_str())
-            .parse()
-            .expect("Cannot parse initial delay seconds to float.");
         let interval: f64 = matches
             .value_of("interval")
             .unwrap_or(format!("{}", default_interval).as_str())
@@ -175,7 +160,6 @@ fn main() {
             initial_states,
             title,
             max_iter,
-            delay,
             interval,
             is_donut,
             alive_ratio,

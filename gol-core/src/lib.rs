@@ -1,5 +1,6 @@
 pub mod board;
 pub mod board_states;
+pub mod callback;
 pub mod cell;
 pub mod evolution;
 pub mod neighbors;
@@ -15,6 +16,7 @@ pub use board::standard::{StandardBoard, StandardBoardFactory};
 pub use board_states::predefined as predefined_states;
 pub use board_states::sparse::SparseStates;
 pub use board_states::sparse_binary::SparseBinaryStates;
+pub use callback::{delay::Delay, keyboard_control::KeyboardControl};
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::ConwayState;

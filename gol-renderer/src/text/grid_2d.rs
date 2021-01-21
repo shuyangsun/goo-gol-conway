@@ -1,13 +1,12 @@
 extern crate ncurses;
 
+use crossbeam_channel::Receiver;
 use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use std::char;
 use std::cmp::{max, min};
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
@@ -19,7 +18,7 @@ pub struct TextRendererGrid2D {
     is_paused: bool,
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
-    rx: Arc<Mutex<Option<mpsc::Receiver<char>>>>,
+    rx: Option<Receiver<char>>,
 }
 
 impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
@@ -45,7 +44,7 @@ where
             self.title.as_str(),
         );
 
-        let message = "Presee SPACE to pause/play, 'q' to exist.";
+        let message = "Presee SPACE to play/pause, 'q' to exist.";
         mvprintw(
             max_y - 2,
             (max_x as usize - message.len()) as i32 / 2,
@@ -53,12 +52,6 @@ where
         );
 
         refresh();
-
-        let (tx, rx) = mpsc::channel();
-        thread::spawn(move || loop {
-            tx.send(char::from_u32(getch() as u32).unwrap()).unwrap();
-        });
-        *self.rx.lock().unwrap() = Some(rx);
     }
 
     fn cleanup(&mut self) {
@@ -140,31 +133,45 @@ impl TextRendererGrid2D {
             title,
             iter: 0,
             is_enabled: true,
-            is_paused: false,
+            is_paused: true,
             screen_dim: (0, 0),
             window_dim: None,
-            rx: Arc::new(Mutex::new(None)),
+            rx: None,
+        }
+    }
+
+    pub fn new_with_title_and_ch_receiver(title: String, receiver: Receiver<char>) -> Self {
+        Self {
+            title,
+            iter: 0,
+            is_enabled: true,
+            is_paused: true,
+            screen_dim: (0, 0),
+            window_dim: None,
+            rx: Some(receiver),
         }
     }
 
     fn check_user_input(&mut self, should_block: bool) {
-        let rx_new = Arc::clone(&self.rx);
-        if should_block {
-            match rx_new.lock().unwrap().as_ref().unwrap().recv() {
-                Ok(val) => self.execute_user_input(val),
-                Err(err) => panic!("Error getting user input: {}", err),
-            }
-        } else {
-            match rx_new.lock().unwrap().as_ref().unwrap().try_recv() {
-                Ok(val) => self.execute_user_input(val),
-                Err(err) => {
-                    // Do nothing for empty input, since it's expected for non-blocking.
-                    if err != mpsc::TryRecvError::Empty {
-                        panic!("Error getting user input: {}", err)
+        if self.rx.is_some() {
+            let rx_new = self.rx.as_ref().unwrap().clone();
+            if should_block {
+                match rx_new.recv() {
+                    Ok(val) => self.execute_user_input(val),
+                    Err(err) => panic!("Error getting user input: {}", err),
+                }
+            } else {
+                match rx_new.try_recv() {
+                    Ok(val) => self.execute_user_input(val),
+                    Err(err) => {
+                        // Do nothing for empty input, since it's expected for non-blocking.
+                        if err != crossbeam_channel::TryRecvError::Empty {
+                            panic!("Error getting user input: {}", err)
+                        }
                     }
                 }
             }
-        };
+        }
     }
 
     fn execute_user_input(&mut self, input_ch: char) {
