@@ -17,6 +17,7 @@ where
             match self.rx.try_recv() {
                 Ok(val) => {
                     if val == 'q' {
+                        // TODO: Hacky solution to give other callbacks a time buffer to do cleanup.
                         std::thread::sleep(std::time::Duration::from_millis(500));
                         std::process::exit(0);
                     }
