@@ -544,7 +544,7 @@ fn gen_board_3d(
 
     let strategy = Box::new(ConwayStrategy::new());
     let board_donut = StandardBoardFactory::new_binary_3d_grid(
-        (shape.clone(), shape.clone()),
+        (shape.clone(), shape.clone(), shape.clone()),
         ConwayState::Dead,
         ConwayState::Alive,
         margin,
