@@ -19,7 +19,6 @@ const SHAPES_2D_SMALL: [usize; 14] = [
 const SHAPES_2D_LARGE: [usize; 6] = [5, 1_000, 2_000, 3_000, 4_000, 5_000];
 
 const SHAPES_3D_SMALL: [usize; 13] = [5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
-const SHAPES_3D_LARGE: [usize; 3] = [5, 1000, 1500];
 
 type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<ConwayState, CI, std::vec::IntoIter<CI>>>>>;
 
@@ -374,76 +373,6 @@ fn neighbor_benchmark_3d_small(c: &mut Criterion) {
     group.finish();
 }
 
-fn neighbor_benchmark_3d_large(c: &mut Criterion) {
-    let mut group = c.benchmark_group("3D Board Large");
-    group.sample_size(10);
-
-    for shape in SHAPES_3D_LARGE.iter() {
-        let (surround, donut) = gen_board_3d(shape, 1);
-        group.bench_with_input(BenchmarkId::new("Surround, 1", shape), shape, |b, _| {
-            b.iter(|| {
-                let unlocked = surround.lock().unwrap();
-                let space_manager = unlocked.space_manager();
-                let neighbor_manager = unlocked.neighbor_manager();
-                let _: Vec<GridPoint3D<i32>> = space_manager
-                    .indices_par_iter()
-                    .map(|idx| {
-                        let neighbors: Vec<GridPoint3D<i32>> =
-                            neighbor_manager.get_neighbors_idx(&idx).collect();
-                        neighbors.first().unwrap().clone()
-                    })
-                    .collect();
-            })
-        });
-        group.bench_with_input(BenchmarkId::new("Wrapping, 1", shape), shape, |b, _| {
-            b.iter(|| {
-                let unlocked = donut.lock().unwrap();
-                let space_manager = unlocked.space_manager();
-                let neighbor_manager = unlocked.neighbor_manager();
-                let _: Vec<GridPoint3D<i32>> = space_manager
-                    .indices_par_iter()
-                    .map(|idx| {
-                        let neighbors: Vec<GridPoint3D<i32>> =
-                            neighbor_manager.get_neighbors_idx(&idx).collect();
-                        neighbors.first().unwrap().clone()
-                    })
-                    .collect();
-            })
-        });
-        let (surround, donut) = gen_board_3d(shape, 2);
-        group.bench_with_input(BenchmarkId::new("Surround, 2", shape), shape, |b, _| {
-            b.iter(|| {
-                let unlocked = surround.lock().unwrap();
-                let space_manager = unlocked.space_manager();
-                let neighbor_manager = unlocked.neighbor_manager();
-                let _: Vec<GridPoint3D<i32>> = space_manager
-                    .indices_par_iter()
-                    .map(|idx| {
-                        let neighbors: Vec<GridPoint3D<i32>> =
-                            neighbor_manager.get_neighbors_idx(&idx).collect();
-                        neighbors.first().unwrap().clone()
-                    })
-                    .collect();
-            })
-        });
-        group.bench_with_input(BenchmarkId::new("Wrapping, 2", shape), shape, |b, _| {
-            b.iter(|| {
-                let unlocked = donut.lock().unwrap();
-                let space_manager = unlocked.space_manager();
-                let neighbor_manager = unlocked.neighbor_manager();
-                let _: Vec<GridPoint3D<i32>> = space_manager
-                    .indices_par_iter()
-                    .map(|idx| {
-                        let neighbors: Vec<GridPoint3D<i32>> =
-                            neighbor_manager.get_neighbors_idx(&idx).collect();
-                        neighbors.first().unwrap().clone()
-                    })
-                    .collect();
-            })
-        });
-    }
-    group.finish();
-}
 criterion_group!(
     benches,
     neighbor_benchmark_1d_small,
@@ -451,7 +380,6 @@ criterion_group!(
     neighbor_benchmark_2d_small,
     neighbor_benchmark_2d_large,
     neighbor_benchmark_3d_small,
-    neighbor_benchmark_3d_large,
 );
 criterion_main!(benches);
 
