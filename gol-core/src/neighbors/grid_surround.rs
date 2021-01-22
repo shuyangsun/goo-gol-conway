@@ -1,5 +1,4 @@
 use super::util::{MarginPrimInt, PointPrimInt};
-use crate::cell::index::ToGridPointND;
 use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 use itertools::izip;
 use std::convert::TryFrom;
@@ -173,14 +172,81 @@ impl<T, U> BoardNeighborManager<GridPoint3D<U>, std::vec::IntoIter<GridPoint3D<U
     for NeighborsGridSurround<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
-        let res: Vec<GridPoint3D<U>> = self
-            .calc_grid_point_surrounding(&idx.to_nd())
-            .iter()
-            .map(|ele| ele.to_3d().unwrap())
-            .collect();
+        let (one_t, one_u) = (T::one(), U::one());
+        let (x_left, x_right) = self.margins.first().unwrap();
+        let (mut y_left, mut y_right) = self.margins.first().unwrap();
+        let (z_left, z_right) = self.margins.last().unwrap();
+        if !self.should_repeat_margin {
+            let y_margin = self.margins[2];
+            y_left = y_margin.0;
+            y_right = y_margin.1;
+        }
+        if x_left == &one_t
+            && x_right == &one_t
+            && (self.should_repeat_margin
+                || y_left == one_t && y_right == one_t && z_left == &one_t && z_right == &one_t)
+        {
+            return vec![
+                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x - one_u, idx.y, idx.z - one_u),
+                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x, idx.y - one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x, idx.y, idx.z - one_u),
+                GridPoint3D::new(idx.x, idx.y + one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y, idx.z - one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z - one_u),
+                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z),
+                GridPoint3D::new(idx.x - one_u, idx.y, idx.z),
+                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z),
+                GridPoint3D::new(idx.x, idx.y - one_u, idx.z),
+                GridPoint3D::new(idx.x, idx.y + one_u, idx.z),
+                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z),
+                GridPoint3D::new(idx.x + one_u, idx.y, idx.z),
+                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z),
+                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z + one_u),
+                GridPoint3D::new(idx.x - one_u, idx.y, idx.z + one_u),
+                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z + one_u),
+                GridPoint3D::new(idx.x, idx.y - one_u, idx.z + one_u),
+                GridPoint3D::new(idx.x, idx.y, idx.z + one_u),
+                GridPoint3D::new(idx.x, idx.y + one_u, idx.z + one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z + one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y, idx.z + one_u),
+                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z + one_u),
+            ]
+            .into_iter();
+        }
+        let x_left_u = match U::try_from(*x_left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let y_left_u = match U::try_from(y_left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let z_left_u = match U::try_from(*z_left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let mut res = Vec::new();
+        let width = (*x_left + one_t + *x_right).to_usize().unwrap();
+        let height = (y_left + one_t + y_right).to_usize().unwrap();
+        let depth = (*z_left + one_t + *z_right).to_usize().unwrap();
+        let skip_idx = x_left.to_usize().unwrap()
+            + width * y_left.to_usize().unwrap()
+            + width * height * z_left.to_usize().unwrap();
+        for i in 0..(width * height * depth) {
+            if i == skip_idx {
+                continue;
+            }
+            let cur_x = x_left_u + U::from_usize(i % width).unwrap();
+            let cur_y = y_left_u + U::from_usize(i / width).unwrap();
+            let cur_z = z_left_u + U::from_usize(i / (width * height)).unwrap();
+            res.push(GridPoint3D::new(cur_x, cur_y, cur_z));
+        }
         res.into_iter()
     }
 }
@@ -189,14 +255,48 @@ impl<T, U> BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U
     for NeighborsGridSurround<T>
 where
     T: MarginPrimInt,
-    U: PointPrimInt,
+    U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
-        let res: Vec<GridPoint2D<U>> = self
-            .calc_grid_point_surrounding(&idx.to_nd())
-            .iter()
-            .map(|ele| ele.to_2d().unwrap())
-            .collect();
+        let (one_t, one_u) = (T::one(), U::one());
+        let (x_left, x_right) = self.margins.first().unwrap();
+        let (y_left, y_right) = self.margins.last().unwrap();
+        if x_left == &one_t
+            && x_right == &one_t
+            && (self.should_repeat_margin || y_left == &one_t && y_right == &one_t)
+        {
+            return vec![
+                GridPoint2D::new(idx.x - one_u, idx.y - one_u),
+                GridPoint2D::new(idx.x - one_u, idx.y),
+                GridPoint2D::new(idx.x - one_u, idx.y + one_u),
+                GridPoint2D::new(idx.x, idx.y - one_u),
+                GridPoint2D::new(idx.x, idx.y + one_u),
+                GridPoint2D::new(idx.x + one_u, idx.y - one_u),
+                GridPoint2D::new(idx.x + one_u, idx.y),
+                GridPoint2D::new(idx.x + one_u, idx.y + one_u),
+            ]
+            .into_iter();
+        }
+        let x_left_u = match U::try_from(*x_left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let y_left_u = match U::try_from(*y_left) {
+            Ok(val) => val,
+            Err(_) => panic!("Error casting number."),
+        };
+        let mut res = Vec::new();
+        let width = (*x_left + one_t + *x_right).to_usize().unwrap();
+        let height = (*y_left + one_t + *y_right).to_usize().unwrap();
+        let skip_idx = x_left.to_usize().unwrap() + width * y_left.to_usize().unwrap();
+        for i in 0..(width * height) {
+            if i == skip_idx {
+                continue;
+            }
+            let cur_x = x_left_u + U::from_usize(i % width).unwrap();
+            let cur_y = y_left_u + U::from_usize(i / width).unwrap();
+            res.push(GridPoint2D::new(cur_x, cur_y));
+        }
         res.into_iter()
     }
 }
@@ -208,7 +308,15 @@ where
     U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint1D<U>) -> std::vec::IntoIter<GridPoint1D<U>> {
+        let (one_t, one_u) = (T::one(), U::one());
         let (left, right) = self.margins.first().unwrap();
+        if left == &one_t && right == &one_t {
+            return vec![
+                GridPoint1D::new(idx.x - one_u),
+                GridPoint1D::new(idx.x + one_u),
+            ]
+            .into_iter();
+        }
         let left = match U::try_from(*left) {
             Ok(val) => val,
             Err(_) => panic!("Error casting number."),
@@ -217,11 +325,17 @@ where
             Ok(val) => val,
             Err(_) => panic!("Error casting number."),
         };
-        vec![
-            GridPoint1D::new(idx.x - left),
-            GridPoint1D::new(idx.x + right),
-        ]
-        .into_iter()
+        let mut res = Vec::new();
+        let left_most_idx = idx.x - left;
+        for i in 0..(left + one_u + right).to_usize().unwrap() {
+            let cur_i = U::from_usize(i).unwrap();
+            let cur_x = cur_i + left_most_idx;
+            if cur_x == idx.x {
+                continue;
+            }
+            res.push(GridPoint1D::new(cur_x));
+        }
+        res.into_iter()
     }
 }
 

@@ -18,9 +18,7 @@ const SHAPES_2D_SMALL: [usize; 14] = [
 ];
 const SHAPES_2D_LARGE: [usize; 6] = [5, 1_000, 2_000, 3_000, 4_000, 5_000];
 
-const SHAPES_3D_SMALL: [usize; 14] = [
-    5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
-];
+const SHAPES_3D_SMALL: [usize; 13] = [5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 const SHAPES_3D_LARGE: [usize; 3] = [5, 1000, 1500];
 
 type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<ConwayState, CI, std::vec::IntoIter<CI>>>>>;
