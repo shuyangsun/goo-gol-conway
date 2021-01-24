@@ -26,6 +26,12 @@ pub fn run_demo(
 
     let one_billion_nano_sec: f64 = 1_000_000_000f64;
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
+
+    #[cfg(not(any(feature = "ascii")))]
+    let (callbacks, _) =
+        gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
+
+    #[cfg(feature = "ascii")]
     let (mut callbacks, keyboard_control) =
         gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
 
