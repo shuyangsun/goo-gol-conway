@@ -18,7 +18,6 @@ where
 {
     fn execute(&mut self, _: I) {
         let old_execution = self.last_execution;
-        self.last_execution = Instant::now();
         self.check_user_input();
         // duration.is_zero() is unstable
         if self.duration.as_nanos() > 0 {
@@ -27,6 +26,7 @@ where
                 thread::sleep(self.duration - diff);
             }
         }
+        self.last_execution = Instant::now();
     }
 }
 
