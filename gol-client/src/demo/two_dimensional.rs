@@ -31,8 +31,9 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     {
-        use gol_renderer::TextRendererGrid2D;
+        use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
         let text_renderer = Box::new(TextRendererGrid2D::new_with_title_and_ch_receiver(
+            DefaultCharMap::new(),
             String::from(title),
             keyboard_control.get_receiver(),
         ))

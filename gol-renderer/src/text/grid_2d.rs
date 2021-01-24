@@ -1,5 +1,6 @@
 extern crate ncurses;
 
+use crate::CharMapping;
 use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
@@ -12,7 +13,7 @@ use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
 
-pub struct TextRendererGrid2D {
+pub struct TextRendererGrid2D<M> {
     title: String,
     iter: usize,
     is_enabled: bool,
@@ -21,13 +22,15 @@ pub struct TextRendererGrid2D {
     rx: Option<Receiver<char>>,
     speed_level: i32,
     last_render_time: Option<Instant>,
+    char_map: M,
 }
 
-impl<T, U, I> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D
+impl<T, U, I, M> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D<M>
 where
-    T: Send + Sync + Clone + std::convert::Into<char>,
+    T: Send + Sync + Clone,
     U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive,
     I: ParallelIterator<Item = IndexedDataOwned<GridPoint2D<U>, T>>,
+    M: Send + Sync + CharMapping<T>,
 {
     fn setup(&mut self) {
         initscr();
@@ -99,7 +102,7 @@ where
                     .to_i32()
                     .unwrap()
                     + 2;
-                let ch: char = state.clone().into();
+                let ch: char = self.char_map.char_representation(state);
                 mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
             }
 
@@ -111,12 +114,12 @@ where
     }
 }
 
-impl TextRendererGrid2D {
-    pub fn new() -> Self {
-        Self::new_with_title(String::from(""))
+impl<M> TextRendererGrid2D<M> {
+    pub fn new(char_map: M) -> Self {
+        Self::new_with_title(char_map, String::from(""))
     }
 
-    pub fn new_with_title(title: String) -> Self {
+    pub fn new_with_title(char_map: M, title: String) -> Self {
         Self {
             title,
             iter: 0,
@@ -126,10 +129,15 @@ impl TextRendererGrid2D {
             rx: None,
             speed_level: 0,
             last_render_time: None,
+            char_map,
         }
     }
 
-    pub fn new_with_title_and_ch_receiver(title: String, receiver: Receiver<char>) -> Self {
+    pub fn new_with_title_and_ch_receiver(
+        char_map: M,
+        title: String,
+        receiver: Receiver<char>,
+    ) -> Self {
         Self {
             title,
             iter: 0,
@@ -139,6 +147,7 @@ impl TextRendererGrid2D {
             rx: Some(receiver),
             speed_level: 0,
             last_render_time: None,
+            char_map,
         }
     }
 
