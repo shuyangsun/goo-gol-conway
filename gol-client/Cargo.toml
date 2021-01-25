@@ -11,11 +11,6 @@ license = "Apache-2.0"
 [features]
 default = []
 ascii = ["ncurses", "gol-renderer/ascii"]
-vulkan = ["gol-renderer/vulkan"]
-metal = ["gol-renderer/metal"]
-dx12 = ["gol-renderer/dx12"]
-dx11 = ["gol-renderer/dx11"]
-gl = ["gol-renderer/gl"]
 
 [dependencies]
 rand = "0.8.2"
