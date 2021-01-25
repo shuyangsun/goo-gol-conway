@@ -20,7 +20,6 @@ pub struct TextRendererGrid2D<M> {
     screen_dim: (i32, i32),
     window_dim: Option<(i32, i32, i32, i32)>,
     rx: Option<Receiver<char>>,
-    speed_level: i32,
     last_render_time: Option<Instant>,
     char_map: M,
 }
@@ -127,7 +126,6 @@ impl<M> TextRendererGrid2D<M> {
             screen_dim: (0, 0),
             window_dim: None,
             rx: None,
-            speed_level: 0,
             last_render_time: None,
             char_map,
         }
@@ -145,7 +143,6 @@ impl<M> TextRendererGrid2D<M> {
             screen_dim: (0, 0),
             window_dim: None,
             rx: Some(receiver),
-            speed_level: 0,
             last_render_time: None,
             char_map,
         }
@@ -179,10 +176,6 @@ impl<M> TextRendererGrid2D<M> {
         // TODO: implement rewind
         if ch == 'q' {
             self.cleanup_impl();
-        } else if ch == 'j' {
-            self.speed_level -= 1;
-        } else if ch == 'k' {
-            self.speed_level += 1;
         }
     }
 
@@ -197,12 +190,6 @@ impl<M> TextRendererGrid2D<M> {
     fn print_generation_and_speed(&self) {
         mv(GENERATION_ROW, 0);
         clrtoeol();
-        let speed = 2u32.pow(self.speed_level.abs() as u32);
-        let speed_str = if self.speed_level < 0 {
-            format!("1/{}", speed)
-        } else {
-            format!("{}", speed)
-        };
         let fps = match self.last_render_time {
             Some(val) => {
                 let time_diff = Instant::now() - val;
@@ -210,10 +197,7 @@ impl<M> TextRendererGrid2D<M> {
             }
             None => 0.0,
         };
-        let iter_msg = format!(
-            "Generation: {}, Speed: {}x, FPS: {:6.2}",
-            self.iter, speed_str, fps
-        );
+        let iter_msg = format!("Generation: {}, FPS: {:6.2}", self.iter, fps);
         mvprintw(
             GENERATION_ROW,
             (self.screen_dim.1 as usize - iter_msg.len()) as i32 / 2,

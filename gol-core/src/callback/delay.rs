@@ -1,6 +1,5 @@
 use crate::{BoardCallback, IndexedDataOwned};
 use rayon::prelude::*;
-use std::thread;
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
@@ -20,11 +19,8 @@ where
         let old_execution = self.last_execution;
         self.check_user_input();
         // duration.is_zero() is unstable
-        if self.duration.as_nanos() > 0 {
-            let diff = Instant::now() - old_execution;
-            if diff < self.duration {
-                thread::sleep(self.duration - diff);
-            }
+        while Instant::now() < old_execution + self.duration {
+            self.check_user_input();
         }
         self.last_execution = Instant::now();
     }
