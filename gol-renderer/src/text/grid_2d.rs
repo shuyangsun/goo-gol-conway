@@ -18,7 +18,7 @@ pub struct TextRendererGrid2D<M> {
     iter: usize,
     is_enabled: bool,
     screen_dim: (i32, i32),
-    window_dim: Option<(i32, i32, i32, i32)>,
+    grid_bounds: Option<(i32, i32, i32, i32)>,
     rx: Option<Receiver<char>>,
     last_render_time: Option<Instant>,
     char_map: M,
@@ -68,16 +68,16 @@ where
             self.last_render_time = Some(Instant::now());
 
             let states: Vec<IndexedDataOwned<GridPoint2D<U>, T>> = states.collect();
-            if self.window_dim.is_none() {
-                let window_dim = find_2d_bounds(&states);
-                self.window_dim = Some((
-                    window_dim.0.to_i32().unwrap(),
-                    window_dim.1.to_i32().unwrap(),
-                    window_dim.2.to_i32().unwrap(),
-                    window_dim.3.to_i32().unwrap(),
+            if self.grid_bounds.is_none() {
+                let grid_bounds = find_2d_bounds(&states);
+                self.grid_bounds = Some((
+                    grid_bounds.0.to_i32().unwrap(),
+                    grid_bounds.1.to_i32().unwrap(),
+                    grid_bounds.2.to_i32().unwrap(),
+                    grid_bounds.3.to_i32().unwrap(),
                 ));
             }
-            let (x_min, x_max, y_min, y_max) = self.window_dim.unwrap();
+            let (x_min, x_max, y_min, y_max) = self.grid_bounds.unwrap();
 
             let win_width = x_max.checked_sub(x_min).unwrap().to_i32().unwrap() + 4;
             let win_height = y_max.checked_sub(y_min).unwrap().to_i32().unwrap() + 4;
@@ -124,7 +124,7 @@ impl<M> TextRendererGrid2D<M> {
             iter: 0,
             is_enabled: true,
             screen_dim: (0, 0),
-            window_dim: None,
+            grid_bounds: None,
             rx: None,
             last_render_time: None,
             char_map,
@@ -141,7 +141,7 @@ impl<M> TextRendererGrid2D<M> {
             iter: 0,
             is_enabled: true,
             screen_dim: (0, 0),
-            window_dim: None,
+            grid_bounds: None,
             rx: Some(receiver),
             last_render_time: None,
             char_map,
