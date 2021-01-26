@@ -5,10 +5,13 @@ pub trait CharMapping<T> {
 }
 
 pub trait ColorMapping<T> {
-    fn color_representation(&self, state: &T) -> rgb::RGBA8;
+    fn color_representation(&self, state: &T) -> rgb::RGBA16;
 }
 
+#[derive(Clone)]
 pub struct DefaultCharMap {}
+
+#[derive(Clone)]
 pub struct DefaultColorMap {}
 
 impl DefaultCharMap {
