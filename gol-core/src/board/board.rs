@@ -4,7 +4,7 @@ use crate::{
 };
 
 use rayon::prelude::*;
-pub trait Board<T, CI, I>
+pub trait Board<T, CI, I>: Send + Sync
 where
     T: 'static + Send + Sync + Clone,
     CI: 'static + Send + Sync + Clone,

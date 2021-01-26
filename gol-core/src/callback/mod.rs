@@ -1,5 +1,6 @@
 pub mod delay;
 pub mod keyboard_control;
+pub mod model_binary_states;
 pub mod pause;
 pub mod terminate;
 

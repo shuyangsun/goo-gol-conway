@@ -5,6 +5,7 @@ pub mod cell;
 pub mod evolution;
 pub mod neighbors;
 pub mod space;
+mod util;
 
 pub use board::board::Board;
 pub use board::board_callback::{BoardCallback, BoardCallbackManager};
