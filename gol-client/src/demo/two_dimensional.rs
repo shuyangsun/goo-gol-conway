@@ -1,5 +1,6 @@
 use gol_core::{
-    self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
+    self, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard,
+    StandardBoardFactory,
 };
 
 use gol_renderer::{DefaultColorMap, GraphicalRendererGrid2D};
@@ -23,7 +24,7 @@ pub fn run_demo(
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
 
     let (mut callbacks, keyboard_control) =
-        gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
+        crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
     let original_callback_size = callbacks.len();
 
     let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
@@ -33,17 +34,18 @@ pub fn run_demo(
     );
     match graphical_renderer {
         Ok(val) => {
-            let graphical_renderer = Box::new(val)
+            let graphical_renderer = BoardCallback::WithStates(Box::new(val)
                 as Box<
-                    dyn gol_core::BoardCallback<
+                    dyn gol_core::BoardCallbackWithStates<
                         ConwayState,
                         GridPoint2D<i32>,
                         rayon::vec::IntoIter<
                             gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>,
                         >,
                     >,
-                >;
-            callbacks.push(graphical_renderer);
+                >);
+            // TODO: uncomment to test graphical renderer.
+            // callbacks.push(graphical_renderer);
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };
@@ -51,18 +53,20 @@ pub fn run_demo(
     #[cfg(feature = "ascii")]
     {
         use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
-        let text_renderer = Box::new(TextRendererGrid2D::new_with_title_and_ch_receiver(
-            DefaultCharMap::new(),
-            String::from(title),
-            keyboard_control.get_receiver(),
-        ))
+        let text_renderer = BoardCallback::WithStates(Box::new(
+            TextRendererGrid2D::new_with_title_and_ch_receiver(
+                DefaultCharMap::new(),
+                String::from(title),
+                keyboard_control.get_receiver(),
+            ),
+        )
             as Box<
-                dyn gol_core::BoardCallback<
+                dyn gol_core::BoardCallbackWithStates<
                     ConwayState,
                     GridPoint2D<i32>,
                     rayon::vec::IntoIter<gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>>,
                 >,
-            >;
+            >);
         callbacks.push(text_renderer);
     }
 

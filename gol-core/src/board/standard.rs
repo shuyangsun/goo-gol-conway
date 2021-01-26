@@ -80,9 +80,7 @@ where
         strategy_manager: Box<
             dyn BoardStrategyManager<CI, T, std::vec::IntoIter<IndexedDataOwned<CI, T>>>,
         >,
-        callbacks: Vec<
-            Box<dyn BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>,
-        >,
+        callbacks: Vec<BoardCallback<T, CI, rayon::vec::IntoIter<IndexedDataOwned<CI, T>>>>,
     ) -> Self {
         Self {
             space_manager,
@@ -108,12 +106,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPointND<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPointND<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -158,12 +154,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPointND<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPointND<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPointND<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -208,12 +202,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint3D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint3D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint3D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint3D<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -257,12 +249,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint3D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint3D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint3D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint3D<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -306,12 +296,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint2D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint2D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -364,12 +352,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint2D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint2D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -422,12 +408,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint1D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint1D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint1D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint1D<U>, T>>,
             >,
         >,
         is_donut: bool,
@@ -471,12 +455,10 @@ impl StandardBoardFactory {
             >,
         >,
         callbacks: Vec<
-            Box<
-                dyn BoardCallback<
-                    T,
-                    GridPoint1D<U>,
-                    rayon::vec::IntoIter<IndexedDataOwned<GridPoint1D<U>, T>>,
-                >,
+            BoardCallback<
+                T,
+                GridPoint1D<U>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint1D<U>, T>>,
             >,
         >,
         is_donut: bool,

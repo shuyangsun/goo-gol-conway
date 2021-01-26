@@ -8,7 +8,9 @@ pub mod space;
 mod util;
 
 pub use board::board::Board;
-pub use board::board_callback::{BoardCallback, BoardCallbackManager};
+pub use board::board_callback::{
+    BoardCallback, BoardCallbackManager, BoardCallbackWithStates, BoardCallbackWithoutStates,
+};
 pub use board::board_neighbor::BoardNeighborManager;
 pub use board::board_space::BoardSpaceManager;
 pub use board::board_state::BoardStateManager;
@@ -17,10 +19,7 @@ pub use board::standard::{StandardBoard, StandardBoardFactory};
 pub use board_states::predefined as predefined_states;
 pub use board_states::sparse::SparseStates;
 pub use board_states::sparse_binary::SparseBinaryStates;
-pub use callback::{
-    delay::Delay, keyboard_control::KeyboardControl, model_binary_states::BinaryStatesCallback,
-    model_states::StatesCallback, pause::Pause, terminate::Terminate,
-};
+pub use callback::{model_binary_states::BinaryStatesCallback, model_states::StatesCallback};
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::ConwayState;

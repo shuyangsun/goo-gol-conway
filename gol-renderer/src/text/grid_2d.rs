@@ -1,7 +1,7 @@
 extern crate ncurses;
 
 use crate::{util::grid_util::find_2d_bounds, CharMapping};
-use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
+use gol_core::{BoardCallbackWithStates, GridPoint2D, IndexedDataOwned};
 use ncurses::*;
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
@@ -24,7 +24,7 @@ pub struct TextRendererGrid2D<M> {
     char_map: M,
 }
 
-impl<T, U, I, M> BoardCallback<T, GridPoint2D<U>, I> for TextRendererGrid2D<M>
+impl<T, U, I, M> BoardCallbackWithStates<T, GridPoint2D<U>, I> for TextRendererGrid2D<M>
 where
     T: Send + Sync + Clone,
     U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive,

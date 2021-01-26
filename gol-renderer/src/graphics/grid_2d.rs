@@ -16,7 +16,7 @@ use gfx_hal::{
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
-use gol_core::{BoardCallback, GridPoint2D, IndexedDataOwned};
+use gol_core::{BoardCallbackWithStates, GridPoint2D, IndexedDataOwned};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use shaderc::ShaderKind;
@@ -39,7 +39,7 @@ pub struct GraphicalRendererGrid2D<M, CI, T> {
     cur_states: Arc<Mutex<Option<Vec<IndexedDataOwned<CI, T>>>>>,
 }
 
-impl<T, U, I, M> BoardCallback<T, GridPoint2D<U>, I>
+impl<T, U, I, M> BoardCallbackWithStates<T, GridPoint2D<U>, I>
     for GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
 where
     T: 'static + Send + Sync + Clone,

@@ -1,5 +1,4 @@
-use crate::{BoardCallback, IndexedDataOwned};
-use rayon::prelude::*;
+use gol_core::BoardCallbackWithoutStates;
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Pause {
@@ -7,13 +6,12 @@ pub struct Pause {
     rx: Receiver<char>,
 }
 
-impl<T, U, I> BoardCallback<T, U, I> for Pause
+impl<T, U> BoardCallbackWithoutStates<T, U> for Pause
 where
     T: Send + Sync + Clone,
     U: Send + Sync + Clone,
-    I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
 {
-    fn execute(&mut self, _: I) {
+    fn execute(&mut self) {
         self.check_user_input(false);
         if self.is_paused {
             loop {

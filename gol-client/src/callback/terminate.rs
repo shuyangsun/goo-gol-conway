@@ -1,18 +1,16 @@
-use crate::{BoardCallback, IndexedDataOwned};
-use rayon::prelude::*;
+use gol_core::BoardCallbackWithoutStates;
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Terminate {
     rx: Receiver<char>,
 }
 
-impl<T, U, I> BoardCallback<T, U, I> for Terminate
+impl<T, U> BoardCallbackWithoutStates<T, U> for Terminate
 where
     T: Send + Sync + Clone,
     U: Send + Sync + Clone,
-    I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
 {
-    fn execute(&mut self, _: I) {
+    fn execute(&mut self) {
         loop {
             match self.rx.try_recv() {
                 Ok(val) => {

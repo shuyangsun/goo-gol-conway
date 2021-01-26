@@ -1,5 +1,5 @@
 use crate::util::sync_util::ReadOnlyLock;
-use crate::{BoardCallback, IndexedDataOwned};
+use crate::{BoardCallbackWithStates, IndexedDataOwned};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<T, CI, I> BoardCallback<T, CI, I> for StatesCallback<T, CI>
+impl<T, CI, I> BoardCallbackWithStates<T, CI, I> for StatesCallback<T, CI>
 where
     T: Send + Sync + Clone + Eq,
     CI: Send + Sync + Clone + Eq + Hash,

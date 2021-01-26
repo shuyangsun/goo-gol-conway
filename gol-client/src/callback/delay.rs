@@ -1,5 +1,4 @@
-use crate::{BoardCallback, IndexedDataOwned};
-use rayon::prelude::*;
+use gol_core::BoardCallbackWithoutStates;
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
@@ -9,13 +8,12 @@ pub struct Delay {
     rx: Option<Receiver<char>>,
 }
 
-impl<T, U, I> BoardCallback<T, U, I> for Delay
+impl<T, U> BoardCallbackWithoutStates<T, U> for Delay
 where
     T: Send + Sync + Clone,
     U: Send + Sync + Clone,
-    I: ParallelIterator<Item = IndexedDataOwned<U, T>>,
 {
-    fn execute(&mut self, _: I) {
+    fn execute(&mut self) {
         let old_execution = self.last_execution;
         self.check_user_input();
         // duration.is_zero() is unstable
