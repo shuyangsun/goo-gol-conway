@@ -27,9 +27,9 @@ where
 }
 
 impl Pause {
-    pub fn new(receiver: Receiver<char>) -> Self {
+    pub fn new(is_paused: bool, receiver: Receiver<char>) -> Self {
         Self {
-            is_paused: true,
+            is_paused,
             rx: receiver,
         }
     }

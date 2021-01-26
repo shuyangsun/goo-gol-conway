@@ -25,7 +25,7 @@ where
         delay_interval,
         keyboard_control.get_receiver(),
     ));
-    let pause = Box::new(Pause::new(keyboard_control.get_receiver()));
+    let pause = Box::new(false, Pause::new(keyboard_control.get_receiver()));
     let terminate = Box::new(Terminate::new(keyboard_control.get_receiver()));
 
     res.push(delay as Box<dyn crate::BoardCallback<T, U, I>>);
