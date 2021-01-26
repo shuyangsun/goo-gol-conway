@@ -15,7 +15,8 @@ pub struct GraphicalRendererGrid2D<M, I> {
     cur_states: Arc<Mutex<Option<I>>>,
 }
 
-impl<T, U, I, M> BoardCallback<T, GridPoint2D<U>, I> for GraphicalRendererGrid2D<M, I>
+impl<T, U, I, M> BoardCallback<T, GridPoint2D<U>, I>
+    for GraphicalRendererGrid2D<M, rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<U>, T>>>
 where
     T: Send + Sync + Clone,
     U: Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive,
@@ -26,7 +27,17 @@ where
     fn cleanup(&mut self) {}
 
     fn execute(&mut self, states: I) {
-        *self.cur_states.lock().unwrap() = Some(states);
+        let states_vec = states.collect();
+        if self.grid_bounds.is_none() {
+            let grid_bounds = find_2d_bounds(&states_vec);
+            self.grid_bounds = Some((
+                grid_bounds.0.to_u32().unwrap(),
+                grid_bounds.1.to_u32().unwrap(),
+                grid_bounds.2.to_u32().unwrap(),
+                grid_bounds.3.to_u32().unwrap(),
+            ));
+        }
+        *self.cur_states.lock().unwrap() = Some(states_vec.into_par_iter());
     }
 }
 
