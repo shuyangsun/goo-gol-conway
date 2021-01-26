@@ -34,7 +34,7 @@ use winit::{
 pub struct GraphicalRendererGrid2D<M, CI, T> {
     title: String,
     iter: usize,
-    grid_bounds: Arc<Mutex<Option<(u32, u32, u32, u32)>>>,
+    grid_bounds: Arc<Mutex<Option<(i32, i32, i32, i32)>>>,
     rx: Option<Receiver<char>>,
     color_map: M,
     cur_states: Arc<Mutex<Option<Vec<IndexedDataOwned<CI, T>>>>>,
@@ -335,11 +335,13 @@ where
 
                             command_buffer.bind_graphics_pipeline(pipeline);
 
+                            let grid_bounds_clone = grid_bounds.lock().unwrap().clone();
+                            let (grid_width, grid_height) = match grid_bounds_clone {
+                                Some(dim) => (dim.1 - dim.0 + 1, dim.3 - dim.2 + 1),
+                                None => (1, 1),
+                            };
                             let (grid_width, grid_height) =
-                                match grid_bounds.lock().unwrap().as_ref() {
-                                    Some(dim) => (dim.1 - dim.0, dim.3 - dim.2),
-                                    None => (1, 1),
-                                };
+                                (grid_width.to_u32().unwrap(), grid_height.to_u32().unwrap());
 
                             let states = match cur_states.lock().unwrap().as_ref() {
                                 Some(val) => {
@@ -348,10 +350,18 @@ where
                                         .map(|ele| {
                                             let color = color_map.color_representation(&ele.1);
                                             let max_color = u16::MAX as f32;
+                                            let (x_min, y_min) = (
+                                                grid_bounds_clone.unwrap().0,
+                                                grid_bounds_clone.unwrap().2,
+                                            );
                                             let ele_res: ((u32, u32), ColorRGBA) = (
                                                 (
-                                                    ele.0.x.to_u32().unwrap(),
-                                                    ele.0.y.to_u32().unwrap(),
+                                                    (ele.0.x.to_i32().unwrap() - x_min)
+                                                        .to_u32()
+                                                        .unwrap(),
+                                                    (ele.0.y.to_i32().unwrap() - y_min)
+                                                        .to_u32()
+                                                        .unwrap(),
                                                 ),
                                                 ColorRGBA {
                                                     r: color.r as f32 / max_color,
@@ -421,10 +431,10 @@ where
         if needs_update {
             let new_grid_bounds = find_2d_bounds(&states_vec);
             *self.grid_bounds.lock().unwrap() = Some((
-                new_grid_bounds.0.to_u32().unwrap(),
-                new_grid_bounds.1.to_u32().unwrap(),
-                new_grid_bounds.2.to_u32().unwrap(),
-                new_grid_bounds.3.to_u32().unwrap(),
+                new_grid_bounds.0.to_i32().unwrap(),
+                new_grid_bounds.1.to_i32().unwrap(),
+                new_grid_bounds.2.to_i32().unwrap(),
+                new_grid_bounds.3.to_i32().unwrap(),
             ));
         }
         *self.cur_states.lock().unwrap() = Some(states_vec);
