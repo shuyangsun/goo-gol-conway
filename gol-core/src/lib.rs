@@ -18,7 +18,8 @@ pub use board_states::predefined as predefined_states;
 pub use board_states::sparse::SparseStates;
 pub use board_states::sparse_binary::SparseBinaryStates;
 pub use callback::{
-    delay::Delay, keyboard_control::KeyboardControl, pause::Pause, terminate::Terminate,
+    delay::Delay, keyboard_control::KeyboardControl, model_binary_states::BinaryStatesCallback,
+    model_states::StatesCallback, pause::Pause, terminate::Terminate,
 };
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
