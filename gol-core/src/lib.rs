@@ -25,6 +25,7 @@ pub use cell::state::ConwayState;
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_conway::ConwayStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
-pub use neighbors::grid_donut::NeighborsGridDonut;
-pub use neighbors::grid_surround::NeighborsGridSurround;
+pub use neighbors::{
+    grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,
+};
 pub use space::grid::{Grid, GridFactory, GridOrigin};

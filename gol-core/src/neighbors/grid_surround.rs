@@ -1,5 +1,7 @@
 use super::util::{MarginPrimInt, PointPrimInt};
-use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
+use crate::{
+    BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND, NeighborMoore,
+};
 use itertools::izip;
 use std::convert::TryFrom;
 
@@ -175,7 +177,7 @@ where
     U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint3D<U>) -> std::vec::IntoIter<GridPoint3D<U>> {
-        let (one_t, one_u) = (T::one(), U::one());
+        let one_t = T::one();
         let (x_left, x_right) = self.margins.first().unwrap();
         let (mut y_left, mut y_right) = self.margins.first().unwrap();
         let (z_left, z_right) = self.margins.last().unwrap();
@@ -189,35 +191,7 @@ where
             && (self.should_repeat_margin
                 || y_left == one_t && y_right == one_t && z_left == &one_t && z_right == &one_t)
         {
-            return vec![
-                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x - one_u, idx.y, idx.z - one_u),
-                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x, idx.y - one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x, idx.y, idx.z - one_u),
-                GridPoint3D::new(idx.x, idx.y + one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y, idx.z - one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z - one_u),
-                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z),
-                GridPoint3D::new(idx.x - one_u, idx.y, idx.z),
-                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z),
-                GridPoint3D::new(idx.x, idx.y - one_u, idx.z),
-                GridPoint3D::new(idx.x, idx.y + one_u, idx.z),
-                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z),
-                GridPoint3D::new(idx.x + one_u, idx.y, idx.z),
-                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z),
-                GridPoint3D::new(idx.x - one_u, idx.y - one_u, idx.z + one_u),
-                GridPoint3D::new(idx.x - one_u, idx.y, idx.z + one_u),
-                GridPoint3D::new(idx.x - one_u, idx.y + one_u, idx.z + one_u),
-                GridPoint3D::new(idx.x, idx.y - one_u, idx.z + one_u),
-                GridPoint3D::new(idx.x, idx.y, idx.z + one_u),
-                GridPoint3D::new(idx.x, idx.y + one_u, idx.z + one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y - one_u, idx.z + one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y, idx.z + one_u),
-                GridPoint3D::new(idx.x + one_u, idx.y + one_u, idx.z + one_u),
-            ]
-            .into_iter();
+            return NeighborMoore::new().get_neighbors_idx(idx);
         }
         let x_left_u = match U::try_from(*x_left) {
             Ok(val) => val,
@@ -258,24 +232,14 @@ where
     U: PointPrimInt + TryFrom<T>,
 {
     fn get_neighbors_idx(&self, idx: &GridPoint2D<U>) -> std::vec::IntoIter<GridPoint2D<U>> {
-        let (one_t, one_u) = (T::one(), U::one());
+        let one_t = T::one();
         let (x_left, x_right) = self.margins.first().unwrap();
         let (y_left, y_right) = self.margins.last().unwrap();
         if x_left == &one_t
             && x_right == &one_t
             && (self.should_repeat_margin || y_left == &one_t && y_right == &one_t)
         {
-            return vec![
-                GridPoint2D::new(idx.x - one_u, idx.y - one_u),
-                GridPoint2D::new(idx.x - one_u, idx.y),
-                GridPoint2D::new(idx.x - one_u, idx.y + one_u),
-                GridPoint2D::new(idx.x, idx.y - one_u),
-                GridPoint2D::new(idx.x, idx.y + one_u),
-                GridPoint2D::new(idx.x + one_u, idx.y - one_u),
-                GridPoint2D::new(idx.x + one_u, idx.y),
-                GridPoint2D::new(idx.x + one_u, idx.y + one_u),
-            ]
-            .into_iter();
+            return NeighborMoore::new().get_neighbors_idx(idx);
         }
         let x_left_u = match U::try_from(*x_left) {
             Ok(val) => val,
@@ -311,11 +275,7 @@ where
         let (one_t, one_u) = (T::one(), U::one());
         let (left, right) = self.margins.first().unwrap();
         if left == &one_t && right == &one_t {
-            return vec![
-                GridPoint1D::new(idx.x - one_u),
-                GridPoint1D::new(idx.x + one_u),
-            ]
-            .into_iter();
+            return NeighborMoore::new().get_neighbors_idx(idx);
         }
         let left = match U::try_from(*left) {
             Ok(val) => val,

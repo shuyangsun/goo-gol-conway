@@ -2,7 +2,7 @@ use crate::neighbors::util::{MarginPrimInt, PointPrimInt};
 use crate::{
     Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint1D,
-    GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned, NeighborsGridDonut,
+    GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned, NeighborMoore, NeighborsGridDonut,
     NeighborsGridSurround, SharedStrategyManager, SparseBinaryStates, SparseStates,
 };
 use num_traits::{CheckedDiv, FromPrimitive, PrimInt, Unsigned};
@@ -327,8 +327,17 @@ impl StandardBoardFactory {
             Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
                 as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
         } else {
-            Box::new(NeighborsGridSurround::new(neighbor_margin))
-                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+            if neighbor_margin == S::one() {
+                Box::new(NeighborMoore::new())
+            } else {
+                Box::new(NeighborsGridSurround::new(neighbor_margin))
+                    as Box<
+                        dyn BoardNeighborManager<
+                            GridPoint2D<U>,
+                            std::vec::IntoIter<GridPoint2D<U>>,
+                        >,
+                    >
+            }
         };
         let state_manager = SparseStates::new(default_state, initial_states);
         let strategy_manger = SharedStrategyManager::new(strategy);
@@ -376,8 +385,17 @@ impl StandardBoardFactory {
             Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
                 as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
         } else {
-            Box::new(NeighborsGridSurround::new(neighbor_margin))
-                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+            if neighbor_margin == S::one() {
+                Box::new(NeighborMoore::new())
+            } else {
+                Box::new(NeighborsGridSurround::new(neighbor_margin))
+                    as Box<
+                        dyn BoardNeighborManager<
+                            GridPoint2D<U>,
+                            std::vec::IntoIter<GridPoint2D<U>>,
+                        >,
+                    >
+            }
         };
         let state_manager =
             SparseBinaryStates::new(default_state, non_default_state, non_default_indices);
