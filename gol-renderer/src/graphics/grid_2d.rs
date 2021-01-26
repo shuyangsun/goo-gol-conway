@@ -28,6 +28,7 @@ use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
+    platform::unix::EventLoopExtUnix,
 };
 
 pub struct GraphicalRendererGrid2D<M, CI, T> {
@@ -54,7 +55,7 @@ where
         let color_map = self.color_map.clone();
 
         std::thread::spawn(move || {
-            let event_loop = winit::event_loop::EventLoop::new_any_thread();
+            let event_loop = EventLoopExtUnix::new_any_thread();
             let desired_aspect_ratio = 1.0;
 
             let (logical_window_size, physical_window_size) =
