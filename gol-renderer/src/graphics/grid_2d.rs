@@ -335,7 +335,17 @@ where
 
                             command_buffer.bind_graphics_pipeline(pipeline);
 
-                            let grid_bounds_clone = grid_bounds.lock().unwrap().clone();
+                            let mut grid_bounds_clone = Some((0, 1, 0, 1));
+                            loop {
+                                match grid_bounds.try_lock() {
+                                    Ok(val) => {
+                                        grid_bounds_clone = val.clone();
+                                        break;
+                                    }
+                                    Err(_) => continue,
+                                };
+                            }
+
                             let (grid_width, grid_height) = match grid_bounds_clone {
                                 Some(dim) => (dim.1 - dim.0 + 1, dim.3 - dim.2 + 1),
                                 None => (1, 1),
@@ -343,7 +353,18 @@ where
                             let (grid_width, grid_height) =
                                 (grid_width.to_u32().unwrap(), grid_height.to_u32().unwrap());
 
-                            let states = match cur_states.lock().unwrap().as_ref() {
+                            let mut states_unlocked = Some(Vec::new());
+                            loop {
+                                match cur_states.try_lock() {
+                                    Ok(val) => {
+                                        states_unlocked = val.clone();
+                                        break;
+                                    }
+                                    Err(_) => continue,
+                                };
+                            }
+
+                            let states = match states_unlocked {
                                 Some(val) => {
                                     let res: Vec<((u32, u32), ColorRGBA)> = val
                                         .par_iter()
