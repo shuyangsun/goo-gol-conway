@@ -2,6 +2,7 @@ use gol_core::{
     self, Board, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard, StandardBoardFactory,
 };
 
+use gol_renderer::{DefaultColorMap, GraphicalRendererGrid2D};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -24,6 +25,28 @@ pub fn run_demo(
     let (mut callbacks, keyboard_control) =
         gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
     let original_callback_size = callbacks.len();
+
+    let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
+        DefaultColorMap::new(),
+        String::from(title),
+        keyboard_control.get_receiver(),
+    );
+    match graphical_renderer {
+        Ok(val) => {
+            let graphical_renderer = Box::new(val)
+                as Box<
+                    dyn gol_core::BoardCallback<
+                        ConwayState,
+                        GridPoint2D<i32>,
+                        rayon::vec::IntoIter<
+                            gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>,
+                        >,
+                    >,
+                >;
+            callbacks.push(graphical_renderer);
+        }
+        Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
+    };
 
     #[cfg(feature = "ascii")]
     {
