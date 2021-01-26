@@ -16,24 +16,14 @@ pub fn run_demo(
     is_board_donut: bool,
     alive_ratio: f64,
 ) {
-    #[cfg(not(any(feature = "ascii")))]
-    eprintln!(
-        "Attempting to render \"{}\" when there was no render engine specified at compile-time.",
-        title
-    );
-
     let strategy = Box::new(ConwayStrategy::new());
 
     let one_billion_nano_sec: f64 = 1_000_000_000f64;
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
 
-    #[cfg(not(any(feature = "ascii")))]
-    let (callbacks, _) =
-        gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
-
-    #[cfg(feature = "ascii")]
     let (mut callbacks, keyboard_control) =
         gol_core::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
+    let original_callback_size = callbacks.len();
 
     #[cfg(feature = "ascii")]
     {
@@ -53,7 +43,6 @@ pub fn run_demo(
         callbacks.push(text_renderer);
     }
 
-    #[cfg(not(any(feature = "ascii")))]
     let win_size = (width.unwrap_or(200usize), height.unwrap_or(50));
 
     #[cfg(feature = "ascii")]
@@ -72,6 +61,11 @@ pub fn run_demo(
     } else {
         gen_random_initial_positions(win_size, alive_ratio)
     };
+
+    if callbacks.len() <= original_callback_size {
+        eprintln!("No callback available, terminating program.");
+        std::process::exit(0);
+    }
 
     let mut board: StandardBoard<
         ConwayState,
