@@ -34,29 +34,6 @@ pub fn run_demo(
     let binary_states_callback = BoardCallback::WithStates(Box::new(binary_states_callback));
     callbacks.push(binary_states_callback);
 
-    let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
-        DefaultColorMap::new(),
-        String::from(title),
-        keyboard_control.get_receiver(),
-    );
-    match graphical_renderer {
-        Ok(val) => {
-            let graphical_renderer = BoardCallback::WithStates(Box::new(val)
-                as Box<
-                    dyn gol_core::BoardCallbackWithStates<
-                        ConwayState,
-                        GridPoint2D<i32>,
-                        rayon::vec::IntoIter<
-                            gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>,
-                        >,
-                    >,
-                >);
-            // TODO: uncomment to test graphical renderer.
-            // callbacks.push(graphical_renderer);
-        }
-        Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
-    };
-
     let win_size = (width.unwrap_or(200usize), height.unwrap_or(50));
 
     #[cfg(feature = "ascii")]
@@ -113,6 +90,22 @@ pub fn run_demo(
         );
         text_renderer.run();
     }
+
+    let mut graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
+        win_size.0,
+        win_size.1,
+        DefaultColorMap::new(),
+        states_read_only.clone(),
+        String::from(title),
+        keyboard_control.get_receiver(),
+    );
+
+    match graphical_renderer {
+        Ok(mut val) => {
+            val.run();
+        }
+        Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
+    };
 }
 
 fn gen_random_initial_positions(

@@ -1,4 +1,4 @@
-use crate::ColorMapping;
+use crate::{util::grid_util::Size2D, ColorMapping};
 use gfx_hal::{
     adapter::PhysicalDevice,
     command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
@@ -16,11 +16,12 @@ use gfx_hal::{
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
-use gol_core::{BoardCallbackWithStates, GridPoint2D, IndexedDataOwned};
+use gol_core::{BinaryStatesReadOnly, GridPoint2D};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use shaderc::ShaderKind;
 use std::borrow::Borrow;
+use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast::{error::TryRecvError, Receiver};
@@ -30,29 +31,84 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-pub struct GraphicalRendererGrid2D<M, CI, T> {
+pub struct GraphicalRendererGrid2D<M, CI, T>
+where
+    CI: Hash,
+{
     title: String,
-    iter: usize,
-    grid_bounds: Arc<Mutex<Option<(i32, i32, i32, i32)>>>,
+    cur_iter: Arc<Mutex<Option<usize>>>,
+    board_size: Size2D,
     rx: Option<Receiver<char>>,
     color_map: M,
-    cur_states: Arc<Mutex<Option<Vec<IndexedDataOwned<CI, T>>>>>,
+    states_read_only: BinaryStatesReadOnly<CI, T>,
 }
 
-impl<T, U, I, M> BoardCallbackWithStates<T, GridPoint2D<U>, I>
-    for GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
+impl<T, U, M> GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
 where
     T: 'static + Send + Sync + Clone,
-    U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive,
-    I: ParallelIterator<Item = IndexedDataOwned<GridPoint2D<U>, T>>,
+    U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
     M: 'static + Send + Sync + Clone + ColorMapping<T>,
 {
-    fn setup(&mut self) {
+    pub fn new(
+        board_width: usize,
+        board_height: usize,
+        color_map: M,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+    ) -> Result<Self, UnsupportedBackend> {
+        Self::new_with_title(
+            board_width,
+            board_height,
+            color_map,
+            states,
+            String::from(""),
+        )
+    }
+
+    pub fn new_with_title(
+        board_width: usize,
+        board_height: usize,
+        color_map: M,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+        title: String,
+    ) -> Result<Self, UnsupportedBackend> {
+        let _ = backend::Instance::create("", 0)?;
+        Ok(Self {
+            title,
+            cur_iter: Arc::new(Mutex::new(None)),
+            board_size: Size2D::new(board_width, board_height),
+            rx: None,
+            color_map,
+            states_read_only: states,
+        })
+    }
+
+    pub fn new_with_title_and_ch_receiver(
+        board_width: usize,
+        board_height: usize,
+        color_map: M,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+        title: String,
+        receiver: Receiver<char>,
+    ) -> Result<Self, UnsupportedBackend> {
+        let _ = backend::Instance::create("", 0)?;
+        Ok(Self {
+            title,
+            cur_iter: Arc::new(Mutex::new(None)),
+            board_size: Size2D::new(board_width, board_height),
+            rx: Some(receiver),
+            color_map,
+            states_read_only: states,
+        })
+    }
+
+    pub fn run(&mut self) {
         let event_loop = EventLoop::new();
-        let grid_bounds = Arc::clone(&self.grid_bounds);
-        let cur_states = Arc::clone(&self.cur_states);
         let title = self.title.clone();
         let color_map = self.color_map.clone();
+
+        let board_size = self.board_size.clone();
+        let states_read_only = self.states_read_only.clone();
+        let cur_iter = Arc::clone(&self.cur_iter);
 
         let desired_aspect_ratio = 1.0;
 
@@ -326,72 +382,59 @@ where
 
                         command_buffer.bind_graphics_pipeline(pipeline);
 
-                        let mut grid_bounds_clone = Some((0, 1, 0, 1));
-                        loop {
-                            match grid_bounds.try_lock() {
-                                Ok(val) => {
-                                    grid_bounds_clone = val.clone();
-                                    break;
-                                }
-                                Err(_) => continue,
-                            };
-                        }
-
-                        let (grid_width, grid_height) = match grid_bounds_clone {
-                            Some(dim) => (dim.1 - dim.0 + 1, dim.3 - dim.2 + 1),
-                            None => (1, 1),
-                        };
                         let (grid_width, grid_height) =
-                            (grid_width.to_u32().unwrap(), grid_height.to_u32().unwrap());
+                            (board_size.width() as u32, board_size.height() as u32);
 
-                        let mut states_unlocked = Some(Vec::new());
+                        let mut constants = Vec::new();
+                        let mut cur_iter_unlocked = cur_iter.lock().unwrap();
                         loop {
-                            match cur_states.try_lock() {
+                            match states_read_only.try_read() {
                                 Ok(val) => {
-                                    states_unlocked = val.clone();
-                                    break;
+                                    if cur_iter_unlocked.is_none()
+                                        || cur_iter_unlocked.unwrap() != val.0
+                                    {
+                                        let res: Vec<((u32, u32), ColorRGBA)> = val
+                                            .1
+                                            .par_iter()
+                                            .map(|ele| {
+                                                let color = color_map.color_representation(
+                                                    &states_read_only.non_trivial_state(),
+                                                );
+                                                let max_color = u16::MAX as f32;
+                                                let (x_min, y_min) = (
+                                                    board_size.x_idx_min() as i32,
+                                                    board_size.y_idx_min() as i32,
+                                                );
+                                                let ele_res: ((u32, u32), ColorRGBA) = (
+                                                    (
+                                                        (ele.x.to_i32().unwrap() - x_min)
+                                                            .to_u32()
+                                                            .unwrap(),
+                                                        (ele.y.to_i32().unwrap() - y_min)
+                                                            .to_u32()
+                                                            .unwrap(),
+                                                    ),
+                                                    ColorRGBA {
+                                                        r: color.r as f32 / max_color,
+                                                        g: color.g as f32 / max_color,
+                                                        b: color.b as f32 / max_color,
+                                                        a: color.a as f32 / max_color,
+                                                    },
+                                                );
+                                                ele_res
+                                            })
+                                            .collect::<Vec<((u32, u32), ColorRGBA)>>();
+                                        constants = res;
+                                        *cur_iter_unlocked = Some(val.0);
+                                        break;
+                                    }
                                 }
                                 Err(_) => continue,
-                            };
-                        }
-
-                        let states = match states_unlocked {
-                            Some(val) => {
-                                let res: Vec<((u32, u32), ColorRGBA)> = val
-                                    .par_iter()
-                                    .map(|ele| {
-                                        let color = color_map.color_representation(&ele.1);
-                                        let max_color = u16::MAX as f32;
-                                        let (x_min, y_min) = (
-                                            grid_bounds_clone.unwrap().0,
-                                            grid_bounds_clone.unwrap().2,
-                                        );
-                                        let ele_res: ((u32, u32), ColorRGBA) = (
-                                            (
-                                                (ele.0.x.to_i32().unwrap() - x_min)
-                                                    .to_u32()
-                                                    .unwrap(),
-                                                (ele.0.y.to_i32().unwrap() - y_min)
-                                                    .to_u32()
-                                                    .unwrap(),
-                                            ),
-                                            ColorRGBA {
-                                                r: color.r as f32 / max_color,
-                                                g: color.g as f32 / max_color,
-                                                b: color.b as f32 / max_color,
-                                                a: color.a as f32 / max_color,
-                                            },
-                                        );
-                                        ele_res
-                                    })
-                                    .collect::<Vec<((u32, u32), ColorRGBA)>>();
-                                res
                             }
-                            None => Vec::new(),
-                        };
+                        }
 
                         let squares =
-                            create_squares(&surface_extent, grid_width, grid_height, states);
+                            create_squares(&surface_extent, grid_width, grid_height, constants);
                         for square in squares.as_slice() {
                             // This encodes the actual push constants themselves
                             // into the command buffer. The vertex shader will be
@@ -434,56 +477,6 @@ where
                 _ => (),
             }
         });
-    }
-
-    fn execute(&mut self, states: I) {
-        let states_vec = states.collect();
-        let needs_update = self.grid_bounds.lock().unwrap().is_none();
-        if needs_update {
-            // TODO: use screen size.
-            let new_grid_bounds = (0, 0, 0, 0);
-            *self.grid_bounds.lock().unwrap() = Some((
-                new_grid_bounds.0.to_i32().unwrap(),
-                new_grid_bounds.1.to_i32().unwrap(),
-                new_grid_bounds.2.to_i32().unwrap(),
-                new_grid_bounds.3.to_i32().unwrap(),
-            ));
-        }
-        *self.cur_states.lock().unwrap() = Some(states_vec);
-    }
-}
-
-impl<M, CI, T> GraphicalRendererGrid2D<M, CI, T> {
-    pub fn new(color_map: M) -> Result<Self, UnsupportedBackend> {
-        Self::new_with_title(color_map, String::from(""))
-    }
-
-    pub fn new_with_title(color_map: M, title: String) -> Result<Self, UnsupportedBackend> {
-        let _ = backend::Instance::create("", 0)?;
-        Ok(Self {
-            title,
-            iter: 0,
-            grid_bounds: Arc::new(Mutex::new(None)),
-            rx: None,
-            color_map,
-            cur_states: Arc::new(Mutex::new(None)),
-        })
-    }
-
-    pub fn new_with_title_and_ch_receiver(
-        color_map: M,
-        title: String,
-        receiver: Receiver<char>,
-    ) -> Result<Self, UnsupportedBackend> {
-        let _ = backend::Instance::create("", 0)?;
-        Ok(Self {
-            title,
-            iter: 0,
-            grid_bounds: Arc::new(Mutex::new(None)),
-            rx: Some(receiver),
-            color_map,
-            cur_states: Arc::new(Mutex::new(None)),
-        })
     }
 }
 

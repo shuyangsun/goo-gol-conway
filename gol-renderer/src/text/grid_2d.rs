@@ -25,7 +25,7 @@ pub struct TextRendererGrid2D<S, M> {
     char_map: M,
 }
 
-impl<T, U, M> TextRendererGrid2D<BinaryStatesReadOnly<T, GridPoint2D<U>>, M>
+impl<T, U, M> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
 where
     U: Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U> + Clone,
     M: CharMapping<T>,
@@ -34,7 +34,7 @@ where
         board_width: usize,
         board_height: usize,
         char_map: M,
-        states: BinaryStatesReadOnly<T, GridPoint2D<U>>,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Self {
         Self::new_with_title(
             board_width,
@@ -49,7 +49,7 @@ where
         board_width: usize,
         board_height: usize,
         char_map: M,
-        states: BinaryStatesReadOnly<T, GridPoint2D<U>>,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
         title: String,
     ) -> Self {
         Self {
@@ -70,7 +70,7 @@ where
         board_width: usize,
         board_height: usize,
         char_map: M,
-        states: BinaryStatesReadOnly<T, GridPoint2D<U>>,
+        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
         title: String,
         sender: Sender<char>,
         receiver: Receiver<char>,
@@ -223,8 +223,6 @@ where
                         wrefresh(win);
                         self.cur_iter = Some(val.0);
                         break;
-                    } else {
-                        continue;
                     }
                 }
                 Err(_) => continue,

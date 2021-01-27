@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::sync::{Arc, RwLock, RwLockReadGuard, TryLockResult};
 
-pub struct BinaryStatesReadOnly<T, CI>
+pub struct BinaryStatesReadOnly<CI, T>
 where
     CI: Hash,
 {
@@ -14,7 +14,7 @@ where
     non_trivial_indices: ReadOnlyLock<(usize, HashSet<CI>)>,
 }
 
-impl<T, CI> Clone for BinaryStatesReadOnly<T, CI>
+impl<CI, T> Clone for BinaryStatesReadOnly<CI, T>
 where
     CI: Hash,
     T: Clone,
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<T, CI> BinaryStatesReadOnly<T, CI>
+impl<CI, T> BinaryStatesReadOnly<CI, T>
 where
     CI: Hash,
 {
@@ -57,7 +57,7 @@ where
     }
 }
 
-pub struct BinaryStatesCallback<T, CI>
+pub struct BinaryStatesCallback<CI, T>
 where
     CI: Hash,
 {
@@ -66,7 +66,7 @@ where
     non_trivial_indices: Arc<RwLock<(usize, HashSet<CI>)>>,
 }
 
-impl<T, CI> BinaryStatesCallback<T, CI>
+impl<CI, T> BinaryStatesCallback<CI, T>
 where
     CI: Hash,
 {
@@ -92,7 +92,7 @@ where
         *indices_unlocked = (iter_count, indices);
     }
 
-    pub fn clone_read_only(&self) -> BinaryStatesReadOnly<T, CI>
+    pub fn clone_read_only(&self) -> BinaryStatesReadOnly<CI, T>
     where
         T: Clone,
     {
@@ -104,7 +104,7 @@ where
     }
 }
 
-impl<T, CI, I> BoardCallbackWithStates<T, CI, I> for BinaryStatesCallback<T, CI>
+impl<T, CI, I> BoardCallbackWithStates<T, CI, I> for BinaryStatesCallback<CI, T>
 where
     T: Send + Sync + Clone + Eq,
     CI: Send + Sync + Clone + Eq + Hash,

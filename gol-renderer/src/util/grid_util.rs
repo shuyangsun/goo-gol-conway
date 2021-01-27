@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Size2D {
     width: usize,
     height: usize,
@@ -33,6 +34,7 @@ impl Size2D {
     }
 }
 
+#[derive(Clone)]
 pub struct Size3D {
     width: usize,
     height: usize,

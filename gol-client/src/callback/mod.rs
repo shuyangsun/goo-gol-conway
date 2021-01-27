@@ -1,6 +1,6 @@
-pub mod delay;
-pub mod pause;
-pub mod terminate;
+mod delay;
+mod pause;
+mod terminate;
 
 pub fn standard_control_callbacks<T, U, I>(
     delay_interval: std::time::Duration,

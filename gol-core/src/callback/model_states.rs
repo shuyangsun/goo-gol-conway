@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::{Arc, RwLock, RwLockReadGuard, TryLockResult};
 
-pub struct StatesReadOnly<T, CI>
+pub struct StatesReadOnly<CI, T>
 where
     CI: Hash,
 {
@@ -13,7 +13,7 @@ where
     lookup: ReadOnlyLock<(usize, HashMap<CI, T>)>,
 }
 
-impl<T, CI> Clone for StatesReadOnly<T, CI>
+impl<CI, T> Clone for StatesReadOnly<CI, T>
 where
     CI: Hash,
     T: Clone,
@@ -23,7 +23,7 @@ where
     }
 }
 
-impl<T, CI> StatesReadOnly<T, CI>
+impl<CI, T> StatesReadOnly<CI, T>
 where
     CI: Hash,
 {
@@ -43,7 +43,7 @@ where
     }
 }
 
-pub struct StatesCallback<T, CI>
+pub struct StatesCallback<CI, T>
 where
     CI: Hash,
 {
@@ -51,7 +51,7 @@ where
     non_trivial_lookup: Arc<RwLock<(usize, HashMap<CI, T>)>>,
 }
 
-impl<T, CI> StatesCallback<T, CI>
+impl<CI, T> StatesCallback<CI, T>
 where
     CI: Hash,
 {
@@ -75,7 +75,7 @@ where
         *lookup_unlocked = (iter_count, lookup);
     }
 
-    pub fn clone_read_only(&self) -> StatesReadOnly<T, CI>
+    pub fn clone_read_only(&self) -> StatesReadOnly<CI, T>
     where
         T: Clone,
     {
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl<T, CI, I> BoardCallbackWithStates<T, CI, I> for StatesCallback<T, CI>
+impl<T, CI, I> BoardCallbackWithStates<T, CI, I> for StatesCallback<CI, T>
 where
     T: Send + Sync + Clone + Eq,
     CI: Send + Sync + Clone + Eq + Hash,
