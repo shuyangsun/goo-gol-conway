@@ -280,6 +280,57 @@ where
                     let pipeline_layout = &res.pipeline_layouts[0];
                     let pipeline = &res.pipelines[0];
 
+                    let (grid_width, grid_height) =
+                        (board_size.width() as u32, board_size.height() as u32);
+
+                    let mut constants = Vec::new();
+                    let mut cur_iter_unlocked = cur_iter.lock().unwrap();
+                    let non_trivial_state = states_read_only.non_trivial_state();
+                    loop {
+                        match states_read_only.try_read() {
+                            Ok(val) => {
+                                if cur_iter_unlocked.is_none()
+                                    || cur_iter_unlocked.unwrap() != val.0
+                                {
+                                    let res: Vec<((u32, u32), ColorRGBA)> = val
+                                        .1
+                                        .par_iter()
+                                        .map(|ele| {
+                                            let color =
+                                                color_map.color_representation(&non_trivial_state);
+                                            let max_color = u16::MAX as f32;
+                                            let (x_min, y_min) = (
+                                                board_size.x_idx_min() as i32,
+                                                board_size.y_idx_min() as i32,
+                                            );
+                                            let ele_res: ((u32, u32), ColorRGBA) = (
+                                                (
+                                                    (ele.x.to_i32().unwrap() - x_min)
+                                                        .to_u32()
+                                                        .unwrap(),
+                                                    (ele.y.to_i32().unwrap() - y_min)
+                                                        .to_u32()
+                                                        .unwrap(),
+                                                ),
+                                                ColorRGBA {
+                                                    r: color.r as f32 / max_color,
+                                                    g: color.g as f32 / max_color,
+                                                    b: color.b as f32 / max_color,
+                                                    a: color.a as f32 / max_color,
+                                                },
+                                            );
+                                            ele_res
+                                        })
+                                        .collect::<Vec<((u32, u32), ColorRGBA)>>();
+                                    constants = res;
+                                    *cur_iter_unlocked = Some(val.0);
+                                    break;
+                                }
+                            }
+                            Err(_) => continue,
+                        }
+                    }
+
                     unsafe {
                         // We refuse to wait more than a second, to avoid hanging.
                         let render_timeout_ns = 1_000_000_000;
@@ -381,57 +432,6 @@ where
                         );
 
                         command_buffer.bind_graphics_pipeline(pipeline);
-
-                        let (grid_width, grid_height) =
-                            (board_size.width() as u32, board_size.height() as u32);
-
-                        let mut constants = Vec::new();
-                        let mut cur_iter_unlocked = cur_iter.lock().unwrap();
-                        let non_trivial_state = states_read_only.non_trivial_state();
-                        loop {
-                            match states_read_only.try_read() {
-                                Ok(val) => {
-                                    if cur_iter_unlocked.is_none()
-                                        || cur_iter_unlocked.unwrap() != val.0
-                                    {
-                                        let res: Vec<((u32, u32), ColorRGBA)> = val
-                                            .1
-                                            .par_iter()
-                                            .map(|ele| {
-                                                let color = color_map
-                                                    .color_representation(&non_trivial_state);
-                                                let max_color = u16::MAX as f32;
-                                                let (x_min, y_min) = (
-                                                    board_size.x_idx_min() as i32,
-                                                    board_size.y_idx_min() as i32,
-                                                );
-                                                let ele_res: ((u32, u32), ColorRGBA) = (
-                                                    (
-                                                        (ele.x.to_i32().unwrap() - x_min)
-                                                            .to_u32()
-                                                            .unwrap(),
-                                                        (ele.y.to_i32().unwrap() - y_min)
-                                                            .to_u32()
-                                                            .unwrap(),
-                                                    ),
-                                                    ColorRGBA {
-                                                        r: color.r as f32 / max_color,
-                                                        g: color.g as f32 / max_color,
-                                                        b: color.b as f32 / max_color,
-                                                        a: color.a as f32 / max_color,
-                                                    },
-                                                );
-                                                ele_res
-                                            })
-                                            .collect::<Vec<((u32, u32), ColorRGBA)>>();
-                                        constants = res;
-                                        *cur_iter_unlocked = Some(val.0);
-                                        break;
-                                    }
-                                }
-                                Err(_) => continue,
-                            }
-                        }
 
                         let squares =
                             create_squares(&surface_extent, grid_width, grid_height, constants);
