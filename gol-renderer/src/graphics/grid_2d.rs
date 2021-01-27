@@ -18,7 +18,6 @@ use gfx_hal::{
 };
 use gol_core::{BinaryStatesReadOnly, GridPoint2D};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
-use rayon::prelude::*;
 use shaderc::ShaderKind;
 use std::borrow::Borrow;
 use std::hash::Hash;
@@ -294,7 +293,7 @@ where
                                 {
                                     let res: Vec<((u32, u32), ColorRGBA)> = val
                                         .1
-                                        .par_iter()
+                                        .iter()
                                         .map(|ele| {
                                             let color =
                                                 color_map.color_representation(&non_trivial_state);
