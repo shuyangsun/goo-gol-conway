@@ -88,7 +88,9 @@ pub fn run_demo(
             keyboard_control.get_sender(),
             keyboard_control.get_receiver(),
         );
-        text_renderer.run();
+        std::thread::spawn(move || {
+            text_renderer.run();
+        });
     }
 
     let mut graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
