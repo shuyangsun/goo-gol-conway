@@ -3,7 +3,45 @@ use crate::{BoardCallbackWithStates, IndexedDataOwned};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard, TryLockResult};
+
+pub struct StatesReadOnly<T, CI>
+where
+    CI: Hash,
+{
+    trivial_state: T,
+    lookup: ReadOnlyLock<(usize, HashMap<CI, T>)>,
+}
+
+impl<T, CI> Clone for StatesReadOnly<T, CI>
+where
+    CI: Hash,
+    T: Clone,
+{
+    fn clone(&self) -> Self {
+        Self::new(self.trivial_state.clone(), self.lookup.clone())
+    }
+}
+
+impl<T, CI> StatesReadOnly<T, CI>
+where
+    CI: Hash,
+{
+    pub fn new(trivial_state: T, lock: ReadOnlyLock<(usize, HashMap<CI, T>)>) -> Self {
+        Self {
+            trivial_state,
+            lookup: lock,
+        }
+    }
+
+    pub fn trivial_state(&self) -> &T {
+        &self.trivial_state
+    }
+
+    pub fn try_read(&self) -> TryLockResult<RwLockReadGuard<(usize, HashMap<CI, T>)>> {
+        self.lookup.try_read()
+    }
+}
 
 pub struct StatesCallback<T, CI>
 where
@@ -37,8 +75,14 @@ where
         *lookup_unlocked = (iter_count, lookup);
     }
 
-    pub fn read_only_lock(&self) -> ReadOnlyLock<(usize, HashMap<CI, T>)> {
-        ReadOnlyLock::new(Arc::clone(&self.non_trivial_lookup))
+    pub fn clone_read_only(&self) -> StatesReadOnly<T, CI>
+    where
+        T: Clone,
+    {
+        StatesReadOnly::new(
+            self.trivial_state.clone(),
+            ReadOnlyLock::new(Arc::clone(&self.non_trivial_lookup)),
+        )
     }
 }
 

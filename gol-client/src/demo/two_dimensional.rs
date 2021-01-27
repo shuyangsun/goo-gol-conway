@@ -1,6 +1,6 @@
 use gol_core::{
-    self, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D, StandardBoard,
-    StandardBoardFactory,
+    self, BinaryStatesCallback, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D,
+    StandardBoard, StandardBoardFactory,
 };
 
 use gol_renderer::{DefaultColorMap, GraphicalRendererGrid2D};
@@ -25,7 +25,14 @@ pub fn run_demo(
 
     let (mut callbacks, keyboard_control) =
         crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
-    let original_callback_size = callbacks.len();
+    let binary_states_callback = BinaryStatesCallback::new_with_non_trivial_indices(
+        ConwayState::Dead,
+        ConwayState::Alive,
+        initial_states.clone(),
+    );
+    let states_read_only = binary_states_callback.clone_read_only();
+    let binary_states_callback = BoardCallback::WithStates(Box::new(binary_states_callback));
+    callbacks.push(binary_states_callback);
 
     let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
         DefaultColorMap::new(),
@@ -50,26 +57,6 @@ pub fn run_demo(
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };
 
-    #[cfg(feature = "ascii")]
-    {
-        use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
-        let text_renderer = BoardCallback::WithStates(Box::new(
-            TextRendererGrid2D::new_with_title_and_ch_receiver(
-                DefaultCharMap::new(),
-                String::from(title),
-                keyboard_control.get_receiver(),
-            ),
-        )
-            as Box<
-                dyn gol_core::BoardCallbackWithStates<
-                    ConwayState,
-                    GridPoint2D<i32>,
-                    rayon::vec::IntoIter<gol_core::IndexedDataOwned<GridPoint2D<i32>, ConwayState>>,
-                >,
-            >);
-        callbacks.push(text_renderer);
-    }
-
     let win_size = (width.unwrap_or(200usize), height.unwrap_or(50));
 
     #[cfg(feature = "ascii")]
@@ -88,11 +75,6 @@ pub fn run_demo(
     } else {
         gen_random_initial_positions(win_size, alive_ratio)
     };
-
-    if callbacks.len() <= original_callback_size {
-        eprintln!("No callback available, terminating program.");
-        std::process::exit(0);
-    }
 
     let mut board: StandardBoard<
         ConwayState,
@@ -113,7 +95,24 @@ pub fn run_demo(
         is_board_donut,
     );
 
-    board.advance(Some(max_iter));
+    std::thread::spawn(move || {
+        board.advance(Some(max_iter));
+    });
+
+    #[cfg(feature = "ascii")]
+    {
+        use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
+        let mut text_renderer = TextRendererGrid2D::new_with_title_and_ch_txrx(
+            win_size.0,
+            win_size.1,
+            DefaultCharMap::new(),
+            states_read_only.clone(),
+            String::from(title),
+            keyboard_control.get_sender(),
+            keyboard_control.get_receiver(),
+        );
+        text_renderer.run();
+    }
 }
 
 fn gen_random_initial_positions(

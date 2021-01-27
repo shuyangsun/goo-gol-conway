@@ -25,6 +25,10 @@ impl KeyboardControl {
         Self { tx }
     }
 
+    pub fn get_sender(&self) -> Sender<char> {
+        self.tx.clone()
+    }
+
     pub fn get_receiver(&self) -> Receiver<char> {
         self.tx.subscribe()
     }

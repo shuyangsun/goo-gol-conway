@@ -9,7 +9,13 @@ impl<T> ReadOnlyLock<T> {
         Self { value }
     }
 
-    pub fn try_get_value(&self) -> TryLockResult<RwLockReadGuard<T>> {
+    pub fn try_read(&self) -> TryLockResult<RwLockReadGuard<T>> {
         self.value.try_read()
+    }
+}
+
+impl<T> Clone for ReadOnlyLock<T> {
+    fn clone(&self) -> Self {
+        Self::new(Arc::clone(&self.value))
     }
 }

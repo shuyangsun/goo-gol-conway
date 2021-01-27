@@ -1,4 +1,4 @@
-use crate::{util::grid_util::find_2d_bounds, ColorMapping};
+use crate::ColorMapping;
 use gfx_hal::{
     adapter::PhysicalDevice,
     command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
@@ -440,7 +440,8 @@ where
         let states_vec = states.collect();
         let needs_update = self.grid_bounds.lock().unwrap().is_none();
         if needs_update {
-            let new_grid_bounds = find_2d_bounds(&states_vec);
+            // TODO: use screen size.
+            let new_grid_bounds = (0, 0, 0, 0);
             *self.grid_bounds.lock().unwrap() = Some((
                 new_grid_bounds.0.to_i32().unwrap(),
                 new_grid_bounds.1.to_i32().unwrap(),
