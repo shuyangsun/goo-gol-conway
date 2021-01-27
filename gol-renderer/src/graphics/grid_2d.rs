@@ -387,6 +387,7 @@ where
 
                         let mut constants = Vec::new();
                         let mut cur_iter_unlocked = cur_iter.lock().unwrap();
+                        let non_trivial_state = states_read_only.non_trivial_state();
                         loop {
                             match states_read_only.try_read() {
                                 Ok(val) => {
@@ -397,9 +398,8 @@ where
                                             .1
                                             .par_iter()
                                             .map(|ele| {
-                                                let color = color_map.color_representation(
-                                                    &states_read_only.non_trivial_state(),
-                                                );
+                                                let color = color_map
+                                                    .color_representation(&non_trivial_state);
                                                 let max_color = u16::MAX as f32;
                                                 let (x_min, y_min) = (
                                                     board_size.x_idx_min() as i32,
