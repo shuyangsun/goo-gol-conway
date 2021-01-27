@@ -95,7 +95,7 @@ pub fn run_demo(
         }));
     }
 
-    let mut graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
+    let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
         win_size.0,
         win_size.1,
         DefaultColorMap::new(),

@@ -1,5 +1,5 @@
 use super::util::PointPrimInt;
-use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
+use crate::{BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D};
 
 pub struct NeighborMoore {}
 

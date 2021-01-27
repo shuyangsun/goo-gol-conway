@@ -5,7 +5,7 @@ pub mod cell;
 pub mod evolution;
 pub mod neighbors;
 pub mod space;
-mod util;
+pub mod util;
 
 pub use board::board::Board;
 pub use board::board_callback::{
@@ -31,5 +31,6 @@ pub use evolution::strategy_conway::ConwayStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
     grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,
+    moore_donut::NeighborMooreDonut,
 };
 pub use space::grid::{Grid, GridFactory, GridOrigin};

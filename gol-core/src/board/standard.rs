@@ -1,9 +1,10 @@
 use crate::neighbors::util::{MarginPrimInt, PointPrimInt};
 use crate::{
-    Board, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
-    BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint1D,
-    GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned, NeighborMoore, NeighborsGridDonut,
-    NeighborsGridSurround, SharedStrategyManager, SparseBinaryStates, SparseStates,
+    util::grid_util::Size2D, Board, BoardCallback, BoardCallbackManager, BoardNeighborManager,
+    BoardSpaceManager, BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid,
+    GridFactory, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned,
+    NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
+    SharedStrategyManager, SparseBinaryStates, SparseStates,
 };
 use num_traits::{CheckedDiv, FromPrimitive, PrimInt, Unsigned};
 use rayon;
@@ -309,11 +310,24 @@ impl StandardBoardFactory {
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let shape = vec![shape.0, shape.1];
+        let (width, height) = shape;
+        let shape = vec![width, height];
         let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
         let neighbor_manager = if is_donut {
-            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
-                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+            if neighbor_margin == S::one() {
+                Box::new(NeighborMooreDonut::new(Size2D::new(
+                    width.to_usize().unwrap(),
+                    height.to_usize().unwrap(),
+                )))
+            } else {
+                Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                    as Box<
+                        dyn BoardNeighborManager<
+                            GridPoint2D<U>,
+                            std::vec::IntoIter<GridPoint2D<U>>,
+                        >,
+                    >
+            }
         } else {
             if neighbor_margin == S::one() {
                 Box::new(NeighborMoore::new())
@@ -365,11 +379,24 @@ impl StandardBoardFactory {
         U: 'static + Hash + PrimInt + CheckedDiv + std::convert::TryFrom<S> + PointPrimInt,
         S: 'static + Unsigned + FromPrimitive + MarginPrimInt,
     {
-        let shape = vec![shape.0, shape.1];
+        let (width, height) = shape;
+        let shape = vec![width, height];
         let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
         let neighbor_manager = if is_donut {
-            Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
-                as Box<dyn BoardNeighborManager<GridPoint2D<U>, std::vec::IntoIter<GridPoint2D<U>>>>
+            if neighbor_margin == S::one() {
+                Box::new(NeighborMooreDonut::new(Size2D::new(
+                    width.to_usize().unwrap(),
+                    height.to_usize().unwrap(),
+                )))
+            } else {
+                Box::new(NeighborsGridDonut::new(neighbor_margin, shape.into_iter()))
+                    as Box<
+                        dyn BoardNeighborManager<
+                            GridPoint2D<U>,
+                            std::vec::IntoIter<GridPoint2D<U>>,
+                        >,
+                    >
+            }
         } else {
             if neighbor_margin == S::one() {
                 Box::new(NeighborMoore::new())

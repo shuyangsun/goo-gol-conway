@@ -1,4 +1,27 @@
 #[derive(Clone)]
+pub struct Size1D {
+    width: usize,
+}
+
+impl Size1D {
+    pub fn new(width: usize) -> Self {
+        Self { width }
+    }
+
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn x_idx_min(&self) -> i64 {
+        dim_idx_min(self.width())
+    }
+
+    pub fn x_idx_max(&self) -> i64 {
+        dim_idx_max(self.width())
+    }
+}
+
+#[derive(Clone)]
 pub struct Size2D {
     width: usize,
     height: usize,

@@ -1,4 +1,4 @@
-use crate::{util::grid_util::Size2D, ColorMapping};
+use crate::ColorMapping;
 use gfx_hal::{
     adapter::PhysicalDevice,
     command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
@@ -16,7 +16,7 @@ use gfx_hal::{
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
-use gol_core::{BinaryStatesReadOnly, GridPoint2D};
+use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use shaderc::ShaderKind;

@@ -1,5 +1,4 @@
 pub mod state_visual;
-mod util;
 
 pub mod graphics;
 #[cfg(feature = "ascii")]

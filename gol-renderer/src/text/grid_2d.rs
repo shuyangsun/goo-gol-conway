@@ -1,7 +1,7 @@
 extern crate ncurses;
 
-use crate::{util::grid_util::Size2D, CharMapping};
-use gol_core::{BinaryStatesReadOnly, GridPoint2D};
+use crate::CharMapping;
+use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
 use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
