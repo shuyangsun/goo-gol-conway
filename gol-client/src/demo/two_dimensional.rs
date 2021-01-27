@@ -106,6 +106,7 @@ pub fn run_demo(
 
     match graphical_renderer {
         Ok(mut val) => {
+            val.set_cell_scale(0.95);
             val.run();
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),

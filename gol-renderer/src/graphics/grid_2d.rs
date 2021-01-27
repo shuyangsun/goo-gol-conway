@@ -42,6 +42,7 @@ where
     rx: Option<Receiver<char>>,
     color_map: M,
     states_read_only: BinaryStatesReadOnly<CI, T>,
+    cell_scale: f32,
 }
 
 impl<T, U, M> GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
@@ -80,6 +81,7 @@ where
             rx: None,
             color_map,
             states_read_only: states,
+            cell_scale: 1.0,
         })
     }
 
@@ -99,7 +101,12 @@ where
             rx: Some(receiver),
             color_map,
             states_read_only: states,
+            cell_scale: 1.0,
         })
+    }
+
+    pub fn set_cell_scale(&mut self, scale: f32) {
+        self.cell_scale = scale;
     }
 
     pub fn run(&mut self) {
@@ -110,6 +117,7 @@ where
         let board_size = self.board_size.clone();
         let states_read_only = self.states_read_only.clone();
         let cur_iter = Arc::clone(&self.cur_iter);
+        let cell_scale = self.cell_scale;
 
         let desired_aspect_ratio = 1.0;
 
@@ -427,8 +435,13 @@ where
 
                         command_buffer.bind_graphics_pipeline(pipeline);
 
-                        let squares =
-                            create_squares(&surface_extent, grid_width, grid_height, constants);
+                        let squares = create_squares(
+                            &surface_extent,
+                            grid_width,
+                            grid_height,
+                            constants,
+                            cell_scale,
+                        );
                         for square in squares.as_slice() {
                             // This encodes the actual push constants themselves
                             // into the command buffer. The vertex shader will be
@@ -543,7 +556,9 @@ fn create_squares(
     grid_width: u32,
     grid_height: u32,
     states: Vec<((u32, u32), ColorRGBA)>,
+    scale: f32,
 ) -> Vec<PushConstants> {
+    assert!(scale >= 0.0 && scale <= 1.0);
     let (mut left_padding, mut top_padding) = (0.0, 0.0);
     let (square_width, square_height) = (
         surface_extent.width as f32 / grid_width as f32,
@@ -566,10 +581,12 @@ fn create_squares(
         res.push(PushConstants {
             color: [color.r, color.g, color.b, color.a],
             pos: [
-                -1.0 + left_padding + idx.0 as f32 * scale_x,
-                -1.0 + top_padding + (grid_height - idx.1 - 1) as f32 * scale_y,
+                -1.0 + left_padding + idx.0 as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x,
+                -1.0 + top_padding
+                    + (grid_height - idx.1 - 1) as f32 * scale_y
+                    + (1.0 - scale) / 2.0 * scale_y,
             ],
-            scale: [scale_x, scale_y],
+            scale: [scale_x * scale, scale_y * scale],
         });
     }
     res
