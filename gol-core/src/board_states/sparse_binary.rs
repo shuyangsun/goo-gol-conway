@@ -45,6 +45,15 @@ where
             .map(|ele| ele.0.clone())
             .collect();
     }
+
+    fn get_non_trivial_states(&self) -> Result<rayon::vec::IntoIter<IndexedDataOwned<CI, T>>, ()> {
+        let res: Vec<IndexedDataOwned<CI, T>> = self
+            .non_default_indices
+            .par_iter()
+            .map(|ele| (ele.clone(), self.non_default_state.clone()))
+            .collect();
+        Ok(res.into_par_iter())
+    }
 }
 
 #[cfg(test)]
