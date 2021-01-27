@@ -9,4 +9,8 @@ where
 {
     fn get_cell_state(&self, idx: &CI) -> T;
     fn update_cell_states_from_par_iter(&mut self, new_states: I);
+
+    fn get_non_trivial_states(&self) -> Result<I, ()> {
+        Err(())
+    }
 }

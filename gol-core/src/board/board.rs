@@ -32,11 +32,14 @@ where
     fn advance(&mut self, max_iter: Option<usize>) {
         let mut cur_iter = 0usize;
         let state_manager = self.state_manager();
-        let cur_states = self
-            .space_manager()
-            .indices_par_iter()
-            .map(|idx| (idx.clone(), state_manager.get_cell_state(&idx)))
-            .collect();
+        let cur_states = match self.state_manager().get_non_trivial_states() {
+            Ok(non_trivial) => non_trivial.collect(),
+            Err(_) => self
+                .space_manager()
+                .indices_par_iter()
+                .map(|idx| (idx.clone(), state_manager.get_cell_state(&idx)))
+                .collect(),
+        };
 
         self.callback_manager().setup_all();
         self.callback_manager().call(cur_states);
@@ -64,25 +67,46 @@ where
         let strat = self.strategy_manager();
         let neighbor_manager = self.neighbor_manager();
 
-        let next_states: Vec<IndexedDataOwned<CI, T>> = self
-            .space_manager()
-            .indices_par_iter()
-            .map(|idx| {
-                let cur_state = states.get_cell_state(&idx.clone());
-                let neighbors: Vec<IndexedDataOwned<CI, T>> = neighbor_manager
-                    .get_neighbors_idx(&idx)
-                    .map(|neighbor_idx| (idx.clone(), states.get_cell_state(&neighbor_idx)))
-                    .collect();
-                (
-                    idx.clone(),
-                    strat.get_strategy_at_index(idx.clone()).next_state(
-                        idx,
-                        cur_state,
-                        neighbors.into_iter(),
-                    ),
-                )
-            })
-            .collect();
+        let next_states: Vec<IndexedDataOwned<CI, T>> = match self
+            .state_manager()
+            .get_non_trivial_states()
+        {
+            Ok(non_trivial) => non_trivial
+                .map(|ele| {
+                    let neighbors: Vec<IndexedDataOwned<CI, T>> = neighbor_manager
+                        .get_neighbors_idx(&ele.0)
+                        .map(|neighbor_idx| (ele.0.clone(), states.get_cell_state(&neighbor_idx)))
+                        .collect();
+                    (
+                        ele.0.clone(),
+                        strat.get_strategy_at_index(ele.0.clone()).next_state(
+                            ele.0,
+                            ele.1,
+                            neighbors.into_iter(),
+                        ),
+                    )
+                })
+                .collect(),
+            Err(_) => self
+                .space_manager()
+                .indices_par_iter()
+                .map(|idx| {
+                    let cur_state = states.get_cell_state(&idx.clone());
+                    let neighbors: Vec<IndexedDataOwned<CI, T>> = neighbor_manager
+                        .get_neighbors_idx(&idx)
+                        .map(|neighbor_idx| (idx.clone(), states.get_cell_state(&neighbor_idx)))
+                        .collect();
+                    (
+                        idx.clone(),
+                        strat.get_strategy_at_index(idx.clone()).next_state(
+                            idx,
+                            cur_state,
+                            neighbors.into_iter(),
+                        ),
+                    )
+                })
+                .collect(),
+        };
 
         self.state_manager_mut()
             .update_cell_states_from_par_iter(next_states.clone().into_par_iter());
