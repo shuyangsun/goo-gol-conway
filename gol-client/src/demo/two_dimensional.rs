@@ -76,6 +76,8 @@ pub fn run_demo(
         board.advance(Some(max_iter));
     });
 
+    let mut handle: Option<std::thread::JoinHandle<()>> = None;
+
     #[cfg(feature = "ascii")]
     {
         use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
@@ -88,9 +90,9 @@ pub fn run_demo(
             keyboard_control.get_sender(),
             keyboard_control.get_receiver(),
         );
-        std::thread::spawn(move || {
+        handle = Some(std::thread::spawn(move || {
             text_renderer.run();
-        });
+        }));
     }
 
     let mut graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
@@ -104,10 +106,15 @@ pub fn run_demo(
 
     match graphical_renderer {
         Ok(mut val) => {
-            val.run();
+            // val.run();
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };
+
+    match handle {
+        Some(val) => val.join().unwrap(),
+        None => (),
+    }
 }
 
 fn gen_random_initial_positions(
