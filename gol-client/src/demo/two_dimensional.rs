@@ -106,7 +106,7 @@ pub fn run_demo(
 
     match graphical_renderer {
         Ok(mut val) => {
-            // val.run();
+            val.run();
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };
