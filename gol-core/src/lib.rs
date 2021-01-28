@@ -4,6 +4,7 @@ pub mod callback;
 pub mod cell;
 pub mod evolution;
 pub mod neighbors;
+pub mod persistence;
 pub mod space;
 pub mod util;
 
