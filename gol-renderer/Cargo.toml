@@ -32,7 +32,7 @@ version = "=0.6.5"
 package = "gfx-backend-dx12"
 version = "=0.6.13"
 
-[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies.backend]
+[target.'cfg(all(unix, not(target_os = "macos"), not(target_os = "$ARCH-pc-windows-gnu")))'.dependencies.backend]
 package = "gfx-backend-vulkan"
 features = ["x11"]
 version = "=0.6.5"
