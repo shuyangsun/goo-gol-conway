@@ -1,41 +1,39 @@
 {
-    "config": {
-        "title": "Tetris",
-        "max_iter": null,
-        "delay": 1.0,
-        "pause_at_start": true,
-        "visual": {
-            "on": true,
-            "type": "graphical"
+    "title": "Tetris",
+    "max_iter": null,
+    "delay": 1.0,
+    "pause_at_start": true,
+    "save": null,
+    "visual": {
+        "on": true,
+        "kind": ["Graphical"]
+    },
+    "neighbor_rule": {
+        "type": "Moore",
+        "margin": 1
+    },
+    "state": {
+        "type": "UInt",
+        "count": 2
+    },
+    "evolution_rule": {
+        "type": "AliveCount",
+        "survive": [2, 3],
+        "born": [3]
+    },
+    "board": {
+        "type": "Grid2D",
+        "shape": {
+            "width": 100,
+            "height": 100
         },
-        "board": {
-            "type": "grid_square_2d",
-            "shape": {
-                "width": 100,
-                "height": 100
-            },
-            "neighbor_rule": {
-                "type": "moore",
-                "margin": 1
-            },
-            "state": {
-                "type": "int",
-                "count": 2
-            },
-            "evolution_rule": {
-                "type": "alive_count",
-                "survive": "2,3",
-                "born": "3"
-            },
-            "initial_states": {
-                "1": [
-                    {"x": 0, "y": 0},
-                    {"x": 0, "y": 1},
-                    {"x": -1, "y": 0},
-                    {"x": 1, "y": 0}
-                ]
-            },
-            "save": null
+        "initial_states": {
+            "1": [
+                {"x": 0, "y": 0},
+                {"x": 0, "y": 1},
+                {"x": -1, "y": 0},
+                {"x": 1, "y": 0}
+            ]
         }
     }
 }

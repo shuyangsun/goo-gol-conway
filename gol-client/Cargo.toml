@@ -18,6 +18,8 @@ rayon = "1.5.0"
 clap = "2.33.3"
 ncurses = { version = "5.100.0", optional = true }
 tokio = { version = "1.0.2", features = ["sync"] }
+serde = { version = "1.0.123", features = ["derive"] }
+serde_json = "1.0.61"
 # gol-core = "0.4.0"
 gol-core = { path = "../gol-core" }
 # gol-renderer = "0.3.0"
