@@ -10,12 +10,6 @@ where
     val: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ConwayState {
-    Alive,
-    Dead,
-}
-
 impl<T, const N: usize> DiscreteState<T, N>
 where
     T: PrimInt + Unsigned,
