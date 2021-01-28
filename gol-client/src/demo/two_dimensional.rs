@@ -95,19 +95,16 @@ pub fn run_demo(
         }));
     }
 
-    let graphical_renderer = GraphicalRendererGrid2D::new_with_title_and_ch_receiver(
+    let graphical_renderer = GraphicalRendererGrid2D::new(
         win_size.0,
         win_size.1,
         DefaultColorMap::new(),
         states_read_only.clone(),
-        String::from(title),
-        keyboard_control.get_receiver(),
     );
 
     match graphical_renderer {
-        Ok(mut val) => {
-            val.set_cell_scale(0.95);
-            val.run();
+        Ok(val) => {
+            val.with_title(String::from(title)).run();
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };

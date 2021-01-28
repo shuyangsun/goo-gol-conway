@@ -25,7 +25,7 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
-use tokio::sync::broadcast::{error::TryRecvError, Receiver};
+use tokio::sync::broadcast::{error::TryRecvError, Receiver, Sender};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{Event, WindowEvent},
@@ -39,7 +39,7 @@ where
     title: String,
     cur_iter: Arc<Mutex<Option<usize>>>,
     board_size: Size2D,
-    rx: Option<Receiver<char>>,
+    ch_channel: Option<(Sender<char>, Receiver<char>)>,
     color_map: M,
     states_read_only: BinaryStatesReadOnly<CI, T>,
     cell_scale: f32,
@@ -55,58 +55,42 @@ where
         board_width: usize,
         board_height: usize,
         color_map: M,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+        states_storage: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Result<Self, UnsupportedBackend> {
-        Self::new_with_title(
-            board_width,
-            board_height,
-            color_map,
-            states,
-            String::from(""),
-        )
-    }
-
-    pub fn new_with_title(
-        board_width: usize,
-        board_height: usize,
-        color_map: M,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
-        title: String,
-    ) -> Result<Self, UnsupportedBackend> {
-        let _ = backend::Instance::create("", 0)?;
         Ok(Self {
-            title,
+            title: String::from(""),
             cur_iter: Arc::new(Mutex::new(None)),
             board_size: Size2D::new(board_width, board_height),
-            rx: None,
+            ch_channel: None,
             color_map,
-            states_read_only: states,
-            cell_scale: 1.0,
+            states_read_only: states_storage,
+            cell_scale: 0.95,
         })
     }
 
-    pub fn new_with_title_and_ch_receiver(
-        board_width: usize,
-        board_height: usize,
-        color_map: M,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
-        title: String,
-        receiver: Receiver<char>,
-    ) -> Result<Self, UnsupportedBackend> {
-        let _ = backend::Instance::create("", 0)?;
-        Ok(Self {
-            title,
-            cur_iter: Arc::new(Mutex::new(None)),
-            board_size: Size2D::new(board_width, board_height),
-            rx: Some(receiver),
-            color_map,
-            states_read_only: states,
-            cell_scale: 1.0,
-        })
+    pub fn with_title(self, title: String) -> Self {
+        let mut res = self;
+        res.title = title;
+        res
     }
 
-    pub fn set_cell_scale(&mut self, scale: f32) {
-        self.cell_scale = scale;
+    pub fn with_color_map(self, cmap: M) -> Self {
+        let mut res = self;
+        res.color_map = cmap;
+        res
+    }
+
+    pub fn with_cell_render_scale(self, scale: f32) -> Self {
+        let mut res = self;
+        res.cell_scale = scale;
+        res
+    }
+
+    pub fn with_ch_channel(self, sender: Sender<char>) -> Self {
+        let receiver = sender.subscribe();
+        let mut res = self;
+        res.ch_channel = Some((sender, receiver));
+        res
     }
 
     pub fn run(&mut self) {
