@@ -1,4 +1,4 @@
-use crate::{util::grid_util::Size2D, GridPoint2D};
+use crate::{util::grid_util::Size2D, Board, GridPoint2D};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -69,6 +69,7 @@ pub struct CellularAutomatonConfig {
     max_iter: Option<usize>,
     delay: f64,
     pause_at_start: bool,
+    enable_contro: bool,
     save: Option<String>,
     visual: VisualConfig,
     neighbor_rule: NeighborRuleConfig,
@@ -76,3 +77,5 @@ pub struct CellularAutomatonConfig {
     evolution_rule: EvolutionRuleConfig,
     board: BoardConfig,
 }
+
+impl CellularAutomatonConfig {}
