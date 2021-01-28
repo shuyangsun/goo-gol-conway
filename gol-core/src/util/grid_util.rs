@@ -1,4 +1,6 @@
-#[derive(Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Size1D {
     width: usize,
 }
@@ -21,7 +23,7 @@ impl Size1D {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Size2D {
     width: usize,
     height: usize,
@@ -57,7 +59,7 @@ impl Size2D {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Size3D {
     width: usize,
     height: usize,

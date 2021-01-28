@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 pub trait ToGridPointND<T>
@@ -7,18 +8,18 @@ where
     fn to_nd(&self) -> GridPointND<T>;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GridPoint1D<T> {
     pub x: T,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GridPoint2D<T> {
     pub x: T,
     pub y: T,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GridPoint3D<T> {
     pub x: T,
     pub y: T,

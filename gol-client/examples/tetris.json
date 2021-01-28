@@ -4,6 +4,10 @@
         "max_iter": null,
         "delay": 1.0,
         "pause_at_start": true,
+        "visual": {
+            "on": true,
+            "type": "graphical"
+        },
         "board": {
             "type": "grid_square_2d",
             "shape": {
@@ -23,12 +27,14 @@
                 "survive": "2,3",
                 "born": "3"
             },
-            "initial_states": [
-                {"x": 0, "y": 0},
-                {"x": 0, "y": 1},
-                {"x": -1, "y": 0},
-                {"x": 1, "y": 0}
-            ],
+            "initial_states": {
+                "1": [
+                    {"x": 0, "y": 0},
+                    {"x": 0, "y": 1},
+                    {"x": -1, "y": 0},
+                    {"x": 1, "y": 0}
+                ]
+            },
             "save": null
         }
     }

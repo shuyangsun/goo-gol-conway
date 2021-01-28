@@ -1,4 +1,6 @@
-use crate::{CellState, EvolutionStrategy, IndexedDataOwned};
+#![feature(min_const_generics)]
+
+use crate::{DiscreteState, EvolutionStrategy, IndexedDataOwned};
 use num_traits::{FromPrimitive, PrimInt, Unsigned};
 use std::collections::HashSet;
 
@@ -8,12 +10,18 @@ pub struct NeighborCountStrategy {
     newborn_counts: HashSet<usize>,
 }
 
-impl<CI, T, I> EvolutionStrategy<CI, CellState<T>, I> for NeighborCountStrategy
+impl<CI, T, I, const N: usize> EvolutionStrategy<CI, DiscreteState<T, N>, I>
+    for NeighborCountStrategy
 where
     T: PrimInt + Unsigned + FromPrimitive + std::ops::Sub<Output = T>,
-    I: Iterator<Item = IndexedDataOwned<CI, CellState<T>>>,
+    I: Iterator<Item = IndexedDataOwned<CI, DiscreteState<T, N>>>,
 {
-    fn next_state(&self, _: CI, cur_state: CellState<T>, neighbors: I) -> CellState<T> {
+    fn next_state(
+        &self,
+        _: CI,
+        cur_state: DiscreteState<T, N>,
+        neighbors: I,
+    ) -> DiscreteState<T, N> {
         let mut alive_count = 0;
         for (_, state) in neighbors {
             alive_count += if state.val() <= &T::zero() { 0 } else { 1 };
@@ -21,9 +29,9 @@ where
 
         let is_alive = cur_state.val() > &T::zero();
         if is_alive && !self.alive_surive_counts.contains(&alive_count) {
-            CellState::new(*cur_state.val() - T::one())
+            cur_state.decay()
         } else if !is_alive && self.newborn_counts.contains(&alive_count) {
-            CellState::new(T::from_usize(self.num_states - 1).unwrap())
+            DiscreteState::new()
         } else {
             cur_state
         }
