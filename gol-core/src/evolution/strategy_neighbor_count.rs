@@ -5,7 +5,6 @@ use num_traits::{FromPrimitive, PrimInt, Unsigned};
 use std::collections::HashSet;
 
 pub struct NeighborCountStrategy {
-    num_states: usize,
     alive_surive_counts: HashSet<usize>,
     newborn_counts: HashSet<usize>,
 }
@@ -39,13 +38,8 @@ where
 }
 
 impl NeighborCountStrategy {
-    pub fn new(
-        num_states: usize,
-        alive_surive_counts: HashSet<usize>,
-        newborn_counts: HashSet<usize>,
-    ) -> Self {
+    pub fn new(alive_surive_counts: HashSet<usize>, newborn_counts: HashSet<usize>) -> Self {
         Self {
-            num_states,
             alive_surive_counts,
             newborn_counts,
         }
