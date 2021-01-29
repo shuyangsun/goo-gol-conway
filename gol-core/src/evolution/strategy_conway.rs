@@ -8,20 +8,22 @@ pub struct ConwayStrategy {}
 impl<T, CI, I, const N: usize> EvolutionStrategy<CI, DiscreteState<T, N>, I> for ConwayStrategy
 where
     T: PrimInt + Unsigned,
-    I: Iterator<Item = IndexedDataOwned<CI, ConwayState>>,
+    I: Iterator<Item = IndexedDataOwned<CI, DiscreteState<T, N>>>,
 {
-    fn next_state(&self, _: CI, cur_state: ConwayState, neighbors: I) -> ConwayState {
+    fn next_state(
+        &self,
+        _: CI,
+        cur_state: DiscreteState<T, N>,
+        neighbors: I,
+    ) -> DiscreteState<T, N> {
         let mut alive_count = 0;
         for (_, state) in neighbors {
-            alive_count += match state {
-                ConwayState::Alive => 1,
-                ConwayState::Dead => 0,
-            };
+            alive_count += if state.val() > &T::zero() { 1 } else { 0 };
         }
-        if alive_count == 3 || alive_count == 2 && cur_state == ConwayState::Alive {
-            ConwayState::Alive
+        if alive_count == 3 || alive_count == 2 && cur_state.val() > &T::zero() {
+            cur_state
         } else {
-            ConwayState::Dead
+            cur_state.decay()
         }
     }
 }
@@ -34,11 +36,16 @@ impl ConwayStrategy {
 
 #[cfg(test)]
 mod conway_strategy_test {
-    use crate::{ConwayState, ConwayStrategy, EvolutionStrategy};
+    use crate::{ConwayStrategy, DiscreteState, EvolutionStrategy};
 
-    fn create_neighbors(alive_count: usize) -> Vec<ConwayState> {
-        let mut res = vec![ConwayState::Alive; alive_count];
-        res.append(&mut vec![ConwayState::Dead; 8 - alive_count]);
+    fn create_neighbors(alive_count: usize) -> Vec<DiscreteState<u8, 2>> {
+        let mut res = vec![DiscreteState::<u8, 2>::new(); alive_count];
+        res.append(
+            &mut vec![DiscreteState::new(); 8 - alive_count]
+                .iter()
+                .map(|ele| ele.decay())
+                .collect(),
+        );
         res
     }
 
@@ -47,7 +54,7 @@ mod conway_strategy_test {
         let strat = ConwayStrategy::new();
         let neighbors = create_neighbors(0);
         let neighbors_iter = neighbors.into_iter().enumerate();
-        let alive_next = strat.next_state(0, ConwayState::Alive, neighbors_iter);
-        assert_eq!(alive_next, ConwayState::Dead);
+        let alive_next = strat.next_state(0, DiscreteState::new(), neighbors_iter);
+        assert_eq!(alive_next, DiscreteState::new().decay());
     }
 }

@@ -1,5 +1,5 @@
 use gol_core::{
-    self, BinaryStatesCallback, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D,
+    self, BinaryStatesCallback, Board, BoardCallback, ConwayStrategy, DiscreteState, GridPoint2D,
     StandardBoard, StandardBoardFactory,
 };
 
@@ -26,8 +26,8 @@ pub fn run_demo(
     let (mut callbacks, keyboard_control) =
         crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
     let binary_states_callback = BinaryStatesCallback::new_with_non_trivial_indices(
-        ConwayState::Dead,
-        ConwayState::Alive,
+        DiscreteState::new().decay(),
+        DiscreteState::new(),
         initial_states.clone(),
     );
     let states_read_only = binary_states_callback.clone_read_only();
@@ -54,13 +54,13 @@ pub fn run_demo(
     };
 
     let mut board: StandardBoard<
-        ConwayState,
+        DiscreteState<u8, 2>,
         GridPoint2D<i32>,
         std::vec::IntoIter<GridPoint2D<i32>>,
     > = StandardBoardFactory::new_binary_2d_grid(
         win_size,
-        ConwayState::Dead,
-        ConwayState::Alive,
+        DiscreteState::new().decay(),
+        DiscreteState::new(),
         1,
         if initial_states.is_empty() {
             &random_init_state
