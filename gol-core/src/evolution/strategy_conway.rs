@@ -1,13 +1,13 @@
 #![feature(min_const_generics)]
 
 use crate::{DiscreteState, EvolutionStrategy, IndexedDataOwned};
-use num_traits::{PrimInt, Unsigned};
+use num_traits::{FromPrimitive, PrimInt, Unsigned};
 
 pub struct ConwayStrategy {}
 
 impl<T, CI, I, const N: usize> EvolutionStrategy<CI, DiscreteState<T, N>, I> for ConwayStrategy
 where
-    T: PrimInt + Unsigned,
+    T: PrimInt + Unsigned + FromPrimitive,
     I: Iterator<Item = IndexedDataOwned<CI, DiscreteState<T, N>>>,
 {
     fn next_state(
@@ -21,7 +21,7 @@ where
             alive_count += if state.val() > &T::zero() { 1 } else { 0 };
         }
         if alive_count == 3 || alive_count == 2 && cur_state.val() > &T::zero() {
-            cur_state
+            DiscreteState::new()
         } else {
             cur_state.decay()
         }
