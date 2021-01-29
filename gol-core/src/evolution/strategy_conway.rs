@@ -1,11 +1,10 @@
-use crate::{DiscreteState, EvolutionStrategy, IndexedDataOwned};
+use crate::{ConwayState, DiscreteState, EvolutionStrategy, IndexedDataOwned};
 use num_traits::{PrimInt, Unsigned};
 
 pub struct ConwayStrategy {}
 
-impl<T, CI, I, const N: u8> EvolutionStrategy<CI, DiscreteState<T, N>, I> for ConwayStrategy
+impl<CI, I> EvolutionStrategy<CI, ConwayState, I> for ConwayStrategy
 where
-    T: PrimInt + Unsigned,
     I: Iterator<Item = IndexedDataOwned<CI, ConwayState>>,
 {
     fn next_state(&self, _: CI, cur_state: ConwayState, neighbors: I) -> ConwayState {

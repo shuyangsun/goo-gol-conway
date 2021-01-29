@@ -1,14 +1,20 @@
 use num_traits::{FromPrimitive, PrimInt, Unsigned};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DiscreteState<T, const N: u8>
+pub struct DiscreteState<T, const N: usize>
 where
     T: PrimInt + Unsigned,
 {
     val: T,
 }
 
-impl<T, const N: u8> DiscreteState<T, N>
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ConwayState {
+    Alive,
+    Dead,
+}
+
+impl<T, const N: usize> DiscreteState<T, N>
 where
     T: PrimInt + Unsigned,
 {
@@ -17,7 +23,7 @@ where
         T: FromPrimitive,
     {
         Self {
-            val: T::from_u8(N - 1).unwrap(),
+            val: T::from_usize(N - 1).unwrap(),
         }
     }
 

@@ -1,10 +1,20 @@
 use super::mapping::{CharMapping, ColorMapping, DefaultCharMap, DefaultColorMap};
-use gol_core::{DiscreteState, ToPrimitive};
-use num_traits::PrimInt;
+use gol_core::ConwayState;
 use rgb::RGBA16;
 
 const DEAD_STATE_CHAR: char = ' ';
 const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const CONWAY_STATE_ALIVE_CHAR: char = '0';
+const CONWAY_STATE_DEAD_CHAR: char = ' ';
+
+impl CharMapping<ConwayState> for DefaultCharMap {
+    fn char_representation(&self, state: &ConwayState) -> char {
+        match state {
+            ConwayState::Alive => CONWAY_STATE_ALIVE_CHAR,
+            ConwayState::Dead => CONWAY_STATE_DEAD_CHAR,
+        }
+    }
+}
 
 impl<T, const N: usize> CharMapping<DiscreteState<T, N>> for DefaultCharMap
 where
@@ -20,28 +30,21 @@ where
     }
 }
 
-impl<T, const N: u8> ColorMapping<DiscreteState<T, N>> for DefaultColorMap
-where
-    T: PrimInt + ToPrimitive,
-{
-    fn color_representation(&self, state: &DiscreteState<T, N>) -> RGBA16 {
-        if state.val() <= T::zero() {
-            RGBA16 {
+impl ColorMapping<ConwayState> for DefaultColorMap {
+    fn color_representation(&self, state: &ConwayState) -> RGBA16 {
+        match state {
+            ConwayState::Alive => RGBA16 {
+                r: 0,
+                g: u16::MAX,
+                b: 0,
+                a: u16::MAX,
+            },
+            ConwayState::Dead => RGBA16 {
                 r: 0,
                 g: 0,
                 b: 0,
                 a: 0,
-            }
-        } else {
-            let ratio = state.val().to_f64().unwrap() / (N - 1) as f64;
-            let green = (u16::MAX as f64 * ratio).ceil() as u16;
-            let red = (u16::MAX as f64 * (1.0 - ratio)).floor() as u16;
-            RGBA16 {
-                r: red,
-                g: green,
-                b: 0,
-                a: green,
-            }
+            },
         }
     }
 }
