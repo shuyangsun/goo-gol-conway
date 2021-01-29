@@ -98,7 +98,7 @@ pub fn run_demo(
     let graphical_renderer = GraphicalRendererGrid2D::new(
         win_size.0,
         win_size.1,
-        DefaultColorMap::new(),
+        DefaultColorMap::new_decay_alpha(),
         states_read_only.clone(),
     );
 

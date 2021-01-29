@@ -12,7 +12,9 @@ pub trait ColorMapping<T> {
 pub struct DefaultCharMap {}
 
 #[derive(Clone)]
-pub struct DefaultColorMap {}
+pub struct DefaultColorMap {
+    should_decay_alpha: bool,
+}
 
 impl DefaultCharMap {
     pub fn new() -> Self {
@@ -22,6 +24,18 @@ impl DefaultCharMap {
 
 impl DefaultColorMap {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            should_decay_alpha: false,
+        }
+    }
+
+    pub fn new_decay_alpha() -> Self {
+        Self {
+            should_decay_alpha: true,
+        }
+    }
+
+    pub fn should_decay_alpha(&self) -> bool {
+        self.should_decay_alpha
     }
 }
