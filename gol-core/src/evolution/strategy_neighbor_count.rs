@@ -1,5 +1,3 @@
-#![feature(min_const_generics)]
-
 use crate::{DiscreteState, EvolutionStrategy, IndexedDataOwned};
 use num_traits::{FromPrimitive, PrimInt, Unsigned};
 use std::collections::HashSet;

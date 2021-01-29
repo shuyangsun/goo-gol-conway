@@ -1,5 +1,3 @@
-#![feature(min_const_generics)]
-
 use num_traits::{FromPrimitive, PrimInt, Unsigned};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

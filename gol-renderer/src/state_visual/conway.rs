@@ -1,5 +1,3 @@
-#![feature(min_const_generics)]
-
 use super::mapping::{CharMapping, ColorMapping, DefaultCharMap, DefaultColorMap};
 use gol_core::DiscreteState;
 use num_traits::{PrimInt, ToPrimitive, Unsigned};
