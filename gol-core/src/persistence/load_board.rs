@@ -69,7 +69,7 @@ pub struct CellularAutomatonConfig {
     max_iter: Option<usize>,
     delay: f64,
     pause_at_start: bool,
-    enable_contro: bool,
+    enable_control: bool,
     save: Option<String>,
     visual: VisualConfig,
     neighbor_rule: NeighborRuleConfig,
@@ -79,7 +79,7 @@ pub struct CellularAutomatonConfig {
 }
 
 impl CellularAutomatonConfig {
-    fn try_gen_discrete_state<const N: u8>(&self) -> Result<DiscreteState<u8, N>, ()> {
+    fn try_gen_discrete_state<const N: usize>(&self) -> Result<DiscreteState<usize, N>, ()> {
         match self.state {
             StateConfig::UInt { count } => {
                 if count == N as usize {

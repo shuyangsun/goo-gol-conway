@@ -1,5 +1,6 @@
 use super::mapping::{CharMapping, ColorMapping, DefaultCharMap, DefaultColorMap};
-use gol_core::ConwayState;
+use gol_core::{ConwayState, DiscreteState};
+use num_traits::{PrimInt, ToPrimitive, Unsigned};
 use rgb::RGBA16;
 
 const DEAD_STATE_CHAR: char = ' ';
@@ -18,11 +19,11 @@ impl CharMapping<ConwayState> for DefaultCharMap {
 
 impl<T, const N: usize> CharMapping<DiscreteState<T, N>> for DefaultCharMap
 where
-    T: PrimInt + ToPrimitive,
+    T: PrimInt + ToPrimitive + Unsigned,
 {
     fn char_representation(&self, state: &DiscreteState<T, N>) -> char {
         assert!(N <= 11);
-        if state.val() <= T::zero() {
+        if state.val() <= &T::zero() {
             DEAD_STATE_CHAR
         } else {
             INT_STATE_CHARS[state.val().to_usize().unwrap() - 1]
