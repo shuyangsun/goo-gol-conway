@@ -69,7 +69,7 @@ pub struct CellularAutomatonConfig {
     max_iter: Option<usize>,
     delay: f64,
     pause_at_start: bool,
-    enable_control: bool,
+    enable_contro: bool,
     save: Option<String>,
     visual: VisualConfig,
     neighbor_rule: NeighborRuleConfig,
