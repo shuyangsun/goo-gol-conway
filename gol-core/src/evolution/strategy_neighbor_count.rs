@@ -7,8 +7,7 @@ pub struct NeighborCountStrategy {
     newborn_counts: HashSet<usize>,
 }
 
-impl<CI, T, I, const N: usize> EvolutionStrategy<CI, DiscreteState<T, N>, I>
-    for NeighborCountStrategy
+impl<CI, T, I, const N: u8> EvolutionStrategy<CI, DiscreteState<T, N>, I> for NeighborCountStrategy
 where
     T: PrimInt + Unsigned + FromPrimitive + std::ops::Sub<Output = T>,
     I: Iterator<Item = IndexedDataOwned<CI, DiscreteState<T, N>>>,

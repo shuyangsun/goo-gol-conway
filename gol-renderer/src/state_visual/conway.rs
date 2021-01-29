@@ -6,7 +6,7 @@ use rgb::RGBA16;
 const DEAD_STATE_CHAR: char = ' ';
 const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-impl<T, const N: usize> CharMapping<DiscreteState<T, N>> for DefaultCharMap
+impl<T, const N: u8> CharMapping<DiscreteState<T, N>> for DefaultCharMap
 where
     T: PrimInt + Unsigned + ToPrimitive,
 {
@@ -20,7 +20,7 @@ where
     }
 }
 
-impl<T, const N: usize> ColorMapping<DiscreteState<T, N>> for DefaultColorMap
+impl<T, const N: u8> ColorMapping<DiscreteState<T, N>> for DefaultColorMap
 where
     T: PrimInt + Unsigned + ToPrimitive,
 {

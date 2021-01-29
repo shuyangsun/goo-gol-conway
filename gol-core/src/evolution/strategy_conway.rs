@@ -3,7 +3,7 @@ use num_traits::{FromPrimitive, PrimInt, Unsigned};
 
 pub struct ConwayStrategy {}
 
-impl<T, CI, I, const N: usize> EvolutionStrategy<CI, DiscreteState<T, N>, I> for ConwayStrategy
+impl<T, CI, I, const N: u8> EvolutionStrategy<CI, DiscreteState<T, N>, I> for ConwayStrategy
 where
     T: PrimInt + Unsigned + FromPrimitive,
     I: Iterator<Item = IndexedDataOwned<CI, DiscreteState<T, N>>>,
