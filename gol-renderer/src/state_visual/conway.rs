@@ -1,18 +1,18 @@
 use super::mapping::{CharMapping, ColorMapping, DefaultCharMap, DefaultColorMap};
-use gol_core::DiscreteState;
-use num_traits::{PrimInt, ToPrimitive, Unsigned};
+use gol_core::{DiscreteState, ToPrimitive};
+use num_traits::PrimInt;
 use rgb::RGBA16;
 
 const DEAD_STATE_CHAR: char = ' ';
 const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-impl<T, const N: u8> CharMapping<DiscreteState<T, N>> for DefaultCharMap
+impl<T, const N: usize> CharMapping<DiscreteState<T, N>> for DefaultCharMap
 where
-    T: PrimInt + Unsigned + ToPrimitive,
+    T: PrimInt + ToPrimitive,
 {
     fn char_representation(&self, state: &DiscreteState<T, N>) -> char {
         assert!(N <= 11);
-        if state.val() <= &T::zero() {
+        if state.val() <= T::zero() {
             DEAD_STATE_CHAR
         } else {
             INT_STATE_CHARS[state.val().to_usize().unwrap() - 1]
@@ -22,10 +22,10 @@ where
 
 impl<T, const N: u8> ColorMapping<DiscreteState<T, N>> for DefaultColorMap
 where
-    T: PrimInt + Unsigned + ToPrimitive,
+    T: PrimInt + ToPrimitive,
 {
     fn color_representation(&self, state: &DiscreteState<T, N>) -> RGBA16 {
-        if state.val() <= &T::zero() {
+        if state.val() <= T::zero() {
             RGBA16 {
                 r: 0,
                 g: 0,
