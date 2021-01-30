@@ -40,7 +40,7 @@ where
         Self {
             info,
             control: None,
-            fps_counter: FPSCounter::new(10),
+            fps_counter: FPSCounter::new(240),
             screen_size: None,
             char_map,
             states_read_only: states,
