@@ -1,4 +1,4 @@
-use crate::{
+use gol_core::{
     util::grid_util::Size2D, BinaryState, BinaryStatesReadOnly, BinaryStrategy,
     BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
     BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
