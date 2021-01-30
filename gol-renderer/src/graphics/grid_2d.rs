@@ -28,7 +28,7 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast::{error::TryRecvError, Receiver, Sender};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
-    event::{Event, WindowEvent},
+    event::{Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -271,6 +271,15 @@ where
                         };
                         should_configure_swapchain = true;
                     }
+                    WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
+                        Some(ch) => match ch {
+                            VirtualKeyCode::Q => {
+                                // TODO: implementation
+                            }
+                            _ => (),
+                        },
+                        _ => (),
+                    },
                     _ => (),
                 },
                 Event::MainEventsCleared => window.request_redraw(),
