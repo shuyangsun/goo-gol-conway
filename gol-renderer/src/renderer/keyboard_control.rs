@@ -1,12 +1,12 @@
 use std::thread;
 use tokio::sync::broadcast::{self, error::TryRecvError, Receiver, Sender};
 
-pub struct RendererKeyboardControl {
+pub struct KeyboardControl {
     sender: Sender<char>,
     receiver: Receiver<char>,
 }
 
-impl Clone for RendererKeyboardControl {
+impl Clone for KeyboardControl {
     fn clone(&self) -> Self {
         let sender = self.sender.clone();
         let receiver = sender.subscribe();
@@ -14,7 +14,7 @@ impl Clone for RendererKeyboardControl {
     }
 }
 
-impl RendererKeyboardControl {
+impl KeyboardControl {
     pub fn new() -> Self {
         let (sender, receiver) = broadcast::channel(1);
         Self { sender, receiver }

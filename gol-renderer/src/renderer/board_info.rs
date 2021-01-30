@@ -8,10 +8,10 @@ pub struct RendererBoardInfo<T> {
 }
 
 impl<T> RendererBoardInfo<T> {
-    pub fn new(board_size: T, title: String) -> Self {
+    pub fn new(board_size: T) -> Self {
         Self {
             board_size,
-            title,
+            title: String::from(""),
             cur_iter: Arc::new(Mutex::new(None)),
         }
     }
@@ -28,7 +28,7 @@ impl<T> RendererBoardInfo<T> {
         self.title = title;
     }
 
-    pub fn cur_iter(&self) -> Option<usize> {
+    pub fn iter_count(&self) -> Option<usize> {
         *self.cur_iter.lock().unwrap()
     }
 

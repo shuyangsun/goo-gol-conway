@@ -2,8 +2,7 @@ extern crate ncurses;
 
 use crate::{
     renderer::{
-        board_info::RendererBoardInfo, fps_counter::FPSCounter,
-        keyboard_control::RendererKeyboardControl,
+        board_info::RendererBoardInfo, fps_counter::FPSCounter, keyboard_control::KeyboardControl,
     },
     CellularAutomatonRenderer, CharMapping,
 };
@@ -13,17 +12,15 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
 use std::hash::Hash;
 use std::time::Instant;
-use tokio::sync::broadcast::{error::TryRecvError, Receiver, Sender};
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
 
 pub struct TextRendererGrid2D<S, M> {
-    info: RendererBoardInfo,
-    control: Option<RendererKeyboardControl>,
-    is_ready: bool,
-    screen_size: Size2D,
-    last_render_time: Option<Instant>,
+    info: RendererBoardInfo<Size2D>,
+    control: Option<KeyboardControl>,
+    fps_counter: FPSCounter,
+    screen_size: Option<Size2D>,
     states_read_only: S,
     char_map: M,
 }
@@ -43,120 +40,73 @@ where
         Self {
             info,
             control: None,
-            is_ready: false,
+            fps_counter: FPSCounter::new(10),
+            screen_size: None,
             char_map,
             states_read_only: states,
         }
     }
 
-    pub fn new_with_title(
-        board_width: usize,
-        board_height: usize,
-        char_map: M,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
-        title: String,
-    ) -> Self {
-        Self {
-            title,
-            cur_iter: None,
-            is_ready: false,
-            screen_size: Size2D::new(0, 0),
-            board_size: Size2D::new(board_width, board_height),
-            tx: None,
-            rx: None,
-            last_render_time: None,
-            states_read_only: states,
-            char_map,
-        }
+    pub fn with_title(self, title: String) -> Self {
+        let mut res = self;
+        res.info.set_title(title);
+        res
     }
 
-    pub fn new_with_title_and_ch_txrx(
-        board_width: usize,
-        board_height: usize,
-        char_map: M,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
-        title: String,
-        sender: Sender<char>,
-        receiver: Receiver<char>,
-    ) -> Self {
-        Self {
-            title,
-            cur_iter: None,
-            is_ready: false,
-            screen_size: Size2D::new(0, 0),
-            board_size: Size2D::new(board_width, board_height),
-            tx: Some(sender),
-            rx: Some(receiver),
-            last_render_time: None,
-            states_read_only: states,
-            char_map,
-        }
+    pub fn with_keyboard_control(self, control: KeyboardControl) -> Self {
+        let mut res = self;
+        control.start_monitoring(move || char::from_u32(getch() as u32).unwrap());
+        res.control = Some(control);
+        res
     }
 
     fn check_user_input(&mut self, should_block: bool) {
-        if self.rx.is_some() {
+        if self.control.is_some() {
             loop {
-                match self.rx.as_mut().unwrap().try_recv() {
-                    Ok(val) => {
+                match self.control.as_mut().unwrap().try_receive() {
+                    Some(val) => {
                         self.execute_user_input(val);
                         break;
                     }
-                    Err(err) => match err {
-                        TryRecvError::Empty => {
-                            if should_block {
-                                continue;
-                            } else {
-                                break;
-                            }
-                        }
-                        TryRecvError::Closed => panic!("Error getting user input: {}", err),
-                        TryRecvError::Lagged(_) => continue,
-                    },
+                    None => continue,
                 }
             }
         }
     }
 
     fn execute_user_input(&mut self, ch: char) {
-        // TODO: implement rewind
         if ch == 'q' {
             self.cleanup();
         }
     }
 
     fn cleanup(&mut self) {
-        if self.is_ready {
+        if self.screen_size.is_some() {
             curs_set(CURSOR_VISIBILITY::CURSOR_VISIBLE);
             endwin();
         }
-        self.is_ready = false;
+        self.screen_size = None;
     }
 
     fn print_generation_and_speed(&self) {
         mv(GENERATION_ROW, 0);
         clrtoeol();
-        let fps = match self.last_render_time {
-            Some(val) => {
-                let time_diff = Instant::now() - val;
-                1.0 / time_diff.as_secs_f64()
-            }
-            None => 0.0,
-        };
+        let fps = self.fps_counter.fps();
         let iter_msg = format!(
             "Generation: {}, FPS: {:6.2}",
-            self.cur_iter.unwrap_or_default(),
+            self.info.iter_count().unwrap_or_default(),
             fps
         );
         mvprintw(
             GENERATION_ROW,
-            (self.screen_size.width() - iter_msg.len()) as i32 / 2,
+            (self.screen_size.as_ref().unwrap().width() - iter_msg.len()) as i32 / 2,
             iter_msg.as_str(),
         );
         refresh();
     }
 
     fn setup_if_not_ready(&mut self) {
-        if !self.is_ready {
+        if self.screen_size.is_none() {
             initscr();
             raw();
             curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
@@ -165,42 +115,43 @@ where
             let mut max_x = 0;
             let mut max_y = 0;
             getmaxyx(stdscr(), &mut max_y, &mut max_x);
-            self.screen_size = Size2D::new(max_x as usize, max_y as usize);
+            self.screen_size = Some(Size2D::new(max_x as usize, max_y as usize));
+            let screen_size = self.screen_size.as_ref().unwrap();
 
             mvprintw(
                 TITLE_ROW,
-                (self.screen_size.width() - self.title.len()) as i32 / 2,
-                self.title.as_str(),
+                (screen_size.width() - self.info.title().len()) as i32 / 2,
+                self.info.title().as_str(),
             );
 
             let message = "SPACE: play/pause, k/j: speed up/down, q: exit.";
             mvprintw(
-                self.screen_size.height() as i32 - 2,
-                (self.screen_size.width() - message.len()) as i32 / 2,
+                screen_size.height() as i32 - 2,
+                (screen_size.width() - message.len()) as i32 / 2,
                 message,
             );
 
             refresh();
-
-            self.is_ready = true;
         }
     }
 
     fn draw(&mut self) {
-        let (win_width, win_height) = (self.board_size.width(), self.board_size.height());
+        let board_size = self.info.board_size();
+        let (win_width, win_height) = (board_size.width(), board_size.height());
 
-        /* Start in the center. */
-        let start_y = ((self.screen_size.height() - win_height) / 2) as i32;
-        let start_x = ((self.screen_size.width() - win_width) / 2) as i32;
+        let screen_size = self.screen_size.as_ref().unwrap();
+        let start_y = ((screen_size.height() - win_height) / 2) as i32;
+        let start_x = ((screen_size.width() - win_width) / 2) as i32;
 
         loop {
             match self.states_read_only.try_read() {
                 Ok(val) => {
-                    if self.cur_iter.is_none() || self.cur_iter.unwrap() != val.0 {
+                    if self.info.iter_count().is_none() || self.info.iter_count().unwrap() != val.0
+                    {
                         let win = create_win(start_y, start_x, win_height as i32, win_width as i32);
                         for idx in val.1.iter() {
-                            let x_min = self.board_size.x_idx_min();
-                            let y_max = self.board_size.y_idx_max();
+                            let x_min = board_size.x_idx_min();
+                            let y_max = board_size.y_idx_max();
                             let cur_x = (idx.x.clone() - U::from_i64(x_min).unwrap())
                                 .to_i32()
                                 .unwrap()
@@ -212,7 +163,7 @@ where
                             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
                         }
                         wrefresh(win);
-                        self.cur_iter = Some(val.0);
+                        self.info.set_iter_count(val.0);
                         break;
                     }
                 }
@@ -233,7 +184,7 @@ where
 
         loop {
             self.print_generation_and_speed();
-            self.last_render_time = Some(Instant::now());
+            self.fps_counter.lapse();
 
             self.draw();
 

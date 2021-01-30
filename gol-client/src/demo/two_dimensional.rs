@@ -81,15 +81,14 @@ pub fn run_demo(
     #[cfg(feature = "ascii")]
     {
         use gol_renderer::{BinaryStateCharMap, TextRendererGrid2D};
-        let mut text_renderer = TextRendererGrid2D::new_with_title_and_ch_txrx(
+        let mut text_renderer = TextRendererGrid2D::new(
             win_size.0,
             win_size.1,
             BinaryStateCharMap::new(),
             states_read_only.clone(),
-            String::from(title),
-            keyboard_control.get_sender(),
-            keyboard_control.get_receiver(),
-        );
+        )
+        .with_title(String::from(title))
+        .with_keyboard_control(keyboard_control.clone());
         handle = Some(std::thread::spawn(move || {
             text_renderer.run();
         }));
