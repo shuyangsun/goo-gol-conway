@@ -1,5 +1,5 @@
 use gol_core::{
-    self, BinaryState, BinaryStatesCallback, Board, BoardCallback, ConwayStrategy, GridPoint2D,
+    self, BinaryState, BinaryStatesCallback, BinaryStrategy, Board, BoardCallback, GridPoint2D,
     StandardBoard, StandardBoardFactory,
 };
 
@@ -18,7 +18,7 @@ pub fn run_demo(
     is_board_donut: bool,
     alive_ratio: f64,
 ) {
-    let strategy = Box::new(ConwayStrategy::new());
+    let strategy = Box::new(BinaryStrategy::new());
 
     let one_billion_nano_sec: f64 = 1_000_000_000f64;
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;

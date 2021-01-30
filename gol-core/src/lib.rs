@@ -28,7 +28,7 @@ pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::BinaryState;
 pub use evolution::strategy::EvolutionStrategy;
-pub use evolution::strategy_conway::ConwayStrategy;
+pub use evolution::strategy_binary::BinaryStrategy;
 pub use evolution::strategy_discrete::DiscreteStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{

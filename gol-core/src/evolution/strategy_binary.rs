@@ -1,8 +1,8 @@
 use crate::{BinaryState, EvolutionStrategy, IndexedDataOwned};
 
-pub struct ConwayStrategy {}
+pub struct BinaryStrategy {}
 
-impl<CI, I> EvolutionStrategy<CI, BinaryState, I> for ConwayStrategy
+impl<CI, I> EvolutionStrategy<CI, BinaryState, I> for BinaryStrategy
 where
     I: Iterator<Item = IndexedDataOwned<CI, BinaryState>>,
 {
@@ -22,7 +22,7 @@ where
     }
 }
 
-impl ConwayStrategy {
+impl BinaryStrategy {
     pub fn new() -> Self {
         Self {}
     }
@@ -30,7 +30,7 @@ impl ConwayStrategy {
 
 #[cfg(test)]
 mod conway_strategy_test {
-    use crate::{BinaryState, ConwayStrategy, EvolutionStrategy};
+    use crate::{BinaryState, BinaryStrategy, EvolutionStrategy};
 
     fn create_neighbors(alive_count: usize) -> Vec<BinaryState> {
         let mut res = vec![BinaryState::Alive; alive_count];
@@ -40,7 +40,7 @@ mod conway_strategy_test {
 
     #[test]
     fn conway_strat_test_0() {
-        let strat = ConwayStrategy::new();
+        let strat = BinaryStrategy::new();
         let neighbors = create_neighbors(0);
         let neighbors_iter = neighbors.into_iter().enumerate();
         let alive_next = strat.next_state(0, BinaryState::Alive, neighbors_iter);
