@@ -3,7 +3,7 @@ use gol_core::{
     StandardBoard, StandardBoardFactory,
 };
 
-use gol_renderer::{DefaultColorMap, GraphicalRendererGrid2D};
+use gol_renderer::{ConwayStateColorMap, GraphicalRendererGrid2D};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -80,11 +80,11 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     {
-        use gol_renderer::{DefaultCharMap, TextRendererGrid2D};
+        use gol_renderer::{ConwayStateCharMap, TextRendererGrid2D};
         let mut text_renderer = TextRendererGrid2D::new_with_title_and_ch_txrx(
             win_size.0,
             win_size.1,
-            DefaultCharMap::new(),
+            ConwayStateCharMap::new(),
             states_read_only.clone(),
             String::from(title),
             keyboard_control.get_sender(),
@@ -98,7 +98,7 @@ pub fn run_demo(
     let graphical_renderer = GraphicalRendererGrid2D::new(
         win_size.0,
         win_size.1,
-        DefaultColorMap::new_decay_alpha(),
+        ConwayStateColorMap::new(),
         states_read_only.clone(),
     );
 

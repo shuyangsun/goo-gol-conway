@@ -1,4 +1,4 @@
-use crate::{util::grid_util::Size2D, Board, DiscreteState, GridPoint2D};
+use crate::{util::grid_util::Size2D, Board, GridPoint2D};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -78,16 +78,4 @@ pub struct CellularAutomatonConfig {
     board: BoardConfig,
 }
 
-impl CellularAutomatonConfig {
-    fn try_gen_discrete_state<const N: usize>(&self) -> Result<DiscreteState<usize, N>, ()> {
-        match self.state {
-            StateConfig::UInt { count } => {
-                if count == N as usize {
-                    Ok(DiscreteState::new())
-                } else {
-                    Err(())
-                }
-            }
-        }
-    }
-}
+impl CellularAutomatonConfig {}

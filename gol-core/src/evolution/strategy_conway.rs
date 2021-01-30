@@ -1,5 +1,4 @@
-use crate::{ConwayState, DiscreteState, EvolutionStrategy, IndexedDataOwned};
-use num_traits::{PrimInt, Unsigned};
+use crate::{ConwayState, EvolutionStrategy, IndexedDataOwned};
 
 pub struct ConwayStrategy {}
 
