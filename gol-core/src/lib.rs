@@ -29,6 +29,7 @@ pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use cell::state::BinaryState;
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_conway::ConwayStrategy;
+pub use evolution::strategy_discrete::DiscreteStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
     grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,
