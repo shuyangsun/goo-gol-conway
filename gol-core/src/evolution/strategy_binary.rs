@@ -1,6 +1,11 @@
 use crate::{BinaryState, EvolutionStrategy, IndexedDataOwned};
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
-pub struct BinaryStrategy {}
+pub struct BinaryStrategy {
+    alive_surive_counts: HashSet<usize>,
+    newborn_counts: HashSet<usize>,
+}
 
 impl<CI, I> EvolutionStrategy<CI, BinaryState, I> for BinaryStrategy
 where
@@ -14,7 +19,9 @@ where
                 BinaryState::Dead => 0,
             };
         }
-        if alive_count == 3 || alive_count == 2 && cur_state == BinaryState::Alive {
+        if cur_state == BinaryState::Alive && self.alive_surive_counts.contains(&alive_count)
+            || cur_state == BinaryState::Dead && self.newborn_counts.contains(&alive_count)
+        {
             BinaryState::Alive
         } else {
             BinaryState::Dead
@@ -23,13 +30,24 @@ where
 }
 
 impl BinaryStrategy {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(alive_survive: HashSet<usize>, newborn: HashSet<usize>) -> Self {
+        Self {
+            alive_surive_counts: alive_survive,
+            newborn_counts: newborn,
+        }
+    }
+
+    pub fn conway() -> Self {
+        let (alive, newborn) = (
+            HashSet::from_iter(vec![2, 3].into_iter()),
+            HashSet::from_iter(vec![3].into_iter()),
+        );
+        Self::new(alive, newborn)
     }
 }
 
 #[cfg(test)]
-mod conway_strategy_test {
+mod binary_strategy_test {
     use crate::{BinaryState, BinaryStrategy, EvolutionStrategy};
 
     fn create_neighbors(alive_count: usize) -> Vec<BinaryState> {
@@ -40,7 +58,7 @@ mod conway_strategy_test {
 
     #[test]
     fn conway_strat_test_0() {
-        let strat = BinaryStrategy::new();
+        let strat = BinaryStrategy::conway();
         let neighbors = create_neighbors(0);
         let neighbors_iter = neighbors.into_iter().enumerate();
         let alive_next = strat.next_state(0, BinaryState::Alive, neighbors_iter);

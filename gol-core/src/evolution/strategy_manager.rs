@@ -28,12 +28,12 @@ where
 #[cfg(test)]
 mod shared_strat_manager_test {
     use crate::{
-        BinaryState, BoardStrategyManager, ConwayStrategy, IndexedDataOwned, SharedStrategyManager,
+        BinaryState, BinaryStrategy, BoardStrategyManager, IndexedDataOwned, SharedStrategyManager,
     };
 
     #[test]
     fn shared_strat_test_1() {
-        let strat = Box::new(ConwayStrategy::new());
+        let strat = Box::new(BinaryStrategy::conway());
         let strat_manager = SharedStrategyManager::<
             i32,
             BinaryState,

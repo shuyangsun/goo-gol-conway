@@ -1,6 +1,7 @@
 use crate::{
-    util::grid_util::Size2D, BinaryState, Board, BoardSpaceManager, BoardStateManager, Grid,
-    GridFactory, GridPoint2D, IndexedDataOwned, SparseBinaryStates, SparseStates,
+    util::grid_util::Size2D, BinaryState, Board, BoardSpaceManager, BoardStateManager,
+    BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
+    SparseBinaryStates, SparseStates,
 };
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -88,7 +89,7 @@ impl CellularAutomatonConfig {
         serde_json::from_str(json).unwrap()
     }
 
-    fn gen_space_manager_grid_2d(
+    fn gen_space_grid_2d(
         &self,
     ) -> Result<
         Box<
@@ -112,7 +113,7 @@ impl CellularAutomatonConfig {
         }
     }
 
-    fn gen_binary_state_manager_grid_2d(
+    fn gen_state_manager_grid_2d_binary(
         &self,
     ) -> Result<
         Box<
@@ -147,7 +148,7 @@ impl CellularAutomatonConfig {
         }
     }
 
-    fn gen_discrete_state_manager_grid_2d(
+    fn gen_state_manager_grid_2d_discrete(
         &self,
     ) -> Result<
         Box<
@@ -187,4 +188,6 @@ impl CellularAutomatonConfig {
             }
         }
     }
+
+    fn gen_strat_grid_2d_binary(&self) {}
 }
