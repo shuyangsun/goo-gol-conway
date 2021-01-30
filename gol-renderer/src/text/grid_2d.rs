@@ -68,7 +68,13 @@ where
                         self.execute_user_input(val);
                         break;
                     }
-                    None => continue,
+                    None => {
+                        if should_block {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
         }
