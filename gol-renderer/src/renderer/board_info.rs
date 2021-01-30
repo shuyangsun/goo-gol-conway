@@ -24,6 +24,10 @@ impl<T> RendererBoardInfo<T> {
         &self.title
     }
 
+    pub fn set_title(&mut self, title: String) {
+        self.title = title;
+    }
+
     pub fn cur_iter(&self) -> Option<usize> {
         *self.cur_iter.lock().unwrap()
     }

@@ -34,6 +34,10 @@ impl RendererKeyboardControl {
         self.sender.send(ch).unwrap();
     }
 
+    pub fn get_new_receiver(&self) -> Receiver<char> {
+        self.sender.subscribe()
+    }
+
     pub fn receive(&mut self) -> char {
         loop {
             let res = self.try_receive();

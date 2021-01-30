@@ -1,6 +1,12 @@
 extern crate ncurses;
 
-use crate::{CellularAutomatonRenderer, CharMapping};
+use crate::{
+    renderer::{
+        board_info::RendererBoardInfo, fps_counter::FPSCounter,
+        keyboard_control::RendererKeyboardControl,
+    },
+    CellularAutomatonRenderer, CharMapping,
+};
 use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
 use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -13,13 +19,10 @@ const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
 
 pub struct TextRendererGrid2D<S, M> {
-    title: String,
-    cur_iter: Option<usize>,
+    info: RendererBoardInfo,
+    control: Option<RendererKeyboardControl>,
     is_ready: bool,
     screen_size: Size2D,
-    board_size: Size2D,
-    tx: Option<Sender<char>>,
-    rx: Option<Receiver<char>>,
     last_render_time: Option<Instant>,
     states_read_only: S,
     char_map: M,
@@ -36,13 +39,14 @@ where
         char_map: M,
         states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Self {
-        Self::new_with_title(
-            board_width,
-            board_height,
+        let info = RendererBoardInfo::new(Size2D::new(board_width, board_height));
+        Self {
+            info,
+            control: None,
+            is_ready: false,
             char_map,
-            states,
-            String::from(""),
-        )
+            states_read_only: states,
+        }
     }
 
     pub fn new_with_title(
