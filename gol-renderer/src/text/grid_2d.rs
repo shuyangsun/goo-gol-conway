@@ -97,11 +97,13 @@ where
             self.info.iter_count().unwrap_or_default(),
             fps
         );
-        mvprintw(
-            GENERATION_ROW,
-            (self.screen_size.as_ref().unwrap().width() - iter_msg.len()) as i32 / 2,
-            iter_msg.as_str(),
-        );
+        if self.screen_size.is_some() {
+            mvprintw(
+                GENERATION_ROW,
+                (self.screen_size.as_ref().unwrap().width() - iter_msg.len()) as i32 / 2,
+                iter_msg.as_str(),
+            );
+        }
         refresh();
     }
 
@@ -138,6 +140,10 @@ where
     fn draw(&mut self) {
         let board_size = self.info.board_size();
         let (win_width, win_height) = (board_size.width(), board_size.height());
+
+        if self.screen_size.is_none() {
+            return;
+        }
 
         let screen_size = self.screen_size.as_ref().unwrap();
         let start_y = ((screen_size.height() - win_height) / 2) as i32;
