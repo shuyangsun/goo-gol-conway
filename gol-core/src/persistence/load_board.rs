@@ -1,8 +1,9 @@
 use crate::{
-    util::grid_util::Size2D, BinaryState, BinaryStrategy, Board, BoardSpaceManager,
-    BoardStateManager, BoardStrategyManager, DiscreteStrategy, EvolutionStrategy, Grid,
-    GridFactory, GridPoint2D, IndexedDataOwned, SharedStrategyManager, SparseBinaryStates,
-    SparseStates,
+    util::grid_util::Size2D, BinaryState, BinaryStrategy, BoardCallbackManager,
+    BoardNeighborManager, BoardSpaceManager, BoardStateManager, BoardStrategyManager,
+    DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned, NeighborMoore,
+    NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround, SharedStrategyManager,
+    SparseBinaryStates, SparseStates,
 };
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -33,6 +34,7 @@ pub struct VisualConfig {
 #[serde(tag = "type")]
 enum NeighborRuleConfig {
     Moore { margin: usize },
+    MooreWrap { margin: usize },
 }
 
 // State
@@ -114,6 +116,39 @@ impl CellularAutomatonConfig {
                 let shape_vec = vec![shape.width(), shape.height()];
                 let space_manager = Grid::<GridPoint2D<IntIdx>>::new(shape_vec.into_iter());
                 Ok(Box::new(space_manager))
+            }
+        }
+    }
+
+    fn gen_neighbor_grid_2d(
+        &self,
+    ) -> Result<
+        Box<dyn BoardNeighborManager<GridPoint2D<IntIdx>, std::vec::IntoIter<GridPoint2D<IntIdx>>>>,
+        (),
+    > {
+        match &self.neighbor_rule {
+            NeighborRuleConfig::Moore { margin } => {
+                if margin == &1 {
+                    Ok(Box::new(NeighborMoore::new()))
+                } else {
+                    Ok(Box::new(NeighborsGridSurround::new(margin.clone())))
+                }
+            }
+            NeighborRuleConfig::MooreWrap { margin } => {
+                let shape = match &self.board {
+                    BoardConfig::Grid2D {
+                        shape,
+                        initial_states: _,
+                    } => shape,
+                };
+                if margin == &1 {
+                    Ok(Box::new(NeighborMooreDonut::new(shape.clone())))
+                } else {
+                    Ok(Box::new(NeighborsGridDonut::new(
+                        margin.clone(),
+                        [shape.width(), shape.height()].iter().cloned(),
+                    )))
+                }
             }
         }
     }
@@ -239,6 +274,17 @@ impl CellularAutomatonConfig {
                 ))),
             )),
         }
+    }
+
+    fn gen_callback_grid_2d(
+        &self,
+    ) -> BoardCallbackManager<
+        BinaryState,
+        GridPoint2D<IntIdx>,
+        rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
+    > {
+        let mut res = Vec::new();
+        BoardCallbackManager::new(res)
     }
 }
 
