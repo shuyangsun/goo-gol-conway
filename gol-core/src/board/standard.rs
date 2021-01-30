@@ -98,7 +98,7 @@ impl StandardBoardFactory {
         shape: I,
         default_state: T,
         neighbor_margin: S,
-        initial_states: &HashMap<GridPointND<U>, T>,
+        initial_states: HashMap<GridPointND<U>, T>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPointND<U>,
@@ -146,7 +146,7 @@ impl StandardBoardFactory {
         default_state: T,
         non_default_state: T,
         neighbor_margin: S,
-        non_default_indices: &HashSet<GridPointND<U>>,
+        non_default_indices: HashSet<GridPointND<U>>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPointND<U>,
@@ -194,7 +194,7 @@ impl StandardBoardFactory {
         shape: (S, S, S),
         default_state: T,
         neighbor_margin: S,
-        initial_states: &HashMap<GridPoint3D<U>, T>,
+        initial_states: HashMap<GridPoint3D<U>, T>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint3D<U>,
@@ -241,7 +241,7 @@ impl StandardBoardFactory {
         default_state: T,
         non_default_state: T,
         neighbor_margin: S,
-        non_default_indices: &HashSet<GridPoint3D<U>>,
+        non_default_indices: HashSet<GridPoint3D<U>>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint3D<U>,
@@ -288,7 +288,7 @@ impl StandardBoardFactory {
         shape: (S, S),
         default_state: T,
         neighbor_margin: S,
-        initial_states: &HashMap<GridPoint2D<U>, T>,
+        initial_states: HashMap<GridPoint2D<U>, T>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint2D<U>,
@@ -357,7 +357,7 @@ impl StandardBoardFactory {
         default_state: T,
         non_default_state: T,
         neighbor_margin: S,
-        non_default_indices: &HashSet<GridPoint2D<U>>,
+        non_default_indices: HashSet<GridPoint2D<U>>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint2D<U>,
@@ -426,7 +426,7 @@ impl StandardBoardFactory {
         shape: S,
         default_state: T,
         neighbor_margin: S,
-        initial_states: &HashMap<GridPoint1D<U>, T>,
+        initial_states: HashMap<GridPoint1D<U>, T>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint1D<U>,
@@ -473,7 +473,7 @@ impl StandardBoardFactory {
         default_state: T,
         non_default_state: T,
         neighbor_margin: S,
-        non_default_indices: &HashSet<GridPoint1D<U>>,
+        non_default_indices: HashSet<GridPoint1D<U>>,
         strategy: Box<
             dyn EvolutionStrategy<
                 GridPoint1D<U>,

@@ -148,8 +148,8 @@ fn main() {
 
     let random_states = (HashSet::new(), "Random Game of Life");
     let (initial_states, title) = match matches.value_of("demo") {
-        Some(demo_name) => demos.get(demo_name).unwrap(),
-        None => &random_states,
+        Some(demo_name) => demos.get(demo_name).unwrap().clone(),
+        None => random_states,
     };
     let is_donut = match matches.occurrences_of("donut") {
         0 => false,

@@ -9,7 +9,7 @@ pub struct SparseBinaryStates<T, CI> {
 }
 
 impl<T, CI> SparseBinaryStates<T, CI> {
-    pub fn new(default_state: T, non_default_state: T, initial_non_defaults: &HashSet<CI>) -> Self
+    pub fn new(default_state: T, non_default_state: T, initial_non_defaults: HashSet<CI>) -> Self
     where
         CI: Eq + std::hash::Hash + Clone,
         T: PartialEq,
@@ -17,7 +17,7 @@ impl<T, CI> SparseBinaryStates<T, CI> {
         Self {
             default_state,
             non_default_state,
-            non_default_indices: initial_non_defaults.clone(),
+            non_default_indices: initial_non_defaults,
         }
     }
 }
@@ -56,7 +56,7 @@ mod sparse_binary_state_manager_test {
     fn sparse_state_test_1() {
         let mut alive_cells = HashSet::new();
         alive_cells.insert(GridPoint2D { x: 0, y: 0 });
-        let states = SparseBinaryStates::new(BinaryState::Dead, BinaryState::Alive, &alive_cells);
+        let states = SparseBinaryStates::new(BinaryState::Dead, BinaryState::Alive, alive_cells);
         assert_eq!(
             states.get_cell_state(&GridPoint2D { x: 0, y: 0 }),
             BinaryState::Alive

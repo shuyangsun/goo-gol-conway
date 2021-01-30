@@ -1,6 +1,11 @@
-use crate::{util::grid_util::Size2D, Board, GridPoint2D};
+use crate::{
+    util::grid_util::Size2D, BinaryState, Board, BoardSpaceManager, BoardStateManager, Grid,
+    GridFactory, GridPoint2D, IndexedDataOwned, SparseBinaryStates, SparseStates,
+};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde_json;
+use std::collections::{HashMap, HashSet};
 
 // Visual
 
@@ -78,4 +83,95 @@ pub struct CellularAutomatonConfig {
     board: BoardConfig,
 }
 
-impl CellularAutomatonConfig {}
+impl CellularAutomatonConfig {
+    pub fn from_json(json: &str) -> Self {
+        serde_json::from_str(json).unwrap()
+    }
+
+    fn gen_space_manager_grid_2d(
+        &self,
+    ) -> Result<
+        Box<
+            dyn BoardSpaceManager<
+                GridPoint2D<i32>,
+                std::vec::IntoIter<GridPoint2D<i32>>,
+                rayon::vec::IntoIter<GridPoint2D<i32>>,
+            >,
+        >,
+        (),
+    > {
+        match &self.board {
+            BoardConfig::Grid2D {
+                shape,
+                initial_states: _,
+            } => {
+                let shape_vec = vec![shape.width(), shape.height()];
+                let space_manager = Grid::<GridPoint2D<i32>>::new(shape_vec.into_iter());
+                Ok(Box::new(space_manager))
+            }
+        }
+    }
+
+    fn gen_binary_state_manager_grid_2d(
+        &self,
+    ) -> Result<
+        Box<
+            dyn BoardStateManager<
+                BinaryState,
+                GridPoint2D<i32>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<i32>, BinaryState>>,
+            >,
+        >,
+        (),
+    > {
+        match &self.state {
+            StateConfig::UInt { count } => {
+                assert!(count == &2);
+                let res_init_states;
+                match &self.board {
+                    BoardConfig::Grid2D {
+                        shape: _,
+                        initial_states,
+                    } => {
+                        res_init_states = initial_states.clone();
+                    }
+                }
+                let init_states: HashSet<GridPoint2D<i32>> = res_init_states
+                    .get("1")
+                    .unwrap()
+                    .par_iter()
+                    .cloned()
+                    .collect();
+                Ok(Box::new(SparseBinaryStates::new(
+                    BinaryState::Dead,
+                    BinaryState::Alive,
+                    init_states,
+                )))
+            }
+        }
+    }
+
+    fn gen_discrete_state_manager_grid_2d(
+        &self,
+    ) -> Result<
+        Box<
+            dyn BoardStateManager<
+                u8,
+                GridPoint2D<i32>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<i32>, u8>>,
+            >,
+        >,
+        (),
+    > {
+        match &self.state {
+            StateConfig::UInt { count } => {
+                if count > &2 {
+                    let init_states = HashMap::new();
+                    Ok(Box::new(SparseStates::new(0u8, init_states)))
+                } else {
+                    Err(())
+                }
+            }
+        }
+    }
+}

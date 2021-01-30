@@ -11,7 +11,7 @@ use std::time::Duration;
 pub fn run_demo(
     width: Option<usize>,
     height: Option<usize>,
-    initial_states: &HashSet<GridPoint2D<i32>>,
+    initial_states: HashSet<GridPoint2D<i32>>,
     title: &str,
     max_iter: usize,
     interval_secs: f64,
@@ -63,7 +63,7 @@ pub fn run_demo(
         BinaryState::Alive,
         1,
         if initial_states.is_empty() {
-            &random_init_state
+            random_init_state
         } else {
             initial_states
         },

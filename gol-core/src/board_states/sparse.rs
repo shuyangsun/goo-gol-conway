@@ -8,20 +8,14 @@ pub struct SparseStates<T, CI> {
 }
 
 impl<T, CI> SparseStates<T, CI> {
-    pub fn new(default_state: T, initial_states: &HashMap<CI, T>) -> Self
+    pub fn new(default_state: T, initial_states: HashMap<CI, T>) -> Self
     where
         CI: Eq + std::hash::Hash + Clone,
         T: PartialEq + Clone,
     {
-        let lookup = initial_states
-            .iter()
-            .filter(|ele| ele.1 != &default_state)
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
-
         Self {
             default_state,
-            lookup,
+            lookup: initial_states,
         }
     }
 }
@@ -59,7 +53,7 @@ mod sparse_state_manager_test {
     fn sparse_state_test_1() {
         let mut initial_maps = HashMap::new();
         initial_maps.insert(GridPoint2D { x: 0, y: 0 }, BinaryState::Alive);
-        let states = SparseStates::new(BinaryState::Dead, &initial_maps);
+        let states = SparseStates::new(BinaryState::Dead, initial_maps);
         assert_eq!(
             states.get_cell_state(&GridPoint2D { x: 0, y: 0 }),
             BinaryState::Alive
