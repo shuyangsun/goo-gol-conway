@@ -127,21 +127,17 @@ impl CellularAutomatonConfig {
         match &self.state {
             StateConfig::UInt { count } => {
                 assert!(count == &2);
-                let res_init_states;
-                match &self.board {
+                let init_states = match &self.board {
                     BoardConfig::Grid2D {
                         shape: _,
                         initial_states,
-                    } => {
-                        res_init_states = initial_states.clone();
-                    }
-                }
-                let init_states: HashSet<GridPoint2D<i32>> = res_init_states
-                    .get("1")
-                    .unwrap()
-                    .par_iter()
-                    .cloned()
-                    .collect();
+                    } => initial_states
+                        .get("1")
+                        .unwrap()
+                        .par_iter()
+                        .cloned()
+                        .collect(),
+                };
                 Ok(Box::new(SparseBinaryStates::new(
                     BinaryState::Dead,
                     BinaryState::Alive,
@@ -165,12 +161,29 @@ impl CellularAutomatonConfig {
     > {
         match &self.state {
             StateConfig::UInt { count } => {
-                if count > &2 {
-                    let init_states = HashMap::new();
-                    Ok(Box::new(SparseStates::new(0u8, init_states)))
-                } else {
-                    Err(())
-                }
+                assert!(count > &2);
+                let init_states = match &self.board {
+                    BoardConfig::Grid2D {
+                        shape: _,
+                        initial_states,
+                    } => initial_states
+                        .par_iter()
+                        .map(|(key, val)| {
+                            let cur_map: HashMap<GridPoint2D<i32>, u8> = val
+                                .par_iter()
+                                .map(|ele| {
+                                    (
+                                        ele.clone(),
+                                        key.parse::<u8>()
+                                            .expect("Discrete states must be unsigned integers."),
+                                    )
+                                })
+                                .collect();
+                            cur_map
+                        })
+                        .reduce(|| HashMap::new(), |a, b| a.into_iter().chain(b).collect()),
+                };
+                Ok(Box::new(SparseStates::new(0u8, init_states)))
             }
         }
     }
