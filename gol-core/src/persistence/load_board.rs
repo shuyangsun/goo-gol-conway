@@ -1,9 +1,9 @@
 use crate::{
-    util::grid_util::Size2D, BinaryState, BinaryStrategy, BoardCallbackManager,
-    BoardNeighborManager, BoardSpaceManager, BoardStateManager, BoardStrategyManager,
-    DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned, NeighborMoore,
-    NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround, SharedStrategyManager,
-    SparseBinaryStates, SparseStates,
+    util::grid_util::Size2D, BinaryState, BinaryStatesReadOnly, BinaryStrategy,
+    BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
+    BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
+    NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
+    SharedStrategyManager, SparseBinaryStates, SparseStates, StatesReadOnly,
 };
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -276,15 +276,19 @@ impl CellularAutomatonConfig {
         }
     }
 
-    fn gen_callback_grid_2d(
+    fn gen_callback_grid_2d_binary_state(
         &self,
-    ) -> BoardCallbackManager<
-        BinaryState,
-        GridPoint2D<IntIdx>,
-        rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
-    > {
+    ) -> (
+        BoardCallbackManager<
+            BinaryState,
+            GridPoint2D<IntIdx>,
+            rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
+        >,
+        Option<BinaryStatesReadOnly<GridPoint2D<IntIdx>, BinaryState>>,
+    ) {
         let mut res = Vec::new();
-        BoardCallbackManager::new(res)
+        // TODO: implementation
+        (BoardCallbackManager::new(res), None)
     }
 }
 
