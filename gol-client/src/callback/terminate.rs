@@ -1,8 +1,8 @@
 use gol_core::BoardCallbackWithoutStates;
-use tokio::sync::broadcast::{error::TryRecvError, Receiver};
+use gol_renderer::renderer::keyboard_control::KeyboardControl;
 
 pub struct Terminate {
-    rx: Receiver<char>,
+    control: KeyboardControl,
 }
 
 impl<T, U> BoardCallbackWithoutStates<T, U> for Terminate
@@ -12,8 +12,8 @@ where
 {
     fn execute(&mut self) {
         loop {
-            match self.rx.try_recv() {
-                Ok(val) => {
+            match self.control.try_receive() {
+                Some(val) => {
                     if val == 'q' {
                         // TODO: Hacky solution to give other callbacks a time buffer to do cleanup.
                         std::thread::sleep(std::time::Duration::from_millis(500));
@@ -21,18 +21,14 @@ where
                     }
                     break;
                 }
-                Err(err) => match err {
-                    TryRecvError::Empty => break,
-                    TryRecvError::Closed => panic!("Error getting user input: {}", err),
-                    TryRecvError::Lagged(_) => continue,
-                },
+                None => break,
             }
         }
     }
 }
 
 impl Terminate {
-    pub fn new(receiver: Receiver<char>) -> Self {
-        Self { rx: receiver }
+    pub fn new(control: KeyboardControl) -> Self {
+        Self { control }
     }
 }

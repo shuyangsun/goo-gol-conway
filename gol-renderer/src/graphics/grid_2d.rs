@@ -1,4 +1,9 @@
-use crate::{CellularAutomatonRenderer, ColorMapping};
+use crate::{
+    renderer::{
+        board_info::RendererBoardInfo, fps_counter::FPSCounter, keyboard_control::KeyboardControl,
+    },
+    CellularAutomatonRenderer, ColorMapping,
+};
 use gfx_hal::{
     adapter::PhysicalDevice,
     command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
@@ -25,7 +30,6 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
-use tokio::sync::broadcast::{error::TryRecvError, Receiver, Sender};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{Event, VirtualKeyCode, WindowEvent},
@@ -36,10 +40,9 @@ pub struct GraphicalRendererGrid2D<M, CI, T>
 where
     CI: Hash,
 {
-    title: String,
-    cur_iter: Arc<Mutex<Option<usize>>>,
-    board_size: Size2D,
-    ch_channel: Option<(Sender<char>, Receiver<char>)>,
+    info: RendererBoardInfo<Size2D>,
+    control: Option<KeyboardControl>,
+    fps_counter: FPSCounter,
     color_map: M,
     states_read_only: BinaryStatesReadOnly<CI, T>,
     cell_scale: f32,
@@ -57,11 +60,11 @@ where
         color_map: M,
         states_storage: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Result<Self, UnsupportedBackend> {
+        let info = RendererBoardInfo::new(Size2D::new(board_width, board_height));
         Ok(Self {
-            title: String::from(""),
-            cur_iter: Arc::new(Mutex::new(None)),
-            board_size: Size2D::new(board_width, board_height),
-            ch_channel: None,
+            info,
+            control: None,
+            fps_counter: FPSCounter::new(240),
             color_map,
             states_read_only: states_storage,
             cell_scale: 0.95,
@@ -70,7 +73,7 @@ where
 
     pub fn with_title(self, title: String) -> Self {
         let mut res = self;
-        res.title = title;
+        res.info.set_title(title);
         res
     }
 
@@ -86,10 +89,9 @@ where
         res
     }
 
-    pub fn with_ch_channel(self, sender: Sender<char>) -> Self {
-        let receiver = sender.subscribe();
+    pub fn with_keyboard_control(self, control: KeyboardControl) -> Self {
         let mut res = self;
-        res.ch_channel = Some((sender, receiver));
+        res.control = Some(control);
         res
     }
 }
@@ -102,13 +104,13 @@ where
 {
     fn run(&mut self) {
         let event_loop = EventLoop::new();
-        let title = self.title.clone();
+        let title = self.info.title().clone();
         let color_map = self.color_map.clone();
 
-        let board_size = self.board_size.clone();
+        let board_size = self.info.board_size().clone();
         let states_read_only = self.states_read_only.clone();
-        let cur_iter = Arc::clone(&self.cur_iter);
         let cell_scale = self.cell_scale;
+        let mut control = self.control.clone();
 
         let desired_aspect_ratio = 1.0;
 
@@ -254,6 +256,7 @@ where
         let mut should_configure_swapchain = true;
 
         event_loop.run(move |event, _, control_flow| {
+            let mut cur_iter: Option<usize> = None;
             match event {
                 Event::WindowEvent { event, .. } => match event {
                     WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
@@ -271,15 +274,28 @@ where
                         };
                         should_configure_swapchain = true;
                     }
-                    WindowEvent::KeyboardInput { input, .. } => match input.virtual_keycode {
-                        Some(ch) => match ch {
-                            VirtualKeyCode::Q => {
-                                // TODO: implementation
+                    WindowEvent::KeyboardInput { input, .. } => {
+                        if let Some(control) = control.as_mut() {
+                            match input.virtual_keycode {
+                                Some(ch) => match ch {
+                                    VirtualKeyCode::Q => {
+                                        control.broadcast('q');
+                                    }
+                                    VirtualKeyCode::J => {
+                                        control.broadcast('j');
+                                    }
+                                    VirtualKeyCode::K => {
+                                        control.broadcast('k');
+                                    }
+                                    VirtualKeyCode::Space => {
+                                        control.broadcast(' ');
+                                    }
+                                    _ => (),
+                                },
+                                _ => (),
                             }
-                            _ => (),
-                        },
-                        _ => (),
-                    },
+                        }
+                    }
                     _ => (),
                 },
                 Event::MainEventsCleared => window.request_redraw(),
@@ -292,17 +308,14 @@ where
                     let (grid_width, grid_height) =
                         (board_size.width() as u32, board_size.height() as u32);
 
-                    let mut cur_iter_unlocked = cur_iter.lock().unwrap();
                     let non_trivial_state = states_read_only.non_trivial_state();
                     let mut indices_clone = HashSet::new();
                     loop {
                         match states_read_only.try_read() {
                             Ok(val) => {
-                                if cur_iter_unlocked.is_none()
-                                    || cur_iter_unlocked.unwrap() != val.0
-                                {
+                                if cur_iter.is_none() || cur_iter.unwrap() != val.0 {
                                     indices_clone = val.1.clone();
-                                    *cur_iter_unlocked = Some(val.0);
+                                    cur_iter = Some(val.0);
                                     break;
                                 }
                             }

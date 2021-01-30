@@ -103,7 +103,9 @@ pub fn run_demo(
 
     match graphical_renderer {
         Ok(val) => {
-            val.with_title(String::from(title)).run();
+            val.with_title(String::from(title))
+                .with_keyboard_control(keyboard_control.clone())
+                .run();
         }
         Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
     };

@@ -1,10 +1,8 @@
-use std::sync::{Arc, Mutex};
-
 #[derive(Clone)]
 pub struct RendererBoardInfo<T> {
     board_size: T,
     title: String,
-    cur_iter: Arc<Mutex<Option<usize>>>,
+    cur_iter: Option<usize>,
 }
 
 impl<T> RendererBoardInfo<T> {
@@ -12,7 +10,7 @@ impl<T> RendererBoardInfo<T> {
         Self {
             board_size,
             title: String::from(""),
-            cur_iter: Arc::new(Mutex::new(None)),
+            cur_iter: None,
         }
     }
 
@@ -29,10 +27,10 @@ impl<T> RendererBoardInfo<T> {
     }
 
     pub fn iter_count(&self) -> Option<usize> {
-        *self.cur_iter.lock().unwrap()
+        self.cur_iter
     }
 
-    pub fn set_iter_count(&self, iter_count: usize) {
-        *self.cur_iter.lock().unwrap() = Some(iter_count);
+    pub fn set_iter_count(&mut self, iter_count: usize) {
+        self.cur_iter = Some(iter_count);
     }
 }

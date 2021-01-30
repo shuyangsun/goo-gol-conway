@@ -21,16 +21,15 @@ where
 
     let mut res = Vec::new();
     let keyboard_control = KeyboardControl::new();
-    let delay = BoardCallback::WithoutStates(Box::new(Delay::new_with_ch_receiver(
-        delay_interval,
-        keyboard_control.get_new_receiver(),
-    )));
+    let delay = BoardCallback::WithoutStates(Box::new(
+        Delay::new(delay_interval).with_ch_receiver(keyboard_control.clone_receive_only()),
+    ));
     let pause = BoardCallback::WithoutStates(Box::new(Pause::new(
         false,
-        keyboard_control.get_new_receiver(),
+        keyboard_control.clone_receive_only(),
     )));
     let terminate = BoardCallback::WithoutStates(Box::new(Terminate::new(
-        keyboard_control.get_new_receiver(),
+        keyboard_control.clone_receive_only(),
     )));
 
     res.push(delay);

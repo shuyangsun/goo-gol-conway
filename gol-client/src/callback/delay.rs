@@ -1,11 +1,11 @@
 use gol_core::BoardCallbackWithoutStates;
+use gol_renderer::renderer::keyboard_control::KeyboardControl;
 use std::time::{Duration, Instant};
-use tokio::sync::broadcast::{error::TryRecvError, Receiver};
 
 pub struct Delay {
     last_execution: Instant,
     duration: Duration,
-    rx: Option<Receiver<char>>,
+    control: Option<KeyboardControl>,
 }
 
 impl<T, U> BoardCallbackWithoutStates<T, U> for Delay
@@ -16,7 +16,6 @@ where
     fn execute(&mut self) {
         let old_execution = self.last_execution;
         self.check_user_input();
-        // duration.is_zero() is unstable
         while Instant::now() < old_execution + self.duration {
             self.check_user_input();
         }
@@ -29,38 +28,38 @@ impl Delay {
         Self {
             last_execution: Instant::now(),
             duration,
-            rx: None,
+            control: None,
         }
     }
 
-    pub fn new_with_ch_receiver(duration: Duration, rx: Receiver<char>) -> Self {
-        Self {
-            last_execution: Instant::now(),
-            duration,
-            rx: Some(rx),
-        }
+    pub fn with_ch_receiver(self, control: KeyboardControl) -> Self {
+        let mut res = self;
+        res.control = Some(control);
+        res
     }
 
     fn check_user_input(&mut self) {
-        if self.rx.is_some() {
-            loop {
-                match self.rx.as_mut().unwrap().try_recv() {
-                    Ok(val) => {
-                        if val == 'k' {
-                            self.duration =
-                                Duration::from_nanos(self.duration.as_nanos() as u64 / 2);
-                        } else if val == 'j' {
-                            self.duration =
-                                Duration::from_nanos(self.duration.as_nanos() as u64 * 2);
-                        }
-                        break;
+        if self.control.is_none() {
+            return;
+        }
+        loop {
+            match self.control.as_mut().unwrap().try_receive() {
+                Some(ch) => {
+                    let duration = if self.duration.as_nanos() == 0 {
+                        Duration::from_millis(1)
+                    } else {
+                        self.duration
+                    };
+                    if ch == 'k' {
+                        self.duration = Duration::from_nanos(duration.as_nanos() as u64 / 2);
+                        println!("K: {:?}", self.duration);
+                    } else if ch == 'j' {
+                        self.duration = Duration::from_nanos(duration.as_nanos() as u64 * 2);
+                        println!("J: {:?}", self.duration);
                     }
-                    Err(err) => match err {
-                        TryRecvError::Empty => break,
-                        TryRecvError::Closed => panic!("Error getting user input: {}", err),
-                        TryRecvError::Lagged(_) => continue,
-                    },
+                    break;
                 }
+                None => break,
             }
         }
     }

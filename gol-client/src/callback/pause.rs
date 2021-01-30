@@ -1,9 +1,9 @@
 use gol_core::BoardCallbackWithoutStates;
-use tokio::sync::broadcast::{error::TryRecvError, Receiver};
+use gol_renderer::renderer::keyboard_control::KeyboardControl;
 
 pub struct Pause {
     is_paused: bool,
-    rx: Receiver<char>,
+    control: KeyboardControl,
 }
 
 impl<T, U> BoardCallbackWithoutStates<T, U> for Pause
@@ -25,31 +25,22 @@ where
 }
 
 impl Pause {
-    pub fn new(is_paused: bool, receiver: Receiver<char>) -> Self {
-        Self {
-            is_paused,
-            rx: receiver,
-        }
+    pub fn new(is_paused: bool, control: KeyboardControl) -> Self {
+        Self { is_paused, control }
     }
 
     fn check_user_input(&mut self, should_block: bool) {
+        if should_block {
+            let ch = self.control.receive();
+            self.execute_user_input(ch);
+        }
         loop {
-            match self.rx.try_recv() {
-                Ok(val) => {
+            match self.control.try_receive() {
+                Some(val) => {
                     self.execute_user_input(val);
                     break;
                 }
-                Err(err) => match err {
-                    TryRecvError::Empty => {
-                        if should_block {
-                            continue;
-                        } else {
-                            break;
-                        }
-                    }
-                    TryRecvError::Closed => panic!("Error getting user input: {}", err),
-                    TryRecvError::Lagged(_) => continue,
-                },
+                None => break,
             }
         }
     }
