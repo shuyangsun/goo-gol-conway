@@ -1,6 +1,6 @@
 extern crate ncurses;
 
-use crate::CharMapping;
+use crate::{CellularAutomatonRenderer, CharMapping};
 use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
 use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
@@ -86,19 +86,6 @@ where
             last_render_time: None,
             states_read_only: states,
             char_map,
-        }
-    }
-
-    pub fn run(&mut self) {
-        self.setup_if_not_ready();
-
-        loop {
-            self.print_generation_and_speed();
-            self.last_render_time = Some(Instant::now());
-
-            self.draw();
-
-            self.check_user_input(false);
         }
     }
 
@@ -227,6 +214,26 @@ where
                 }
                 Err(_) => continue,
             }
+        }
+    }
+}
+
+impl<T, U, M> CellularAutomatonRenderer
+    for TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
+where
+    U: Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U> + Clone,
+    M: CharMapping<T>,
+{
+    fn run(&mut self) {
+        self.setup_if_not_ready();
+
+        loop {
+            self.print_generation_and_speed();
+            self.last_render_time = Some(Instant::now());
+
+            self.draw();
+
+            self.check_user_input(false);
         }
     }
 }

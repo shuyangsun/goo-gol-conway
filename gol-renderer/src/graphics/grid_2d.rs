@@ -1,4 +1,4 @@
-use crate::ColorMapping;
+use crate::{CellularAutomatonRenderer, ColorMapping};
 use gfx_hal::{
     adapter::PhysicalDevice,
     command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
@@ -92,8 +92,15 @@ where
         res.ch_channel = Some((sender, receiver));
         res
     }
+}
 
-    pub fn run(&mut self) {
+impl<T, U, M> CellularAutomatonRenderer for GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
+where
+    T: 'static + Send + Sync + Clone,
+    U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
+    M: 'static + Send + Sync + Clone + ColorMapping<T>,
+{
+    fn run(&mut self) {
         let event_loop = EventLoop::new();
         let title = self.title.clone();
         let color_map = self.color_map.clone();

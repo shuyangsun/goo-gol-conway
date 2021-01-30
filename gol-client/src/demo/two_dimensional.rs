@@ -3,7 +3,7 @@ use gol_core::{
     StandardBoard, StandardBoardFactory,
 };
 
-use gol_renderer::{BinaryStateColorMap, GraphicalRendererGrid2D};
+use gol_renderer::{BinaryStateColorMap, CellularAutomatonRenderer, GraphicalRendererGrid2D};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
