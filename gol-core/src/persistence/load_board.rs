@@ -1,12 +1,17 @@
 use crate::{
-    util::grid_util::Size2D, BinaryState, Board, BoardSpaceManager, BoardStateManager,
-    BoardStrategyManager, EvolutionStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
-    SparseBinaryStates, SparseStates,
+    util::grid_util::Size2D, BinaryState, BinaryStrategy, Board, BoardSpaceManager,
+    BoardStateManager, BoardStrategyManager, DiscreteStrategy, EvolutionStrategy, Grid,
+    GridFactory, GridPoint2D, IndexedDataOwned, SharedStrategyManager, SparseBinaryStates,
+    SparseStates,
 };
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
+
+type IntIdx = i32;
+type IntState = u8;
 
 // Visual
 
@@ -63,7 +68,7 @@ enum EvolutionRuleConfig {
 enum BoardConfig {
     Grid2D {
         shape: Size2D,
-        initial_states: HashMap<String, Vec<GridPoint2D<i32>>>,
+        initial_states: HashMap<String, Vec<GridPoint2D<IntIdx>>>,
     },
 }
 
@@ -94,9 +99,9 @@ impl CellularAutomatonConfig {
     ) -> Result<
         Box<
             dyn BoardSpaceManager<
-                GridPoint2D<i32>,
-                std::vec::IntoIter<GridPoint2D<i32>>,
-                rayon::vec::IntoIter<GridPoint2D<i32>>,
+                GridPoint2D<IntIdx>,
+                std::vec::IntoIter<GridPoint2D<IntIdx>>,
+                rayon::vec::IntoIter<GridPoint2D<IntIdx>>,
             >,
         >,
         (),
@@ -107,7 +112,7 @@ impl CellularAutomatonConfig {
                 initial_states: _,
             } => {
                 let shape_vec = vec![shape.width(), shape.height()];
-                let space_manager = Grid::<GridPoint2D<i32>>::new(shape_vec.into_iter());
+                let space_manager = Grid::<GridPoint2D<IntIdx>>::new(shape_vec.into_iter());
                 Ok(Box::new(space_manager))
             }
         }
@@ -119,8 +124,8 @@ impl CellularAutomatonConfig {
         Box<
             dyn BoardStateManager<
                 BinaryState,
-                GridPoint2D<i32>,
-                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<i32>, BinaryState>>,
+                GridPoint2D<IntIdx>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
             >,
         >,
         (),
@@ -153,9 +158,9 @@ impl CellularAutomatonConfig {
     ) -> Result<
         Box<
             dyn BoardStateManager<
-                u8,
-                GridPoint2D<i32>,
-                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<i32>, u8>>,
+                IntState,
+                GridPoint2D<IntIdx>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
             >,
         >,
         (),
@@ -170,12 +175,12 @@ impl CellularAutomatonConfig {
                     } => initial_states
                         .par_iter()
                         .map(|(key, val)| {
-                            let cur_map: HashMap<GridPoint2D<i32>, u8> = val
+                            let cur_map: HashMap<GridPoint2D<IntIdx>, IntState> = val
                                 .par_iter()
                                 .map(|ele| {
                                     (
                                         ele.clone(),
-                                        key.parse::<u8>()
+                                        key.parse::<IntState>()
                                             .expect("Discrete states must be unsigned integers."),
                                     )
                                 })
@@ -184,10 +189,67 @@ impl CellularAutomatonConfig {
                         })
                         .reduce(|| HashMap::new(), |a, b| a.into_iter().chain(b).collect()),
                 };
-                Ok(Box::new(SparseStates::new(0u8, init_states)))
+                Ok(Box::new(SparseStates::new(0, init_states)))
             }
         }
     }
 
-    fn gen_strat_grid_2d_binary(&self) {}
+    fn gen_strat_grid_2d_binary(
+        &self,
+    ) -> Result<
+        Box<
+            dyn BoardStrategyManager<
+                GridPoint2D<IntIdx>,
+                BinaryState,
+                std::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
+            >,
+        >,
+        (),
+    > {
+        match &self.evolution_rule {
+            EvolutionRuleConfig::AliveCount { survive, born } => {
+                Ok(Box::new(SharedStrategyManager::new(Box::new(
+                    BinaryStrategy::new(collect_cell_counts(&survive), collect_cell_counts(&born)),
+                ))))
+            }
+        }
+    }
+
+    fn gen_strat_grid_2d_discrete(
+        &self,
+    ) -> Result<
+        Box<
+            dyn BoardStrategyManager<
+                GridPoint2D<IntIdx>,
+                IntState,
+                std::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
+            >,
+        >,
+        (),
+    > {
+        let state_count = match &self.state {
+            StateConfig::UInt { count } => count,
+        };
+        match &self.evolution_rule {
+            EvolutionRuleConfig::AliveCount { survive, born } => Ok(Box::new(
+                SharedStrategyManager::new(Box::new(DiscreteStrategy::new(
+                    state_count.clone(),
+                    collect_cell_counts(&survive),
+                    collect_cell_counts(&born),
+                ))),
+            )),
+        }
+    }
+}
+
+fn collect_cell_counts(counts: &Vec<CellCount>) -> HashSet<usize> {
+    counts
+        .par_iter()
+        .map(|ele| match ele {
+            CellCount::Integer(val) => HashSet::from_iter([val.clone()].iter().cloned()),
+            CellCount::Range(range) => {
+                HashSet::from_iter(range.first().unwrap().clone()..=range.last().unwrap().clone())
+            }
+        })
+        .reduce(|| HashSet::new(), |a, b| a.union(&b).cloned().collect())
 }

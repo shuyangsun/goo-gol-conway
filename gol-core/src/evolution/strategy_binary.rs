@@ -39,8 +39,8 @@ impl BinaryStrategy {
 
     pub fn conway() -> Self {
         let (alive, newborn) = (
-            HashSet::from_iter(vec![2, 3].into_iter()),
-            HashSet::from_iter(vec![3].into_iter()),
+            HashSet::from_iter([2, 3].iter().cloned()),
+            HashSet::from_iter([3].iter().cloned()),
         );
         Self::new(alive, newborn)
     }
