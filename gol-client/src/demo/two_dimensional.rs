@@ -1,9 +1,9 @@
 use gol_core::{
-    self, BinaryStatesCallback, Board, BoardCallback, ConwayState, ConwayStrategy, GridPoint2D,
+    self, BinaryState, BinaryStatesCallback, Board, BoardCallback, ConwayStrategy, GridPoint2D,
     StandardBoard, StandardBoardFactory,
 };
 
-use gol_renderer::{ConwayStateColorMap, GraphicalRendererGrid2D};
+use gol_renderer::{BinaryStateColorMap, GraphicalRendererGrid2D};
 use rand::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -26,8 +26,8 @@ pub fn run_demo(
     let (mut callbacks, keyboard_control) =
         crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
     let binary_states_callback = BinaryStatesCallback::new_with_non_trivial_indices(
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         initial_states.clone(),
     );
     let states_read_only = binary_states_callback.clone_read_only();
@@ -54,13 +54,13 @@ pub fn run_demo(
     };
 
     let mut board: StandardBoard<
-        ConwayState,
+        BinaryState,
         GridPoint2D<i32>,
         std::vec::IntoIter<GridPoint2D<i32>>,
     > = StandardBoardFactory::new_binary_2d_grid(
         win_size,
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         1,
         if initial_states.is_empty() {
             &random_init_state
@@ -80,11 +80,11 @@ pub fn run_demo(
 
     #[cfg(feature = "ascii")]
     {
-        use gol_renderer::{ConwayStateCharMap, TextRendererGrid2D};
+        use gol_renderer::{BinaryStateCharMap, TextRendererGrid2D};
         let mut text_renderer = TextRendererGrid2D::new_with_title_and_ch_txrx(
             win_size.0,
             win_size.1,
-            ConwayStateCharMap::new(),
+            BinaryStateCharMap::new(),
             states_read_only.clone(),
             String::from(title),
             keyboard_control.get_sender(),
@@ -98,7 +98,7 @@ pub fn run_demo(
     let graphical_renderer = GraphicalRendererGrid2D::new(
         win_size.0,
         win_size.1,
-        ConwayStateColorMap::new(),
+        BinaryStateColorMap::new(),
         states_read_only.clone(),
     );
 

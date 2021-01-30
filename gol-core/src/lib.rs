@@ -26,7 +26,7 @@ pub use callback::{
 };
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
-pub use cell::state::ConwayState;
+pub use cell::state::BinaryState;
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_conway::ConwayStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;

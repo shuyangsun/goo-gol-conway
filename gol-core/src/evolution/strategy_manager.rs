@@ -28,7 +28,7 @@ where
 #[cfg(test)]
 mod shared_strat_manager_test {
     use crate::{
-        BoardStrategyManager, ConwayState, ConwayStrategy, IndexedDataOwned, SharedStrategyManager,
+        BinaryState, BoardStrategyManager, ConwayStrategy, IndexedDataOwned, SharedStrategyManager,
     };
 
     #[test]
@@ -36,8 +36,8 @@ mod shared_strat_manager_test {
         let strat = Box::new(ConwayStrategy::new());
         let strat_manager = SharedStrategyManager::<
             i32,
-            ConwayState,
-            std::vec::IntoIter<IndexedDataOwned<i32, ConwayState>>,
+            BinaryState,
+            std::vec::IntoIter<IndexedDataOwned<i32, BinaryState>>,
         >::new(strat);
         let _ = strat_manager.get_strategy_at_index(0);
     }

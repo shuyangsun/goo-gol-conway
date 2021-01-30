@@ -49,25 +49,25 @@ where
 
 #[cfg(test)]
 mod sparse_binary_state_manager_test {
-    use crate::{BoardStateManager, ConwayState, GridPoint2D, SparseBinaryStates};
+    use crate::{BinaryState, BoardStateManager, GridPoint2D, SparseBinaryStates};
     use std::collections::HashSet;
 
     #[test]
     fn sparse_state_test_1() {
         let mut alive_cells = HashSet::new();
         alive_cells.insert(GridPoint2D { x: 0, y: 0 });
-        let states = SparseBinaryStates::new(ConwayState::Dead, ConwayState::Alive, &alive_cells);
+        let states = SparseBinaryStates::new(BinaryState::Dead, BinaryState::Alive, &alive_cells);
         assert_eq!(
             states.get_cell_state(&GridPoint2D { x: 0, y: 0 }),
-            ConwayState::Alive
+            BinaryState::Alive
         );
         assert_eq!(
             states.get_cell_state(&GridPoint2D { x: 1, y: 0 }),
-            ConwayState::Dead
+            BinaryState::Dead
         );
         assert_eq!(
             states.get_cell_state(&GridPoint2D { x: 1, y: -5 }),
-            ConwayState::Dead
+            BinaryState::Dead
         );
     }
 }

@@ -1,21 +1,21 @@
 use super::mapping::{
-    CharMapping, ColorMapping, ConwayStateCharMap, ConwayStateColorMap, DiscreteStateCharMap,
+    BinaryStateCharMap, BinaryStateColorMap, CharMapping, ColorMapping, DiscreteStateCharMap,
     DiscreteStateColorMap,
 };
-use gol_core::ConwayState;
+use gol_core::BinaryState;
 use num_traits::{PrimInt, ToPrimitive, Unsigned};
 use rgb::RGBA16;
 
 const DEAD_STATE_CHAR: char = ' ';
 const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-const CONWAY_STATE_ALIVE_CHAR: char = '0';
-const CONWAY_STATE_DEAD_CHAR: char = ' ';
+const BINARY_STATE_ALIVE_CHAR: char = '0';
+const BINARY_STATE_DEAD_CHAR: char = ' ';
 
-impl CharMapping<ConwayState> for ConwayStateCharMap {
-    fn char_representation(&self, state: &ConwayState) -> char {
+impl CharMapping<BinaryState> for BinaryStateCharMap {
+    fn char_representation(&self, state: &BinaryState) -> char {
         match state {
-            ConwayState::Alive => CONWAY_STATE_ALIVE_CHAR,
-            ConwayState::Dead => CONWAY_STATE_DEAD_CHAR,
+            BinaryState::Alive => BINARY_STATE_ALIVE_CHAR,
+            BinaryState::Dead => BINARY_STATE_DEAD_CHAR,
         }
     }
 }
@@ -34,16 +34,16 @@ where
     }
 }
 
-impl ColorMapping<ConwayState> for ConwayStateColorMap {
-    fn color_representation(&self, state: &ConwayState) -> RGBA16 {
+impl ColorMapping<BinaryState> for BinaryStateColorMap {
+    fn color_representation(&self, state: &BinaryState) -> RGBA16 {
         match state {
-            ConwayState::Alive => RGBA16 {
+            BinaryState::Alive => RGBA16 {
                 r: 0,
                 g: u16::MAX,
                 b: 0,
                 a: u16::MAX,
             },
-            ConwayState::Dead => RGBA16 {
+            BinaryState::Dead => RGBA16 {
                 r: 0,
                 g: 0,
                 b: 0,

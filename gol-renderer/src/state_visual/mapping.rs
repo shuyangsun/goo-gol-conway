@@ -9,10 +9,10 @@ pub trait ColorMapping<T> {
 }
 
 #[derive(Clone)]
-pub struct ConwayStateCharMap {}
+pub struct BinaryStateCharMap {}
 
 #[derive(Clone)]
-pub struct ConwayStateColorMap {}
+pub struct BinaryStateColorMap {}
 
 #[derive(Clone)]
 pub struct DiscreteStateCharMap {
@@ -25,13 +25,13 @@ pub struct DiscreteStateColorMap {
     should_decay_alpha: bool,
 }
 
-impl ConwayStateCharMap {
+impl BinaryStateCharMap {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl ConwayStateColorMap {
+impl BinaryStateColorMap {
     pub fn new() -> Self {
         Self {}
     }

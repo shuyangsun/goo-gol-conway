@@ -9,6 +9,6 @@ pub use graphics::grid_2d::GraphicalRendererGrid2D;
 pub use text::grid_2d::TextRendererGrid2D;
 
 pub use state_visual::mapping::{
-    CharMapping, ColorMapping, ConwayStateCharMap, ConwayStateColorMap, DiscreteStateCharMap,
+    BinaryStateCharMap, BinaryStateColorMap, CharMapping, ColorMapping, DiscreteStateCharMap,
     DiscreteStateColorMap,
 };

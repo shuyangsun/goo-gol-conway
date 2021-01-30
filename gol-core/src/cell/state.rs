@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ConwayState {
+pub enum BinaryState {
     Alive,
     Dead,
 }

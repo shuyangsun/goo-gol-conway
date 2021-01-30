@@ -1,2 +1,2 @@
-pub mod conway;
+pub mod discrete;
 pub mod mapping;

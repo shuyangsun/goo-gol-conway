@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use gol_core::{
-    Board, ConwayState, ConwayStrategy, GridPoint1D, GridPoint2D, GridPoint3D, StandardBoardFactory,
+    BinaryState, Board, ConwayStrategy, GridPoint1D, GridPoint2D, GridPoint3D, StandardBoardFactory,
 };
 use rayon::prelude::*;
 use std::collections::HashSet;
@@ -20,7 +20,7 @@ const SHAPES_2D_LARGE: [usize; 6] = [5, 1_000, 2_000, 3_000, 4_000, 5_000];
 
 const SHAPES_3D_SMALL: [usize; 13] = [5, 10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
 
-type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<ConwayState, CI, std::vec::IntoIter<CI>>>>>;
+type ConwayBoard<CI> = Arc<Mutex<Box<dyn Board<BinaryState, CI, std::vec::IntoIter<CI>>>>>;
 
 fn neighbor_benchmark_1d_small(c: &mut Criterion) {
     let mut group = c.benchmark_group("1D Board Small");
@@ -390,8 +390,8 @@ fn gen_board_1d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_surround = StandardBoardFactory::new_binary_1d_grid(
         shape.clone(),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
@@ -402,8 +402,8 @@ fn gen_board_1d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_donut = StandardBoardFactory::new_binary_1d_grid(
         shape.clone(),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
@@ -424,8 +424,8 @@ fn gen_board_2d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_surround = StandardBoardFactory::new_binary_2d_grid(
         (shape.clone(), shape.clone()),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
@@ -436,8 +436,8 @@ fn gen_board_2d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_donut = StandardBoardFactory::new_binary_2d_grid(
         (shape.clone(), shape.clone()),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
@@ -458,8 +458,8 @@ fn gen_board_3d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_surround = StandardBoardFactory::new_binary_3d_grid(
         (shape.clone(), shape.clone(), shape.clone()),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
@@ -470,8 +470,8 @@ fn gen_board_3d(
     let strategy = Box::new(ConwayStrategy::new());
     let board_donut = StandardBoardFactory::new_binary_3d_grid(
         (shape.clone(), shape.clone(), shape.clone()),
-        ConwayState::Dead,
-        ConwayState::Alive,
+        BinaryState::Dead,
+        BinaryState::Alive,
         margin,
         &HashSet::new(),
         strategy,
