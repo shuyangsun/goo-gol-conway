@@ -21,13 +21,13 @@ use gfx_hal::{
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
-use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
+use gol_core::{util::grid_util::Shape2D, GridPoint2D, StatesReadOnly};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use rgb::RGBA16;
 use shaderc::ShaderKind;
 use std::borrow::Borrow;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use winit::{
@@ -43,7 +43,7 @@ where
     info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter,
-    states_read_only: BinaryStatesReadOnly<CI, T>,
+    states_read_only: StatesReadOnly<CI, T>,
     cell_scale: f32,
 }
 
@@ -55,7 +55,7 @@ where
     pub fn new(
         board_width: usize,
         board_height: usize,
-        states_storage: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+        states_storage: StatesReadOnly<GridPoint2D<U>, T>,
     ) -> Result<Self, UnsupportedBackend> {
         let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
         Ok(Self {
@@ -302,13 +302,12 @@ where
                     let (grid_width, grid_height) =
                         (board_shape.width() as u32, board_shape.height() as u32);
 
-                    let non_trivial_state = states_read_only.non_trivial_state();
-                    let mut indices_clone = HashSet::new();
+                    let mut lookup_clone = HashMap::new();
                     loop {
                         match states_read_only.try_read() {
                             Ok(val) => {
                                 if cur_iter.is_none() || cur_iter.unwrap() != val.0 {
-                                    indices_clone = val.1.clone();
+                                    lookup_clone = val.1.clone();
                                     cur_iter = Some(val.0);
                                     break;
                                 }
@@ -317,10 +316,10 @@ where
                         }
                     }
 
-                    let constants: Vec<((u32, u32), ColorRGBA)> = indices_clone
+                    let constants: Vec<((u32, u32), ColorRGBA)> = lookup_clone
                         .par_iter()
-                        .map(|ele| {
-                            let color = visual_mapping.to_visual(&non_trivial_state);
+                        .map(|(idx, state)| {
+                            let color = visual_mapping.to_visual(&state);
                             let max_color = u16::MAX as f32;
                             let (x_min, y_min) = (
                                 board_shape.x_idx_min() as i32,
@@ -328,8 +327,8 @@ where
                             );
                             let ele_res: ((u32, u32), ColorRGBA) = (
                                 (
-                                    (ele.x.to_i32().unwrap() - x_min).to_u32().unwrap(),
-                                    (ele.y.to_i32().unwrap() - y_min).to_u32().unwrap(),
+                                    (idx.x.to_i32().unwrap() - x_min).to_u32().unwrap(),
+                                    (idx.y.to_i32().unwrap() - y_min).to_u32().unwrap(),
                                 ),
                                 ColorRGBA {
                                     r: color.r as f32 / max_color,

@@ -11,7 +11,4 @@ pub use text::grid_2d::TextRendererGrid2D;
 
 pub use renderer::renderer::CellularAutomatonRenderer;
 
-pub use state_visual::mapping::{
-    BinaryStateCharMap, BinaryStateColorMap, DiscreteStateCharMap, DiscreteStateColorMap,
-    StateVisualMapping,
-};
+pub use state_visual::mapping::{DiscreteStateCharMap, DiscreteStateColorMap, StateVisualMapping};

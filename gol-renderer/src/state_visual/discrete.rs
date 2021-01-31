@@ -1,24 +1,9 @@
-use super::mapping::{
-    BinaryStateCharMap, BinaryStateColorMap, DiscreteStateCharMap, DiscreteStateColorMap,
-    StateVisualMapping,
-};
-use gol_core::BinaryState;
+use super::mapping::{DiscreteStateCharMap, DiscreteStateColorMap, StateVisualMapping};
 use num_traits::{PrimInt, ToPrimitive, Unsigned};
 use rgb::RGBA16;
 
 const DEAD_STATE_CHAR: char = ' ';
 const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-const BINARY_STATE_ALIVE_CHAR: char = '0';
-const BINARY_STATE_DEAD_CHAR: char = ' ';
-
-impl StateVisualMapping<BinaryState, char> for BinaryStateCharMap {
-    fn to_visual(&self, state: &BinaryState) -> char {
-        match state {
-            BinaryState::Alive => BINARY_STATE_ALIVE_CHAR,
-            BinaryState::Dead => BINARY_STATE_DEAD_CHAR,
-        }
-    }
-}
 
 impl<T> StateVisualMapping<T, char> for DiscreteStateCharMap
 where
@@ -30,25 +15,6 @@ where
             DEAD_STATE_CHAR
         } else {
             INT_STATE_CHARS[state.to_usize().unwrap() - 1]
-        }
-    }
-}
-
-impl StateVisualMapping<BinaryState, RGBA16> for BinaryStateColorMap {
-    fn to_visual(&self, state: &BinaryState) -> RGBA16 {
-        match state {
-            BinaryState::Alive => RGBA16 {
-                r: 0,
-                g: u16::MAX,
-                b: 0,
-                a: u16::MAX,
-            },
-            BinaryState::Dead => RGBA16 {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 0,
-            },
         }
     }
 }

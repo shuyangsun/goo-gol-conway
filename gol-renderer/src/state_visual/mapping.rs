@@ -3,12 +3,6 @@ pub trait StateVisualMapping<T, U>: Send + Sync {
 }
 
 #[derive(Clone)]
-pub struct BinaryStateCharMap {}
-
-#[derive(Clone)]
-pub struct BinaryStateColorMap {}
-
-#[derive(Clone)]
 pub struct DiscreteStateCharMap {
     state_count: usize,
 }
@@ -17,18 +11,6 @@ pub struct DiscreteStateCharMap {
 pub struct DiscreteStateColorMap {
     state_count: usize,
     should_decay_alpha: bool,
-}
-
-impl BinaryStateCharMap {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl BinaryStateColorMap {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 impl DiscreteStateCharMap {

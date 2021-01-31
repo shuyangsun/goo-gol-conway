@@ -18,16 +18,10 @@ pub use board::board_strategy::BoardStrategyManager;
 pub use board::standard::{StandardBoard, StandardBoardFactory};
 pub use board_states::predefined as predefined_states;
 pub use board_states::sparse::SparseStates;
-pub use board_states::sparse_binary::SparseBinaryStates;
-pub use callback::{
-    model_binary_states::BinaryStatesCallback, model_binary_states::BinaryStatesReadOnly,
-    model_states::StatesCallback, model_states::StatesReadOnly,
-};
+pub use callback::{model_states::StatesCallback, model_states::StatesReadOnly};
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
-pub use cell::state::BinaryState;
 pub use evolution::strategy::EvolutionStrategy;
-pub use evolution::strategy_binary::BinaryStrategy;
 pub use evolution::strategy_discrete::DiscreteStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
