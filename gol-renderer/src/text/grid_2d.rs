@@ -27,7 +27,7 @@ pub struct TextRendererGrid2D<S, M> {
 
 impl<T, U, M> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
 where
-    U: Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U> + Clone,
+    U: Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
     M: CharMapping<T>,
 {
     pub fn new(
@@ -188,8 +188,9 @@ where
 impl<T, U, M> CellularAutomatonRenderer
     for TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
 where
-    U: Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U> + Clone,
-    M: CharMapping<T>,
+    T: Send + Sync,
+    U: Send + Sync + Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
+    M: Send + Sync + CharMapping<T>,
 {
     fn need_run_on_main(&self) -> bool {
         false

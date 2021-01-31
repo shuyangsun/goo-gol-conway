@@ -1,9 +1,9 @@
 use gol_core::{
     util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStatesReadOnly,
-    BinaryStrategy, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
+    BinaryStrategy, Board, BoardCallback, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D,
     IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
-    SharedStrategyManager, SparseBinaryStates, SparseStates, StatesReadOnly,
+    SharedStrategyManager, SparseBinaryStates, SparseStates, StandardBoard, StatesReadOnly,
 };
 use gol_renderer::{BinaryStateColorMap, CellularAutomatonRenderer, GraphicalRendererGrid2D};
 use rayon::prelude::*;
@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
+use std::thread;
 use std::time::Duration;
+
 type IntIdx = i32;
 type IntState = u8;
 
@@ -95,6 +97,61 @@ pub struct CellularAutomatonConfig {
 impl CellularAutomatonConfig {
     pub fn from_json(json: &str) -> Self {
         serde_json::from_str(json).unwrap()
+    }
+
+    pub fn run_board(&self) {
+        let max_iter = self.max_iter.clone();
+        let mut renderers = match self.board {
+            BoardConfig::Grid2D {
+                shape: _,
+                initial_states: _,
+            } => {
+                let space = self.gen_space_grid_2d().unwrap();
+                let neighbor = self.gen_neighbor_grid_2d().unwrap();
+                match self.state {
+                    StateConfig::UInt { count } => {
+                        if count == 2 {
+                            let state = self.gen_state_manager_grid_2d_binary().unwrap();
+                            let strat = self.gen_strat_grid_2d_binary().unwrap();
+                            let (callbacks, renderers) = self.gen_callback_grid_2d_binary_state();
+                            let mut board =
+                                StandardBoard::new(space, neighbor, state, strat, callbacks);
+                            std::thread::spawn(move || {
+                                board.advance(max_iter);
+                            });
+                            renderers
+                        } else {
+                            let _state = self.gen_state_manager_grid_2d_discrete().unwrap();
+                            let _strat = self.gen_strat_grid_2d_discrete().unwrap();
+                            panic!("Implement discrete state renderer");
+                        }
+                    }
+                }
+            }
+        };
+        if renderers.len() == 1 {
+            renderers[0].as_mut().run();
+        } else {
+            let mut main_renderer = None;
+            let mut handles = Vec::with_capacity(renderers.len());
+            while !renderers.is_empty() {
+                let mut cur = renderers.pop().unwrap();
+                if cur.need_run_on_main() {
+                    main_renderer = Some(cur);
+                } else {
+                    handles.push(thread::spawn(move || cur.run()));
+                }
+            }
+            match main_renderer {
+                Some(mut renderer) => renderer.run(),
+                None => {
+                    for handle in handles {
+                        handle.join().unwrap()
+                    }
+                }
+            }
+        }
+        panic!("Could not generate Cellular Automaton from config file.");
     }
 
     fn gen_space_grid_2d(
@@ -280,10 +337,12 @@ impl CellularAutomatonConfig {
     fn gen_callback_grid_2d_binary_state(
         &self,
     ) -> (
-        BoardCallbackManager<
-            BinaryState,
-            GridPoint2D<IntIdx>,
-            rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
+        Vec<
+            BoardCallback<
+                BinaryState,
+                GridPoint2D<IntIdx>,
+                rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
+            >,
         >,
         Vec<Box<dyn CellularAutomatonRenderer>>,
     ) {
@@ -354,7 +413,18 @@ impl CellularAutomatonConfig {
             }
         }
 
-        (BoardCallbackManager::new(callbacks), renderers)
+        let mut found_must_main_thread = false;
+        for renderer in renderers.iter() {
+            if renderer.need_run_on_main() {
+                if found_must_main_thread {
+                    panic!("More than one visual style need to be ran on main thread, try reducing the number of styles.");
+                } else {
+                    found_must_main_thread = true;
+                }
+            }
+        }
+
+        (callbacks, renderers)
     }
 }
 
