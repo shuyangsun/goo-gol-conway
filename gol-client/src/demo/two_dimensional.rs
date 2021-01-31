@@ -24,7 +24,7 @@ pub fn run_demo(
     let interval_nano_sec = (interval_secs * one_billion_nano_sec) as u64;
 
     let (mut callbacks, keyboard_control) =
-        crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
+        crate::callback::standard_control_callbacks(true, Duration::from_nanos(interval_nano_sec));
     let binary_states_callback = BinaryStatesCallback::new(BinaryState::Dead, BinaryState::Alive);
     let states_read_only = binary_states_callback.clone_read_only();
     let binary_states_callback = BoardCallback::WithStates(Box::new(binary_states_callback));
