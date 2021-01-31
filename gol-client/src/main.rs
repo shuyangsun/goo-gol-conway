@@ -18,6 +18,8 @@ fn main() {
         include_str!("../examples/and_gate_11.json"),
         include_str!("../examples/random.json"),
         include_str!("../examples/random_gol.json"),
+        include_str!("../examples/and_gate_4_neighbors.json"),
+        include_str!("../examples/byte_state.json"),
     ];
     let configs: Vec<CellularAutomatonConfig> = jsons
         .par_iter()

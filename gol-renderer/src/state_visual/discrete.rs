@@ -33,13 +33,13 @@ where
             }
         } else {
             let ratio = state.to_f64().unwrap() / (self.state_count() - 1) as f64;
-            let green = (u16::MAX as f64 * ratio).ceil() as u16;
-            let red = (u16::MAX as f64 * (1.0 - ratio)).floor() as u16;
+            let high = (u16::MAX as f64 * ratio).ceil() as u16;
+            let low = (u16::MAX as f64 * (1.0 - ratio)).floor() as u16;
             RGBA16 {
-                r: red,
-                g: green,
+                r: low,
+                g: high,
                 b: 0,
-                a: green,
+                a: high,
             }
         }
     }

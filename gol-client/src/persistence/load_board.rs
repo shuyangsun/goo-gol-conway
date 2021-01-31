@@ -5,8 +5,8 @@ use gol_core::{
     SharedStrategyManager, SparseStates, StandardBoard, StatesCallback,
 };
 use gol_renderer::{
-    renderer::keyboard_control::KeyboardControl, CellularAutomatonRenderer, DiscreteStateCharMap,
-    DiscreteStateColorMap, GraphicalRendererGrid2D, StateVisualMapping,
+    CellularAutomatonRenderer, DiscreteStateCharMap, DiscreteStateColorMap,
+    GraphicalRendererGrid2D, StateVisualMapping,
 };
 use num_cpus;
 use rand::Rng;
@@ -129,7 +129,7 @@ impl CellularAutomatonConfig {
                 let space = self.gen_space_grid_2d().unwrap();
                 let neighbor = self.gen_neighbor_grid_2d().unwrap();
                 match self.state {
-                    StateConfig::UInt { count } => {
+                    StateConfig::UInt { count: _ } => {
                         let state = self.gen_state_manager_grid_2d_discrete().unwrap();
                         let strat = self.gen_strat_grid_2d_discrete().unwrap();
                         let (callbacks, char_renderers, color_renderers) =

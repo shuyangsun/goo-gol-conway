@@ -27,7 +27,6 @@ use rayon::prelude::*;
 use rgb::RGBA16;
 use shaderc::ShaderKind;
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use winit::{
@@ -42,7 +41,7 @@ where
 {
     info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
-    fps_counter: FPSCounter,
+    fps_counter: FPSCounter, // TODO: show FPS
     states_read_only: StatesReadOnly<CI, T>,
     cell_scale: f32,
 }
@@ -302,13 +301,13 @@ where
                     let (grid_width, grid_height) =
                         (board_shape.width() as u32, board_shape.height() as u32);
 
-                    let mut lookup_clone = HashMap::new();
+                    let lookup;
                     loop {
                         match states_read_only.try_read() {
                             Ok(val) => {
                                 if cur_iter.is_none() || cur_iter.unwrap() != val.0 {
-                                    lookup_clone = val.1.clone();
-                                    cur_iter = Some(val.0);
+                                    lookup = val.1.clone();
+                                    cur_iter = Some(val.0); // TODO: show current iteration.
                                     break;
                                 }
                             }
@@ -316,7 +315,7 @@ where
                         }
                     }
 
-                    let constants: Vec<((u32, u32), ColorRGBA)> = lookup_clone
+                    let constants: Vec<((u32, u32), ColorRGBA)> = lookup
                         .par_iter()
                         .map(|(idx, state)| {
                             let color = visual_mapping.to_visual(&state);

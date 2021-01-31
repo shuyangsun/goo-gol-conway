@@ -1,0 +1,36 @@
+{
+    "title": "ByteState",
+    "max_iter": null,
+    "delay": 0.1,
+    "pause_at_start": false,
+    "enable_control": true,
+    "save": null,
+    "visual": {
+        "on": true,
+        "styles": ["Graphical"]
+    },
+    "neighbor_rule": {
+        "type": "Moore",
+        "margin": 1
+    },
+    "state": {
+        "type": "UInt",
+        "count": 255
+    },
+    "evolution_rule": {
+        "type": "AliveCount",
+        "survive": [[2, 4]],
+        "born": [5, 10]
+    },
+    "board": {
+        "type": "Grid2D",
+        "shape": {
+            "width": 480,
+            "height": 250
+        },
+        "initial_states": {
+            "type": "Random",
+            "alive_ratio": 0.3
+        }
+    }
+}

@@ -11,7 +11,6 @@ use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
 use std::hash::Hash;
-use std::time::Instant;
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
