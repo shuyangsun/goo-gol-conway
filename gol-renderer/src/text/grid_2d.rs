@@ -6,7 +6,7 @@ use crate::{
     },
     CellularAutomatonRenderer, StateVisualMapping,
 };
-use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
+use gol_core::{util::grid_util::Shape2D, GridPoint2D, StatesReadOnly};
 use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
@@ -24,14 +24,14 @@ pub struct TextRendererGrid2D<S> {
     states_read_only: S,
 }
 
-impl<T, U> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>>
+impl<T, U> TextRendererGrid2D<StatesReadOnly<GridPoint2D<U>, T>>
 where
     U: Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
 {
     pub fn new(
         board_width: usize,
         board_height: usize,
-        states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
+        states: StatesReadOnly<GridPoint2D<U>, T>,
     ) -> Self {
         let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
         Self {
@@ -157,7 +157,7 @@ where
                     if self.info.iter_count().is_none() || self.info.iter_count().unwrap() != val.0
                     {
                         let win = create_win(start_y, start_x, win_height as i32, win_width as i32);
-                        for idx in val.1.iter() {
+                        for (idx, state) in val.1.iter() {
                             let x_min = board_shape.x_idx_min();
                             let y_max = board_shape.y_idx_max();
                             let cur_x = (idx.x.clone() - U::from_i64(x_min).unwrap())
@@ -165,8 +165,7 @@ where
                                 .unwrap()
                                 + 1;
                             let cur_y = (y_max - idx.y.to_i64().unwrap()).to_i32().unwrap() + 2;
-                            let ch: char =
-                                char_map.to_visual(&self.states_read_only.non_trivial_state());
+                            let ch: char = char_map.to_visual(state);
                             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
                         }
                         wrefresh(win);
@@ -181,7 +180,7 @@ where
 }
 
 impl<T, U> CellularAutomatonRenderer<T, char>
-    for TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>>
+    for TextRendererGrid2D<StatesReadOnly<GridPoint2D<U>, T>>
 where
     T: Send + Sync,
     U: Send + Sync + Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,

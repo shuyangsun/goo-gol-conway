@@ -380,6 +380,8 @@ impl CellularAutomatonConfig {
                         eprintln!("Cannot create ASCII renderer, please recompile with \"--features ascii\",");
                         #[cfg(feature = "ascii")]
                         {
+                            use gol_renderer::TextRendererGrid2D;
+
                             let text_renderer = TextRendererGrid2D::new(
                                 board_shape.width(),
                                 board_shape.height(),
