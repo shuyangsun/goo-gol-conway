@@ -6,12 +6,13 @@ use gol_core::{
     SharedStrategyManager, SparseBinaryStates, SparseStates, StandardBoard,
 };
 use gol_renderer::{
-    renderer::keyboard_control::KeyboardControl, BinaryStateColorMap, CellularAutomatonRenderer,
-    GraphicalRendererGrid2D,
+    renderer::keyboard_control::KeyboardControl, BinaryStateCharMap, BinaryStateColorMap,
+    CellularAutomatonRenderer, GraphicalRendererGrid2D,
 };
 use num_cpus;
 use rand::Rng;
 use rayon::prelude::*;
+use rgb::RGBA16;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::{HashMap, HashSet};
@@ -121,7 +122,7 @@ impl CellularAutomatonConfig {
 
     pub fn run_board(&self) {
         let max_iter = self.max_iter.clone();
-        let mut renderers = match self.board {
+        let (mut char_renderers, mut color_renderers) = match self.board {
             BoardConfig::Grid2D {
                 shape: _,
                 initial_states: _,
@@ -133,13 +134,14 @@ impl CellularAutomatonConfig {
                         if count == 2 {
                             let state = self.gen_state_manager_grid_2d_binary().unwrap();
                             let strat = self.gen_strat_grid_2d_binary().unwrap();
-                            let (callbacks, renderers) = self.gen_callback_grid_2d_binary_state();
+                            let (callbacks, char_renderers, color_renderers) =
+                                self.gen_callback_grid_2d_binary_state();
                             let mut board =
                                 StandardBoard::new(space, neighbor, state, strat, callbacks);
                             std::thread::spawn(move || {
                                 board.advance(max_iter);
                             });
-                            renderers
+                            (char_renderers, color_renderers)
                         } else {
                             let _state = self.gen_state_manager_grid_2d_discrete().unwrap();
                             let _strat = self.gen_strat_grid_2d_discrete().unwrap();
@@ -149,21 +151,34 @@ impl CellularAutomatonConfig {
                 }
             }
         };
-        if renderers.len() == 1 {
-            renderers[0].as_mut().run();
+
+        let char_map = BinaryStateCharMap::new();
+        let color_map = BinaryStateColorMap::new();
+
+        if char_renderers.len() + color_renderers.len() == 1 {
+            match char_renderers.first() {
+                Some(_) => char_renderers[0].as_mut().run(Box::new(char_map.clone())),
+                None => color_renderers[0].as_mut().run(Box::new(color_map.clone())),
+            }
         } else {
             let mut main_renderer = None;
-            let mut handles = Vec::with_capacity(renderers.len());
-            while !renderers.is_empty() {
-                let mut cur = renderers.pop().unwrap();
+            let mut handles = Vec::with_capacity(char_renderers.len() + color_renderers.len());
+            while !char_renderers.is_empty() {
+                let mut cur = char_renderers.pop().unwrap();
+                let char_map_clone = char_map.clone();
+                handles.push(thread::spawn(move || cur.run(Box::new(char_map_clone))));
+            }
+            while !color_renderers.is_empty() {
+                let mut cur = color_renderers.pop().unwrap();
                 if cur.need_run_on_main() {
                     main_renderer = Some(cur);
                 } else {
-                    handles.push(thread::spawn(move || cur.run()));
+                    let color_map_clone = color_map.clone();
+                    handles.push(thread::spawn(move || cur.run(Box::new(color_map_clone))));
                 }
             }
             match main_renderer {
-                Some(mut renderer) => renderer.run(),
+                Some(mut renderer) => renderer.run(Box::new(color_map)),
                 None => {
                     for handle in handles {
                         handle.join().unwrap()
@@ -371,10 +386,14 @@ impl CellularAutomatonConfig {
                 rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
             >,
         >,
-        Vec<Box<dyn CellularAutomatonRenderer>>,
+        Vec<Box<dyn CellularAutomatonRenderer<BinaryState, char>>>,
+        Vec<Box<dyn CellularAutomatonRenderer<BinaryState, RGBA16>>>,
     ) {
         let mut callbacks = Vec::new();
-        let mut renderers: Vec<Box<dyn CellularAutomatonRenderer>> = Vec::new();
+        let mut char_renderers: Vec<Box<dyn CellularAutomatonRenderer<BinaryState, char>>> =
+            Vec::new();
+        let mut color_renderers: Vec<Box<dyn CellularAutomatonRenderer<BinaryState, RGBA16>>> =
+            Vec::new();
 
         if self.visual.on && !self.visual.styles.is_empty() {
             let one_billion_nano_sec: f64 = 1_000_000_000f64;
@@ -409,7 +428,6 @@ impl CellularAutomatonConfig {
                         let graphical_renderer = GraphicalRendererGrid2D::new(
                             board_shape.width(),
                             board_shape.height(),
-                            BinaryStateColorMap::new(),
                             states_read_only.clone(),
                         );
 
@@ -422,7 +440,7 @@ impl CellularAutomatonConfig {
                                     }
                                     None => real_gui_renderer,
                                 };
-                                renderers.push(Box::new(res));
+                                color_renderers.push(Box::new(res));
                             }
                             Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
                         };
@@ -437,7 +455,6 @@ impl CellularAutomatonConfig {
                             let text_renderer = TextRendererGrid2D::new(
                                 board_shape.width(),
                                 board_shape.height(),
-                                BinaryStateCharMap::new(),
                                 states_read_only.clone(),
                             )
                             .with_title(self.title.clone());
@@ -447,7 +464,7 @@ impl CellularAutomatonConfig {
                                 }
                                 None => text_renderer,
                             };
-                            renderers.push(Box::new(res));
+                            char_renderers.push(Box::new(res));
                         }
                     }
                 }
@@ -455,7 +472,8 @@ impl CellularAutomatonConfig {
         }
 
         let mut found_must_main_thread = false;
-        for renderer in renderers.iter() {
+
+        for renderer in char_renderers.iter() {
             if renderer.need_run_on_main() {
                 if found_must_main_thread {
                     panic!("More than one visual style need to be ran on main thread, try reducing the number of styles.");
@@ -465,7 +483,17 @@ impl CellularAutomatonConfig {
             }
         }
 
-        (callbacks, renderers)
+        for renderer in color_renderers.iter() {
+            if renderer.need_run_on_main() {
+                if found_must_main_thread {
+                    panic!("More than one visual style need to be ran on main thread, try reducing the number of styles.");
+                } else {
+                    found_must_main_thread = true;
+                }
+            }
+        }
+
+        (callbacks, char_renderers, color_renderers)
     }
 }
 

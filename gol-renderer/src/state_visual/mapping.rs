@@ -1,4 +1,4 @@
-pub trait StateVisualMapping<T, U> {
+pub trait StateVisualMapping<T, U>: Send + Sync {
     fn to_visual(&self, state: &T) -> U;
 }
 

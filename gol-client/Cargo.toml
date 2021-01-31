@@ -14,6 +14,7 @@ ascii = ["ncurses", "gol-renderer/ascii"]
 
 [dependencies]
 num_cpus = "1.13.0"
+rgb = "0.8.25"
 rand = "0.8.2"
 rayon = "1.5.0"
 clap = "2.33.3"

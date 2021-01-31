@@ -36,28 +36,25 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-pub struct GraphicalRendererGrid2D<M, CI, T>
+pub struct GraphicalRendererGrid2D<CI, T>
 where
     CI: Hash,
 {
     info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter,
-    color_map: M,
     states_read_only: BinaryStatesReadOnly<CI, T>,
     cell_scale: f32,
 }
 
-impl<T, U, M> GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
+impl<T, U> GraphicalRendererGrid2D<GridPoint2D<U>, T>
 where
     T: 'static + Send + Sync + Clone,
     U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
-    M: 'static + Send + Sync + Clone + StateVisualMapping<T, RGBA16>,
 {
     pub fn new(
         board_width: usize,
         board_height: usize,
-        color_map: M,
         states_storage: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Result<Self, UnsupportedBackend> {
         let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
@@ -65,7 +62,6 @@ where
             info,
             control: None,
             fps_counter: FPSCounter::new(240),
-            color_map,
             states_read_only: states_storage,
             cell_scale: 0.95,
         })
@@ -74,12 +70,6 @@ where
     pub fn with_title(self, title: String) -> Self {
         let mut res = self;
         res.info.set_title(title);
-        res
-    }
-
-    pub fn with_color_map(self, cmap: M) -> Self {
-        let mut res = self;
-        res.color_map = cmap;
         res
     }
 
@@ -96,20 +86,18 @@ where
     }
 }
 
-impl<T, U, M> CellularAutomatonRenderer for GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
+impl<T, U> CellularAutomatonRenderer<T, RGBA16> for GraphicalRendererGrid2D<GridPoint2D<U>, T>
 where
-    T: 'static + Send + Sync + Clone,
+    T: 'static + Send + Sync + Clone + Hash,
     U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
-    M: 'static + Send + Sync + Clone + StateVisualMapping<T, RGBA16>,
 {
     fn need_run_on_main(&self) -> bool {
         true
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, visual_mapping: Box<dyn StateVisualMapping<T, RGBA16>>) {
         let event_loop = EventLoop::new();
         let title = self.info.title().clone();
-        let color_map = self.color_map.clone();
 
         let board_shape = self.info.board_shape().clone();
         let states_read_only = self.states_read_only.clone();
@@ -332,7 +320,7 @@ where
                     let constants: Vec<((u32, u32), ColorRGBA)> = indices_clone
                         .par_iter()
                         .map(|ele| {
-                            let color = color_map.to_visual(&non_trivial_state);
+                            let color = visual_mapping.to_visual(&non_trivial_state);
                             let max_color = u16::MAX as f32;
                             let (x_min, y_min) = (
                                 board_shape.x_idx_min() as i32,

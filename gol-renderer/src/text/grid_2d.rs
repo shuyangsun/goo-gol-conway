@@ -16,24 +16,21 @@ use std::time::Instant;
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
 
-pub struct TextRendererGrid2D<S, M> {
+pub struct TextRendererGrid2D<S> {
     info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter,
     screen_size: Option<Shape2D>,
     states_read_only: S,
-    char_map: M,
 }
 
-impl<T, U, M> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
+impl<T, U> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>>
 where
     U: Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
-    M: StateVisualMapping<T, char>,
 {
     pub fn new(
         board_width: usize,
         board_height: usize,
-        char_map: M,
         states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Self {
         let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
@@ -42,7 +39,6 @@ where
             control: None,
             fps_counter: FPSCounter::new(240),
             screen_size: None,
-            char_map,
             states_read_only: states,
         }
     }
@@ -143,7 +139,7 @@ where
         }
     }
 
-    fn draw(&mut self) {
+    fn draw(&mut self, char_map: &dyn StateVisualMapping<T, char>) {
         let board_shape = self.info.board_shape();
         let (win_width, win_height) = (board_shape.width(), board_shape.height());
 
@@ -169,9 +165,8 @@ where
                                 .unwrap()
                                 + 1;
                             let cur_y = (y_max - idx.y.to_i64().unwrap()).to_i32().unwrap() + 2;
-                            let ch: char = self
-                                .char_map
-                                .to_visual(&self.states_read_only.non_trivial_state());
+                            let ch: char =
+                                char_map.to_visual(&self.states_read_only.non_trivial_state());
                             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
                         }
                         wrefresh(win);
@@ -185,25 +180,24 @@ where
     }
 }
 
-impl<T, U, M> CellularAutomatonRenderer
-    for TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
+impl<T, U> CellularAutomatonRenderer<T, char>
+    for TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>>
 where
     T: Send + Sync,
     U: Send + Sync + Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
-    M: Send + Sync + StateVisualMapping<T, char>,
 {
     fn need_run_on_main(&self) -> bool {
         false
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, visual_mapping: Box<dyn StateVisualMapping<T, char>>) {
         self.setup_if_not_ready();
 
         loop {
             self.print_generation_and_speed();
             self.fps_counter.lapse();
 
-            self.draw();
+            self.draw(&*visual_mapping);
 
             self.check_user_input(false);
         }
