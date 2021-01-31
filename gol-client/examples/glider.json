@@ -26,7 +26,7 @@
         "type": "Grid2D",
         "shape": {
             "width": 50,
-            "height": 50
+            "height": 30
         },
         "initial_states": {
             "type": "Deterministic",

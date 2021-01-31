@@ -25,8 +25,8 @@
     "board": {
         "type": "Grid2D",
         "shape": {
-            "width": 70,
-            "height": 100
+            "width": 50,
+            "height": 70
         },
         "initial_states": {
             "type": "Deterministic",
