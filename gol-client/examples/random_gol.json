@@ -1,5 +1,5 @@
 {
-    "title": "Random",
+    "title": "RandomGoL",
     "max_iter": null,
     "delay": 1.0,
     "pause_at_start": true,
@@ -10,8 +10,8 @@
         "styles": ["Graphical"]
     },
     "neighbor_rule": {
-        "type": "MooreWrap",
-        "margin": 2
+        "type": "Moore",
+        "margin": 1
     },
     "state": {
         "type": "UInt",
@@ -25,12 +25,12 @@
     "board": {
         "type": "Grid2D",
         "shape": {
-            "width": 384,
-            "height": 216
+            "width": 200,
+            "height": 200
         },
         "initial_states": {
             "type": "Random",
-            "alive_ratio": 0.4
+            "alive_ratio": 0.5
         }
     }
 }

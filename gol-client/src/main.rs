@@ -9,6 +9,7 @@ fn main() {
     let jsons = vec![
         include_str!("../examples/tetris.json"),
         include_str!("../examples/random.json"),
+        include_str!("../examples/random_gol.json"),
     ];
     let configs: Vec<CellularAutomatonConfig> = jsons
         .par_iter()

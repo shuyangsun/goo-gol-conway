@@ -512,8 +512,8 @@ fn gen_2d_random_binary_states(
     let res = gen_random_usize(&board_size.volume(), alive_ratio);
     res.into_par_iter()
         .map(|ele| {
-            let x = (ele % board_size.height()) as i64 + board_size.x_idx_min();
-            let y = (ele / board_size.height()) as i64 + board_size.y_idx_min();
+            let x = (ele % board_size.width()) as i64 + board_size.x_idx_min();
+            let y = (ele / board_size.width()) as i64 + board_size.y_idx_min();
             GridPoint2D::new(x as IntIdx, y as IntIdx)
         })
         .collect()
@@ -527,8 +527,8 @@ fn gen_2d_random_discrete_states(
     let res = gen_random_usize(&board_size.volume(), alive_ratio);
     res.into_par_iter()
         .map(|ele| {
-            let x = (ele % board_size.height()) as i64 + board_size.x_idx_min();
-            let y = (ele / board_size.height()) as i64 + board_size.y_idx_min();
+            let x = (ele % board_size.width()) as i64 + board_size.x_idx_min();
+            let y = (ele / board_size.width()) as i64 + board_size.y_idx_min();
             (
                 GridPoint2D::new(x as IntIdx, y as IntIdx),
                 (state_count - 1) as IntState,
