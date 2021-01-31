@@ -1,8 +1,8 @@
 {
     "title": "AndGate4Neighbor",
     "max_iter": null,
-    "delay": 0.1,
-    "pause_at_start": false,
+    "delay": 1.0,
+    "pause_at_start": true,
     "enable_control": true,
     "save": null,
     "visual": {
