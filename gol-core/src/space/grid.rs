@@ -286,9 +286,9 @@ mod grid_tests {
     #[test]
     fn grid_nd_test_2() {
         type Point = GridPointND<i32>;
-        let board_size = vec![2u32, 2, 2, 2, 2];
+        let board_shape = vec![2u32, 2, 2, 2, 2];
 
-        let grid_1 = Box::new(Grid::<Point>::new(board_size.clone().into_iter()))
+        let grid_1 = Box::new(Grid::<Point>::new(board_shape.clone().into_iter()))
             as Box<
                 dyn BoardSpaceManager<
                     Point,
@@ -297,7 +297,7 @@ mod grid_tests {
                 >,
             >;
         let grid_2 = Box::new(Grid::<Point>::new_with_origin(
-            board_size.into_iter(),
+            board_shape.into_iter(),
             GridOrigin::Zero,
         ))
             as Box<

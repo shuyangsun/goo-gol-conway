@@ -1,21 +1,21 @@
 #[derive(Clone)]
 pub struct RendererBoardInfo<T> {
-    board_size: T,
+    board_shape: T,
     title: String,
     cur_iter: Option<usize>,
 }
 
 impl<T> RendererBoardInfo<T> {
-    pub fn new(board_size: T) -> Self {
+    pub fn new(board_shape: T) -> Self {
         Self {
-            board_size,
+            board_shape,
             title: String::from(""),
             cur_iter: None,
         }
     }
 
-    pub fn board_size(&self) -> &T {
-        &self.board_size
+    pub fn board_shape(&self) -> &T {
+        &self.board_shape
     }
 
     pub fn title(&self) -> &String {

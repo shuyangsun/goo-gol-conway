@@ -110,7 +110,7 @@ where
         let title = self.info.title().clone();
         let color_map = self.color_map.clone();
 
-        let board_size = self.info.board_size().clone();
+        let board_shape = self.info.board_shape().clone();
         let states_read_only = self.states_read_only.clone();
         let cell_scale = self.cell_scale;
         let mut control = self.control.clone();
@@ -311,7 +311,7 @@ where
                     let pipeline = &res.pipelines[0];
 
                     let (grid_width, grid_height) =
-                        (board_size.width() as u32, board_size.height() as u32);
+                        (board_shape.width() as u32, board_shape.height() as u32);
 
                     let non_trivial_state = states_read_only.non_trivial_state();
                     let mut indices_clone = HashSet::new();
@@ -333,8 +333,10 @@ where
                         .map(|ele| {
                             let color = color_map.color_representation(&non_trivial_state);
                             let max_color = u16::MAX as f32;
-                            let (x_min, y_min) =
-                                (board_size.x_idx_min() as i32, board_size.y_idx_min() as i32);
+                            let (x_min, y_min) = (
+                                board_shape.x_idx_min() as i32,
+                                board_shape.y_idx_min() as i32,
+                            );
                             let ele_res: ((u32, u32), ColorRGBA) = (
                                 (
                                     (ele.x.to_i32().unwrap() - x_min).to_u32().unwrap(),

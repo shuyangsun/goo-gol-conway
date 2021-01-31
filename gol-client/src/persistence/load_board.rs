@@ -505,29 +505,29 @@ fn gen_random_usize(len: &usize, alive_ratio: &f32) -> HashSet<usize> {
 }
 
 fn gen_2d_random_binary_states(
-    board_size: &Shape2D,
+    board_shape: &Shape2D,
     alive_ratio: &f32,
 ) -> HashSet<GridPoint2D<IntIdx>> {
-    let res = gen_random_usize(&board_size.volume(), alive_ratio);
+    let res = gen_random_usize(&board_shape.volume(), alive_ratio);
     res.into_par_iter()
         .map(|ele| {
-            let x = (ele % board_size.width()) as i64 + board_size.x_idx_min();
-            let y = (ele / board_size.width()) as i64 + board_size.y_idx_min();
+            let x = (ele % board_shape.width()) as i64 + board_shape.x_idx_min();
+            let y = (ele / board_shape.width()) as i64 + board_shape.y_idx_min();
             GridPoint2D::new(x as IntIdx, y as IntIdx)
         })
         .collect()
 }
 
 fn gen_2d_random_discrete_states(
-    board_size: &Shape2D,
+    board_shape: &Shape2D,
     alive_ratio: &f32,
     state_count: &usize,
 ) -> HashMap<GridPoint2D<IntIdx>, IntState> {
-    let res = gen_random_usize(&board_size.volume(), alive_ratio);
+    let res = gen_random_usize(&board_shape.volume(), alive_ratio);
     res.into_par_iter()
         .map(|ele| {
-            let x = (ele % board_size.width()) as i64 + board_size.x_idx_min();
-            let y = (ele / board_size.width()) as i64 + board_size.y_idx_min();
+            let x = (ele % board_shape.width()) as i64 + board_shape.x_idx_min();
+            let y = (ele / board_shape.width()) as i64 + board_shape.y_idx_min();
             (
                 GridPoint2D::new(x as IntIdx, y as IntIdx),
                 (state_count - 1) as IntState,

@@ -144,8 +144,8 @@ where
     }
 
     fn draw(&mut self) {
-        let board_size = self.info.board_size();
-        let (win_width, win_height) = (board_size.width(), board_size.height());
+        let board_shape = self.info.board_shape();
+        let (win_width, win_height) = (board_shape.width(), board_shape.height());
 
         if self.screen_size.is_none() {
             return;
@@ -162,8 +162,8 @@ where
                     {
                         let win = create_win(start_y, start_x, win_height as i32, win_width as i32);
                         for idx in val.1.iter() {
-                            let x_min = board_size.x_idx_min();
-                            let y_max = board_size.y_idx_max();
+                            let x_min = board_shape.x_idx_min();
+                            let y_max = board_shape.y_idx_max();
                             let cur_x = (idx.x.clone() - U::from_i64(x_min).unwrap())
                                 .to_i32()
                                 .unwrap()
