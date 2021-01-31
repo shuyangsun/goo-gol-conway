@@ -8,6 +8,14 @@ use std::fs;
 fn main() {
     let jsons = vec![
         include_str!("../examples/tetris.json"),
+        include_str!("../examples/glider.json"),
+        include_str!("../examples/glider_gun.json"),
+        include_str!("../examples/glider_eater.json"),
+        include_str!("../examples/glider_gun_with_eater.json"),
+        include_str!("../examples/and_gate_00.json"),
+        include_str!("../examples/and_gate_01.json"),
+        include_str!("../examples/and_gate_10.json"),
+        include_str!("../examples/and_gate_11.json"),
         include_str!("../examples/random.json"),
         include_str!("../examples/random_gol.json"),
     ];
