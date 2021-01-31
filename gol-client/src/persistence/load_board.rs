@@ -1,5 +1,5 @@
 use gol_core::{
-    util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStrategy, Board,
+    util::grid_util::Shape2D, BinaryState, BinaryStatesCallback, BinaryStrategy, Board,
     BoardCallback, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
     BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
     NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
@@ -88,7 +88,7 @@ enum InitialStatesConfig {
 #[serde(tag = "type")]
 enum BoardConfig {
     Grid2D {
-        shape: Size2D,
+        shape: Shape2D,
         initial_states: InitialStatesConfig,
     },
 }
@@ -505,7 +505,7 @@ fn gen_random_usize(len: &usize, alive_ratio: &f32) -> HashSet<usize> {
 }
 
 fn gen_2d_random_binary_states(
-    board_size: &Size2D,
+    board_size: &Shape2D,
     alive_ratio: &f32,
 ) -> HashSet<GridPoint2D<IntIdx>> {
     let res = gen_random_usize(&board_size.volume(), alive_ratio);
@@ -519,7 +519,7 @@ fn gen_2d_random_binary_states(
 }
 
 fn gen_2d_random_discrete_states(
-    board_size: &Size2D,
+    board_size: &Shape2D,
     alive_ratio: &f32,
     state_count: &usize,
 ) -> HashMap<GridPoint2D<IntIdx>, IntState> {

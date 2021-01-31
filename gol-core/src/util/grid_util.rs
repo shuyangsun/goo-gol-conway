@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Size1D {
+pub struct Shape1D {
     width: usize,
 }
 
-impl Size1D {
+impl Shape1D {
     pub fn new(width: usize) -> Self {
         Self { width }
     }
@@ -28,12 +28,12 @@ impl Size1D {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Size2D {
+pub struct Shape2D {
     width: usize,
     height: usize,
 }
 
-impl Size2D {
+impl Shape2D {
     pub fn new(width: usize, height: usize) -> Self {
         Self { width, height }
     }
@@ -68,13 +68,13 @@ impl Size2D {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Size3D {
+pub struct Shape3D {
     width: usize,
     height: usize,
     depth: usize,
 }
 
-impl Size3D {
+impl Shape3D {
     pub fn new(width: usize, height: usize, depth: usize) -> Self {
         Self {
             width,

@@ -6,7 +6,7 @@ use crate::{
     },
     CellularAutomatonRenderer, CharMapping,
 };
-use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
+use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
 use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
@@ -17,10 +17,10 @@ const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
 
 pub struct TextRendererGrid2D<S, M> {
-    info: RendererBoardInfo<Size2D>,
+    info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter,
-    screen_size: Option<Size2D>,
+    screen_size: Option<Shape2D>,
     states_read_only: S,
     char_map: M,
 }
@@ -36,7 +36,7 @@ where
         char_map: M,
         states: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Self {
-        let info = RendererBoardInfo::new(Size2D::new(board_width, board_height));
+        let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
         Self {
             info,
             control: None,
@@ -123,7 +123,7 @@ where
             let mut max_x = 0;
             let mut max_y = 0;
             getmaxyx(stdscr(), &mut max_y, &mut max_x);
-            self.screen_size = Some(Size2D::new(max_x as usize, max_y as usize));
+            self.screen_size = Some(Shape2D::new(max_x as usize, max_y as usize));
             let screen_size = self.screen_size.as_ref().unwrap();
 
             mvprintw(

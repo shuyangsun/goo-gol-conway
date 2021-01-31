@@ -1,6 +1,6 @@
 use super::util::PointPrimInt;
 use crate::{
-    util::grid_util::{Size1D, Size2D, Size3D},
+    util::grid_util::{Shape1D, Shape2D, Shape3D},
     BoardNeighborManager, GridPoint1D, GridPoint2D, GridPoint3D,
 };
 
@@ -15,7 +15,7 @@ impl<T> NeighborMooreDonut<T> {
 }
 
 impl<T> BoardNeighborManager<GridPoint3D<T>, std::vec::IntoIter<GridPoint3D<T>>>
-    for NeighborMooreDonut<Size3D>
+    for NeighborMooreDonut<Shape3D>
 where
     T: PointPrimInt,
 {
@@ -76,7 +76,7 @@ where
 }
 
 impl<T> BoardNeighborManager<GridPoint2D<T>, std::vec::IntoIter<GridPoint2D<T>>>
-    for NeighborMooreDonut<Size2D>
+    for NeighborMooreDonut<Shape2D>
 where
     T: PointPrimInt,
 {
@@ -111,7 +111,7 @@ where
 }
 
 impl<T> BoardNeighborManager<GridPoint1D<T>, std::vec::IntoIter<GridPoint1D<T>>>
-    for NeighborMooreDonut<Size1D>
+    for NeighborMooreDonut<Shape1D>
 where
     T: PointPrimInt,
 {

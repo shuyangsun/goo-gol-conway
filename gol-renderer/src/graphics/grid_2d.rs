@@ -21,7 +21,7 @@ use gfx_hal::{
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
-use gol_core::{util::grid_util::Size2D, BinaryStatesReadOnly, GridPoint2D};
+use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
 use shaderc::ShaderKind;
@@ -39,7 +39,7 @@ pub struct GraphicalRendererGrid2D<M, CI, T>
 where
     CI: Hash,
 {
-    info: RendererBoardInfo<Size2D>,
+    info: RendererBoardInfo<Shape2D>,
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter,
     color_map: M,
@@ -59,7 +59,7 @@ where
         color_map: M,
         states_storage: BinaryStatesReadOnly<GridPoint2D<U>, T>,
     ) -> Result<Self, UnsupportedBackend> {
-        let info = RendererBoardInfo::new(Size2D::new(board_width, board_height));
+        let info = RendererBoardInfo::new(Shape2D::new(board_width, board_height));
         Ok(Self {
             info,
             control: None,

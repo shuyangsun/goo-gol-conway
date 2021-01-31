@@ -1,6 +1,6 @@
 use crate::neighbors::util::{MarginPrimInt, PointPrimInt};
 use crate::{
-    util::grid_util::Size2D, Board, BoardCallback, BoardCallbackManager, BoardNeighborManager,
+    util::grid_util::Shape2D, Board, BoardCallback, BoardCallbackManager, BoardNeighborManager,
     BoardSpaceManager, BoardStateManager, BoardStrategyManager, EvolutionStrategy, Grid,
     GridFactory, GridPoint1D, GridPoint2D, GridPoint3D, GridPointND, IndexedDataOwned,
     NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
@@ -315,7 +315,7 @@ impl StandardBoardFactory {
         let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
         let neighbor_manager = if is_donut {
             if neighbor_margin == S::one() {
-                Box::new(NeighborMooreDonut::new(Size2D::new(
+                Box::new(NeighborMooreDonut::new(Shape2D::new(
                     width.to_usize().unwrap(),
                     height.to_usize().unwrap(),
                 )))
@@ -384,7 +384,7 @@ impl StandardBoardFactory {
         let space_manager = Grid::<GridPoint2D<U>>::new(shape.clone().into_iter());
         let neighbor_manager = if is_donut {
             if neighbor_margin == S::one() {
-                Box::new(NeighborMooreDonut::new(Size2D::new(
+                Box::new(NeighborMooreDonut::new(Shape2D::new(
                     width.to_usize().unwrap(),
                     height.to_usize().unwrap(),
                 )))
