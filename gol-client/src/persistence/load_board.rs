@@ -1,6 +1,6 @@
 use gol_core::{
     util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStatesReadOnly,
-    BinaryStrategy, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
+    BinaryStrategy, BoardCallback, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D,
     IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
     SharedStrategyManager, SparseBinaryStates, SparseStates, StatesReadOnly,
@@ -306,6 +306,9 @@ impl CellularAutomatonConfig {
             let binary_states_callback: BinaryStatesCallback<GridPoint2D<IntIdx>, BinaryState> =
                 BinaryStatesCallback::new(BinaryState::Dead, BinaryState::Alive);
             let states_read_only = binary_states_callback.clone_read_only();
+            let binary_states_callback =
+                BoardCallback::WithStates(Box::new(binary_states_callback));
+            callbacks.push(binary_states_callback);
 
             for style in self.visual.styles.iter() {
                 match style {
