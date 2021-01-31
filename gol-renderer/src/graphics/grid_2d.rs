@@ -32,7 +32,7 @@ use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
-    event::{Event, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -275,24 +275,26 @@ where
                         should_configure_swapchain = true;
                     }
                     WindowEvent::KeyboardInput { input, .. } => {
-                        if let Some(control) = control.as_mut() {
-                            match input.virtual_keycode {
-                                Some(ch) => match ch {
-                                    VirtualKeyCode::Q => {
-                                        control.broadcast('q');
-                                    }
-                                    VirtualKeyCode::J => {
-                                        control.broadcast('j');
-                                    }
-                                    VirtualKeyCode::K => {
-                                        control.broadcast('k');
-                                    }
-                                    VirtualKeyCode::Space => {
-                                        control.broadcast(' ');
-                                    }
+                        if input.state == ElementState::Released {
+                            if let Some(control) = control.as_mut() {
+                                match input.virtual_keycode {
+                                    Some(ch) => match ch {
+                                        VirtualKeyCode::Q => {
+                                            control.broadcast('q');
+                                        }
+                                        VirtualKeyCode::J => {
+                                            control.broadcast('j');
+                                        }
+                                        VirtualKeyCode::K => {
+                                            control.broadcast('k');
+                                        }
+                                        VirtualKeyCode::Space => {
+                                            control.broadcast(' ');
+                                        }
+                                        _ => (),
+                                    },
                                     _ => (),
-                                },
-                                _ => (),
+                                }
                             }
                         }
                     }

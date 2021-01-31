@@ -52,10 +52,8 @@ impl Delay {
                     };
                     if ch == 'k' {
                         self.duration = Duration::from_nanos(duration.as_nanos() as u64 / 2);
-                        println!("K: {:?}", self.duration);
                     } else if ch == 'j' {
                         self.duration = Duration::from_nanos(duration.as_nanos() as u64 * 2);
-                        println!("J: {:?}", self.duration);
                     }
                     break;
                 }
