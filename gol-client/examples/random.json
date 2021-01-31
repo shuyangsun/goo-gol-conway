@@ -1,5 +1,5 @@
 {
-    "title": "Tetris",
+    "title": "Random",
     "max_iter": null,
     "delay": 1.0,
     "pause_at_start": true,
@@ -29,15 +29,8 @@
             "height": 100
         },
         "initial_states": {
-            "type": "Deterministic",
-            "positions": {
-                "1": [
-                    {"x": 0, "y": 0},
-                    {"x": 0, "y": 1},
-                    {"x": -1, "y": 0},
-                    {"x": 1, "y": 0}
-                ]
-            }
+            "type": "Random",
+            "alive_ratio": 0.5
         }
     }
 }

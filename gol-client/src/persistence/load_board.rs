@@ -1,11 +1,13 @@
 use gol_core::{
-    util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStatesReadOnly,
-    BinaryStrategy, Board, BoardCallback, BoardNeighborManager, BoardSpaceManager,
-    BoardStateManager, BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D,
-    IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
-    SharedStrategyManager, SparseBinaryStates, SparseStates, StandardBoard, StatesReadOnly,
+    util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStrategy, Board,
+    BoardCallback, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
+    BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
+    NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
+    SharedStrategyManager, SparseBinaryStates, SparseStates, StandardBoard,
 };
 use gol_renderer::{BinaryStateColorMap, CellularAutomatonRenderer, GraphicalRendererGrid2D};
+use num_cpus;
+use rand::Rng;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -70,10 +72,21 @@ enum EvolutionRuleConfig {
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type")]
+enum InitialStatesConfig {
+    Deterministic {
+        positions: HashMap<String, Vec<GridPoint2D<IntIdx>>>,
+    },
+    Random {
+        alive_ratio: f32,
+    },
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(tag = "type")]
 enum BoardConfig {
     Grid2D {
         shape: Size2D,
-        initial_states: HashMap<String, Vec<GridPoint2D<IntIdx>>>,
+        initial_states: InitialStatesConfig,
     },
 }
 
@@ -232,14 +245,16 @@ impl CellularAutomatonConfig {
                 assert!(count == &2);
                 let init_states = match &self.board {
                     BoardConfig::Grid2D {
-                        shape: _,
+                        shape,
                         initial_states,
-                    } => initial_states
-                        .get("1")
-                        .unwrap()
-                        .par_iter()
-                        .cloned()
-                        .collect(),
+                    } => match initial_states {
+                        InitialStatesConfig::Deterministic { positions } => {
+                            positions.get("1").unwrap().par_iter().cloned().collect()
+                        }
+                        InitialStatesConfig::Random { alive_ratio } => {
+                            gen_2d_random_binary_states(shape, alive_ratio)
+                        }
+                    },
                 };
                 Ok(Box::new(SparseBinaryStates::new(
                     BinaryState::Dead,
@@ -267,24 +282,30 @@ impl CellularAutomatonConfig {
                 assert!(count > &2);
                 let init_states = match &self.board {
                     BoardConfig::Grid2D {
-                        shape: _,
+                        shape,
                         initial_states,
-                    } => initial_states
-                        .par_iter()
-                        .map(|(key, val)| {
-                            let cur_map: HashMap<GridPoint2D<IntIdx>, IntState> = val
-                                .par_iter()
-                                .map(|ele| {
-                                    (
-                                        ele.clone(),
-                                        key.parse::<IntState>()
-                                            .expect("Discrete states must be unsigned integers."),
-                                    )
-                                })
-                                .collect();
-                            cur_map
-                        })
-                        .reduce(|| HashMap::new(), |a, b| a.into_iter().chain(b).collect()),
+                    } => match initial_states {
+                        InitialStatesConfig::Deterministic { positions } => positions
+                            .par_iter()
+                            .map(|(key, val)| {
+                                let cur_map: HashMap<GridPoint2D<IntIdx>, IntState> = val
+                                    .par_iter()
+                                    .map(|ele| {
+                                        (
+                                            ele.clone(),
+                                            key.parse::<IntState>().expect(
+                                                "Discrete states must be unsigned integers.",
+                                            ),
+                                        )
+                                    })
+                                    .collect();
+                                cur_map
+                            })
+                            .reduce(|| HashMap::new(), |a, b| a.into_iter().chain(b).collect()),
+                        InitialStatesConfig::Random { alive_ratio } => {
+                            gen_2d_random_discrete_states(shape, alive_ratio, count)
+                        }
+                    },
                 };
                 Ok(Box::new(SparseStates::new(0, init_states)))
             }
@@ -443,4 +464,59 @@ fn collect_cell_counts(counts: &Vec<CellCount>) -> HashSet<usize> {
             }
         })
         .reduce(|| HashSet::new(), |a, b| a.union(&b).cloned().collect())
+}
+
+fn gen_random_usize(len: &usize, alive_ratio: &f32) -> HashSet<usize> {
+    let core_count = num_cpus::get();
+    let num_indices_per_thread = len / core_count + 1;
+    let mut state_indices: Vec<HashSet<usize>> = vec![HashSet::new(); core_count];
+    state_indices
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, ele)| {
+            let mut rng = rand::thread_rng();
+            for inner_idx in
+                (i * num_indices_per_thread)..std::cmp::min((i + 1) * num_indices_per_thread, *len)
+            {
+                if &rng.gen::<f32>() <= alive_ratio {
+                    ele.insert(inner_idx);
+                }
+            }
+        });
+
+    state_indices
+        .into_par_iter()
+        .reduce(|| HashSet::new(), |a, b| a.union(&b).cloned().collect())
+}
+
+fn gen_2d_random_binary_states(
+    board_size: &Size2D,
+    alive_ratio: &f32,
+) -> HashSet<GridPoint2D<IntIdx>> {
+    let res = gen_random_usize(&board_size.volume(), alive_ratio);
+    res.into_par_iter()
+        .map(|ele| {
+            let x = (ele % board_size.height()) as i64 + board_size.x_idx_min();
+            let y = (ele / board_size.height()) as i64 + board_size.y_idx_min();
+            GridPoint2D::new(x as IntIdx, y as IntIdx)
+        })
+        .collect()
+}
+
+fn gen_2d_random_discrete_states(
+    board_size: &Size2D,
+    alive_ratio: &f32,
+    state_count: &usize,
+) -> HashMap<GridPoint2D<IntIdx>, IntState> {
+    let res = gen_random_usize(&board_size.volume(), alive_ratio);
+    res.into_par_iter()
+        .map(|ele| {
+            let x = (ele % board_size.height()) as i64 + board_size.x_idx_min();
+            let y = (ele / board_size.height()) as i64 + board_size.y_idx_min();
+            (
+                GridPoint2D::new(x as IntIdx, y as IntIdx),
+                (state_count - 1) as IntState,
+            )
+        })
+        .collect()
 }

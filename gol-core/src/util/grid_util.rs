@@ -14,6 +14,10 @@ impl Size1D {
         self.width
     }
 
+    pub fn volume(&self) -> usize {
+        self.width()
+    }
+
     pub fn x_idx_min(&self) -> i64 {
         dim_idx_min(self.width())
     }
@@ -40,6 +44,10 @@ impl Size2D {
 
     pub fn height(&self) -> usize {
         self.height
+    }
+
+    pub fn volume(&self) -> usize {
+        self.width() * self.height()
     }
 
     pub fn x_idx_min(&self) -> i64 {
@@ -85,6 +93,10 @@ impl Size3D {
 
     pub fn depth(&self) -> usize {
         self.depth
+    }
+
+    pub fn volume(&self) -> usize {
+        self.width() * self.height() * self.depth()
     }
 
     pub fn x_idx_min(&self) -> i64 {

@@ -6,7 +6,10 @@ use serde_json;
 use std::collections::HashMap;
 
 fn main() {
-    let jsons = vec![include_str!("../examples/tetris.json")];
+    let jsons = vec![
+        include_str!("../examples/tetris.json"),
+        include_str!("../examples/random.json"),
+    ];
     let configs: Vec<CellularAutomatonConfig> = jsons
         .par_iter()
         .map(|ele| serde_json::from_str(ele).unwrap())
@@ -30,6 +33,11 @@ fn main() {
             "."
         });
     }
+
+    let title_to_config: HashMap<String, CellularAutomatonConfig> = title_to_config
+        .into_par_iter()
+        .map(|(key, value)| (key.to_lowercase(), value))
+        .collect();
 
     let default_interval = 1.0;
 
@@ -126,7 +134,10 @@ fn main() {
     };
 
     match matches.value_of("demo") {
-        Some(demo_name) => title_to_config.get(demo_name).unwrap().run_board(),
+        Some(demo_name) => title_to_config
+            .get(&demo_name.to_lowercase())
+            .unwrap()
+            .run_board(),
         None => (),
     };
 }
