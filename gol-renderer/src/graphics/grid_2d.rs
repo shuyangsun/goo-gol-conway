@@ -29,7 +29,6 @@ use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
-use std::sync::{Arc, Mutex};
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},

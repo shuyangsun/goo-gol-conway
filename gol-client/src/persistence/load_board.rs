@@ -171,7 +171,6 @@ impl CellularAutomatonConfig {
                 }
             }
         }
-        panic!("Could not generate Cellular Automaton from config file.");
     }
 
     fn gen_space_grid_2d(
