@@ -2,7 +2,7 @@ use crate::{
     renderer::{
         board_info::RendererBoardInfo, fps_counter::FPSCounter, keyboard_control::KeyboardControl,
     },
-    CellularAutomatonRenderer, ColorMapping,
+    CellularAutomatonRenderer, StateVisualMapping,
 };
 use gfx_hal::{
     adapter::PhysicalDevice,
@@ -24,6 +24,7 @@ use gfx_hal::{
 use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
 use num_traits::{CheckedSub, FromPrimitive, ToPrimitive};
 use rayon::prelude::*;
+use rgb::RGBA16;
 use shaderc::ShaderKind;
 use std::borrow::Borrow;
 use std::collections::HashSet;
@@ -51,7 +52,7 @@ impl<T, U, M> GraphicalRendererGrid2D<M, GridPoint2D<U>, T>
 where
     T: 'static + Send + Sync + Clone,
     U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
-    M: 'static + Send + Sync + Clone + ColorMapping<T>,
+    M: 'static + Send + Sync + Clone + StateVisualMapping<T, RGBA16>,
 {
     pub fn new(
         board_width: usize,
@@ -99,7 +100,7 @@ impl<T, U, M> CellularAutomatonRenderer for GraphicalRendererGrid2D<M, GridPoint
 where
     T: 'static + Send + Sync + Clone,
     U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
-    M: 'static + Send + Sync + Clone + ColorMapping<T>,
+    M: 'static + Send + Sync + Clone + StateVisualMapping<T, RGBA16>,
 {
     fn need_run_on_main(&self) -> bool {
         true
@@ -331,7 +332,7 @@ where
                     let constants: Vec<((u32, u32), ColorRGBA)> = indices_clone
                         .par_iter()
                         .map(|ele| {
-                            let color = color_map.color_representation(&non_trivial_state);
+                            let color = color_map.to_visual(&non_trivial_state);
                             let max_color = u16::MAX as f32;
                             let (x_min, y_min) = (
                                 board_shape.x_idx_min() as i32,

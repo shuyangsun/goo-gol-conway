@@ -1,6 +1,6 @@
 use super::mapping::{
-    BinaryStateCharMap, BinaryStateColorMap, CharMapping, ColorMapping, DiscreteStateCharMap,
-    DiscreteStateColorMap,
+    BinaryStateCharMap, BinaryStateColorMap, DiscreteStateCharMap, DiscreteStateColorMap,
+    StateVisualMapping,
 };
 use gol_core::BinaryState;
 use num_traits::{PrimInt, ToPrimitive, Unsigned};
@@ -11,8 +11,8 @@ const INT_STATE_CHARS: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8'
 const BINARY_STATE_ALIVE_CHAR: char = '0';
 const BINARY_STATE_DEAD_CHAR: char = ' ';
 
-impl CharMapping<BinaryState> for BinaryStateCharMap {
-    fn char_representation(&self, state: &BinaryState) -> char {
+impl StateVisualMapping<BinaryState, char> for BinaryStateCharMap {
+    fn to_visual(&self, state: &BinaryState) -> char {
         match state {
             BinaryState::Alive => BINARY_STATE_ALIVE_CHAR,
             BinaryState::Dead => BINARY_STATE_DEAD_CHAR,
@@ -20,11 +20,11 @@ impl CharMapping<BinaryState> for BinaryStateCharMap {
     }
 }
 
-impl<T> CharMapping<T> for DiscreteStateCharMap
+impl<T> StateVisualMapping<T, char> for DiscreteStateCharMap
 where
     T: PrimInt + ToPrimitive + Unsigned,
 {
-    fn char_representation(&self, state: &T) -> char {
+    fn to_visual(&self, state: &T) -> char {
         assert!(self.state_count() <= 11);
         if state <= &T::zero() {
             DEAD_STATE_CHAR
@@ -34,8 +34,8 @@ where
     }
 }
 
-impl ColorMapping<BinaryState> for BinaryStateColorMap {
-    fn color_representation(&self, state: &BinaryState) -> RGBA16 {
+impl StateVisualMapping<BinaryState, RGBA16> for BinaryStateColorMap {
+    fn to_visual(&self, state: &BinaryState) -> RGBA16 {
         match state {
             BinaryState::Alive => RGBA16 {
                 r: 0,
@@ -53,11 +53,11 @@ impl ColorMapping<BinaryState> for BinaryStateColorMap {
     }
 }
 
-impl<T> ColorMapping<T> for DiscreteStateColorMap
+impl<T> StateVisualMapping<T, RGBA16> for DiscreteStateColorMap
 where
     T: PrimInt + Unsigned + ToPrimitive,
 {
-    fn color_representation(&self, state: &T) -> RGBA16 {
+    fn to_visual(&self, state: &T) -> RGBA16 {
         if state <= &T::zero() {
             RGBA16 {
                 r: 0,

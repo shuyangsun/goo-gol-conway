@@ -4,7 +4,7 @@ use crate::{
     renderer::{
         board_info::RendererBoardInfo, fps_counter::FPSCounter, keyboard_control::KeyboardControl,
     },
-    CellularAutomatonRenderer, CharMapping,
+    CellularAutomatonRenderer, StateVisualMapping,
 };
 use gol_core::{util::grid_util::Shape2D, BinaryStatesReadOnly, GridPoint2D};
 use ncurses::*;
@@ -28,7 +28,7 @@ pub struct TextRendererGrid2D<S, M> {
 impl<T, U, M> TextRendererGrid2D<BinaryStatesReadOnly<GridPoint2D<U>, T>, M>
 where
     U: Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
-    M: CharMapping<T>,
+    M: StateVisualMapping<T, char>,
 {
     pub fn new(
         board_width: usize,
@@ -171,7 +171,7 @@ where
                             let cur_y = (y_max - idx.y.to_i64().unwrap()).to_i32().unwrap() + 2;
                             let ch: char = self
                                 .char_map
-                                .char_representation(&self.states_read_only.non_trivial_state());
+                                .to_visual(&self.states_read_only.non_trivial_state());
                             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
                         }
                         wrefresh(win);
@@ -190,7 +190,7 @@ impl<T, U, M> CellularAutomatonRenderer
 where
     T: Send + Sync,
     U: Send + Sync + Clone + Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U>,
-    M: Send + Sync + CharMapping<T>,
+    M: Send + Sync + StateVisualMapping<T, char>,
 {
     fn need_run_on_main(&self) -> bool {
         false

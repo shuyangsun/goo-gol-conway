@@ -1,11 +1,5 @@
-use rgb;
-
-pub trait CharMapping<T> {
-    fn char_representation(&self, state: &T) -> char;
-}
-
-pub trait ColorMapping<T> {
-    fn color_representation(&self, state: &T) -> rgb::RGBA16;
+pub trait StateVisualMapping<T, U> {
+    fn to_visual(&self, state: &T) -> U;
 }
 
 #[derive(Clone)]
