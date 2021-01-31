@@ -8,7 +8,6 @@ use std::collections::{HashMap, HashSet};
 fn main() {
     let tetris_json = include_str!("../examples/tetris.json");
     let config: CellularAutomatonConfig = serde_json::from_str(tetris_json).unwrap();
-    config.run_board();
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 

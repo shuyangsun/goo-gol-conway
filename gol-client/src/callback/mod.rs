@@ -3,6 +3,7 @@ mod pause;
 mod terminate;
 
 pub fn standard_control_callbacks<T, U, I>(
+    is_paused: bool,
     delay_interval: std::time::Duration,
 ) -> (
     Vec<gol_core::BoardCallback<T, U, I>>,
@@ -25,7 +26,7 @@ where
         Delay::new(delay_interval).with_ch_receiver(keyboard_control.clone_receive_only()),
     ));
     let pause = BoardCallback::WithoutStates(Box::new(Pause::new(
-        false,
+        is_paused,
         keyboard_control.clone_receive_only(),
     )));
     let terminate = BoardCallback::WithoutStates(Box::new(Terminate::new(

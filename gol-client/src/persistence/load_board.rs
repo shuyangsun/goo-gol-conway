@@ -353,6 +353,7 @@ impl CellularAutomatonConfig {
             let one_billion_nano_sec: f64 = 1_000_000_000f64;
             let interval_nano_sec = (self.delay * one_billion_nano_sec) as u64;
             let (control_callbacks, keyboard_control) = crate::callback::standard_control_callbacks(
+                self.pause_at_start,
                 Duration::from_nanos(interval_nano_sec),
             );
             let board_shape = match &self.board {
