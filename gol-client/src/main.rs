@@ -1,58 +1,34 @@
 use clap::{App, Arg};
-use gol_client::{demo, persistence::load_board::CellularAutomatonConfig};
+use gol_client::persistence::load_board::CellularAutomatonConfig;
 use gol_core::predefined_states;
+use rayon::prelude::*;
 use serde_json;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 fn main() {
-    let tetris_json = include_str!("../examples/tetris.json");
-    let config: CellularAutomatonConfig = serde_json::from_str(tetris_json).unwrap();
+    let jsons = vec![include_str!("../examples/tetris.json")];
+    let configs: Vec<CellularAutomatonConfig> = jsons
+        .par_iter()
+        .map(|ele| serde_json::from_str(ele).unwrap())
+        .collect();
+
+    let title_to_config: HashMap<String, CellularAutomatonConfig> = configs
+        .into_par_iter()
+        .map(|config| (config.title().clone(), config))
+        .collect();
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-    let mut demos = HashMap::new();
-    demos.insert("tetris", (predefined_states::conway_2d_tetris(), "Tetris"));
-    demos.insert("glider", (predefined_states::conway_2d_glider(), "Glider"));
-    demos.insert(
-        "generator",
-        (
-            predefined_states::conway_2d_glider_gun(),
-            "Glider Generator",
-        ),
-    );
-    demos.insert(
-        "eater",
-        (predefined_states::conway_2d_eater(), "Glider Eater"),
-    );
-    demos.insert(
-        "generator_and_eater",
-        (
-            predefined_states::conway_2d_glider_gun_with_eater(),
-            "Glider Generator and Eater",
-        ),
-    );
-    demos.insert(
-        "and_gate_00",
-        (predefined_states::conway_2d_and_gate_00(), "AND Gate 00"),
-    );
-    demos.insert(
-        "and_gate_01",
-        (predefined_states::conway_2d_and_gate_01(), "AND Gate 01"),
-    );
-    demos.insert(
-        "and_gate_10",
-        (predefined_states::conway_2d_and_gate_10(), "AND Gate 10"),
-    );
-    demos.insert(
-        "and_gate_11",
-        (predefined_states::conway_2d_and_gate_11(), "AND Gate 11"),
-    );
-
     let mut demos_description = String::from("Runs demo, available demos: ");
-    for (i, key_val) in demos.iter().enumerate() {
-        let key = key_val.0;
-        demos_description.push_str(key);
-        demos_description.push_str(if i < demos.len() - 1 { ", " } else { "." });
+    let mut sorted_titiles: Vec<&String> = title_to_config.keys().collect();
+    sorted_titiles.sort();
+    for (i, title) in sorted_titiles.iter().enumerate() {
+        demos_description.push_str(title);
+        demos_description.push_str(if i < sorted_titiles.len() - 1 {
+            ", "
+        } else {
+            "."
+        });
     }
 
     let default_interval = 1.0;
@@ -144,23 +120,13 @@ fn main() {
         None => None,
     };
 
-    let random_states = (HashSet::new(), "Random Game of Life");
-    let (initial_states, title) = match matches.value_of("demo") {
-        Some(demo_name) => demos.get(demo_name).unwrap().clone(),
-        None => random_states,
-    };
     let is_donut = match matches.occurrences_of("donut") {
         0 => false,
         _ => true,
     };
-    demo::two_dimensional::run_demo(
-        width,
-        height,
-        initial_states,
-        title,
-        max_iter,
-        interval,
-        is_donut,
-        alive_ratio,
-    );
+
+    match matches.value_of("demo") {
+        Some(demo_name) => title_to_config.get(demo_name).unwrap().run_board(),
+        None => (),
+    };
 }

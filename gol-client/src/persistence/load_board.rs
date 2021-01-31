@@ -99,6 +99,10 @@ impl CellularAutomatonConfig {
         serde_json::from_str(json).unwrap()
     }
 
+    pub fn title(&self) -> &String {
+        &self.title
+    }
+
     pub fn run_board(&self) {
         let max_iter = self.max_iter.clone();
         let mut renderers = match self.board {
