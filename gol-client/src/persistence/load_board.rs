@@ -1,23 +1,24 @@
 use gol_core::{
-    util::grid_util::Size2D, BinaryState, BinaryStatesReadOnly, BinaryStrategy,
-    BoardCallbackManager, BoardNeighborManager, BoardSpaceManager, BoardStateManager,
-    BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D, IndexedDataOwned,
-    NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
+    util::grid_util::Size2D, BinaryState, BinaryStatesCallback, BinaryStatesReadOnly,
+    BinaryStrategy, BoardCallbackManager, BoardNeighborManager, BoardSpaceManager,
+    BoardStateManager, BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D,
+    IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
     SharedStrategyManager, SparseBinaryStates, SparseStates, StatesReadOnly,
 };
+use gol_renderer::{BinaryStateColorMap, CellularAutomatonRenderer, GraphicalRendererGrid2D};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
-
+use std::time::Duration;
 type IntIdx = i32;
 type IntState = u8;
 
 // Visual
 
 #[derive(Serialize, Deserialize)]
-pub enum VisualKind {
+pub enum VisualStyle {
     Ascii,
     Graphical,
 }
@@ -25,7 +26,7 @@ pub enum VisualKind {
 #[derive(Serialize, Deserialize)]
 pub struct VisualConfig {
     on: bool,
-    kind: Vec<VisualKind>,
+    styles: Vec<VisualStyle>,
 }
 
 // Neighbor
@@ -284,11 +285,73 @@ impl CellularAutomatonConfig {
             GridPoint2D<IntIdx>,
             rayon::vec::IntoIter<IndexedDataOwned<GridPoint2D<IntIdx>, BinaryState>>,
         >,
-        Option<BinaryStatesReadOnly<GridPoint2D<IntIdx>, BinaryState>>,
+        Vec<Box<dyn CellularAutomatonRenderer>>,
     ) {
-        let mut res = Vec::new();
-        // TODO: implementation
-        (BoardCallbackManager::new(res), None)
+        let mut callbacks = Vec::new();
+        let mut renderers: Vec<Box<dyn CellularAutomatonRenderer>> = Vec::new();
+
+        if self.visual.on && !self.visual.styles.is_empty() {
+            let one_billion_nano_sec: f64 = 1_000_000_000f64;
+            let interval_nano_sec = (self.delay * one_billion_nano_sec) as u64;
+            let (control_callbacks, keyboard_control) = crate::callback::standard_control_callbacks(
+                Duration::from_nanos(interval_nano_sec),
+            );
+            let board_shape = match &self.board {
+                BoardConfig::Grid2D {
+                    shape,
+                    initial_states: _,
+                } => shape.clone(),
+            };
+            callbacks = control_callbacks;
+            let binary_states_callback: BinaryStatesCallback<GridPoint2D<IntIdx>, BinaryState> =
+                BinaryStatesCallback::new(BinaryState::Dead, BinaryState::Alive);
+            let states_read_only = binary_states_callback.clone_read_only();
+
+            for style in self.visual.styles.iter() {
+                match style {
+                    VisualStyle::Graphical => {
+                        let graphical_renderer = GraphicalRendererGrid2D::new(
+                            board_shape.width(),
+                            board_shape.height(),
+                            BinaryStateColorMap::new(),
+                            states_read_only.clone(),
+                        );
+
+                        match graphical_renderer {
+                            Ok(val) => {
+                                let boxed = Box::new(
+                                    val.with_title(self.title.clone())
+                                        .with_keyboard_control(keyboard_control.clone()),
+                                );
+                                renderers.push(boxed);
+                            }
+                            Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
+                        };
+                    }
+                    VisualStyle::Ascii => {
+                        #[cfg(not(feature = "ascii"))]
+                        eprintln!("Cannot create ASCII renderer, please recompile with \"--features ascii\",");
+                        #[cfg(feature = "ascii")]
+                        {
+                            use gol_renderer::{BinaryStateCharMap, TextRendererGrid2D};
+
+                            let text_renderer = TextRendererGrid2D::new(
+                                board_shape.width(),
+                                board_shape.height(),
+                                BinaryStateCharMap::new(),
+                                states_read_only.clone(),
+                            )
+                            .with_title(self.title.clone())
+                            .with_keyboard_control(keyboard_control.clone());
+
+                            renderers.push(Box::new(text_renderer));
+                        }
+                    }
+                }
+            }
+        }
+
+        (BoardCallbackManager::new(callbacks), renderers)
     }
 }
 

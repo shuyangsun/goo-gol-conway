@@ -102,6 +102,10 @@ where
     U: 'static + Send + Sync + Clone + Ord + CheckedSub + ToPrimitive + FromPrimitive + Hash,
     M: 'static + Send + Sync + Clone + ColorMapping<T>,
 {
+    fn need_run_on_main(&self) -> bool {
+        true
+    }
+
     fn run(&mut self) {
         let event_loop = EventLoop::new();
         let title = self.info.title().clone();

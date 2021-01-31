@@ -191,6 +191,10 @@ where
     U: Hash + FromPrimitive + ToPrimitive + std::ops::Sub<Output = U> + Clone,
     M: CharMapping<T>,
 {
+    fn need_run_on_main(&self) -> bool {
+        false
+    }
+
     fn run(&mut self) {
         self.setup_if_not_ready();
 

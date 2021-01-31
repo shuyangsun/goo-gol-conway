@@ -7,7 +7,7 @@
     "save": null,
     "visual": {
         "on": true,
-        "kind": ["Graphical"]
+        "styles": ["Graphical"]
     },
     "neighbor_rule": {
         "type": "Moore",

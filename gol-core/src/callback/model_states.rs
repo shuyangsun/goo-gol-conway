@@ -56,16 +56,9 @@ where
     CI: Hash,
 {
     pub fn new(trivial_state: T) -> Self {
-        Self::new_with_non_trivial_lookup(trivial_state, HashMap::new())
-    }
-
-    pub fn new_with_non_trivial_lookup(
-        trivial_state: T,
-        non_trivial_lookup: HashMap<CI, T>,
-    ) -> Self {
         Self {
             trivial_state,
-            non_trivial_lookup: Arc::new(RwLock::new((0, non_trivial_lookup))),
+            non_trivial_lookup: Arc::new(RwLock::new((0, HashMap::new()))),
         }
     }
 

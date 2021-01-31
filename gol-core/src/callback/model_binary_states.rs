@@ -71,18 +71,10 @@ where
     CI: Hash,
 {
     pub fn new(trivial_state: T, non_trivial_state: T) -> Self {
-        Self::new_with_non_trivial_indices(trivial_state, non_trivial_state, HashSet::new())
-    }
-
-    pub fn new_with_non_trivial_indices(
-        trivial_state: T,
-        non_trivial_state: T,
-        non_trivial_indices: HashSet<CI>,
-    ) -> Self {
         Self {
             trivial_state,
             non_trivial_state,
-            non_trivial_indices: Arc::new(RwLock::new((0, non_trivial_indices))),
+            non_trivial_indices: Arc::new(RwLock::new((0, HashSet::new()))),
         }
     }
 

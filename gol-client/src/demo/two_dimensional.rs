@@ -25,11 +25,7 @@ pub fn run_demo(
 
     let (mut callbacks, keyboard_control) =
         crate::callback::standard_control_callbacks(Duration::from_nanos(interval_nano_sec));
-    let binary_states_callback = BinaryStatesCallback::new_with_non_trivial_indices(
-        BinaryState::Dead,
-        BinaryState::Alive,
-        initial_states.clone(),
-    );
+    let binary_states_callback = BinaryStatesCallback::new(BinaryState::Dead, BinaryState::Alive);
     let states_read_only = binary_states_callback.clone_read_only();
     let binary_states_callback = BoardCallback::WithStates(Box::new(binary_states_callback));
     callbacks.push(binary_states_callback);
