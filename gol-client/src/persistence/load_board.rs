@@ -5,7 +5,10 @@ use gol_core::{
     NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
     SharedStrategyManager, SparseBinaryStates, SparseStates, StandardBoard,
 };
-use gol_renderer::{BinaryStateColorMap, CellularAutomatonRenderer, GraphicalRendererGrid2D};
+use gol_renderer::{
+    renderer::keyboard_control::KeyboardControl, BinaryStateColorMap, CellularAutomatonRenderer,
+    GraphicalRendererGrid2D,
+};
 use num_cpus;
 use rand::Rng;
 use rayon::prelude::*;
@@ -377,17 +380,23 @@ impl CellularAutomatonConfig {
         if self.visual.on && !self.visual.styles.is_empty() {
             let one_billion_nano_sec: f64 = 1_000_000_000f64;
             let interval_nano_sec = (self.delay * one_billion_nano_sec) as u64;
-            let (control_callbacks, keyboard_control) = crate::callback::standard_control_callbacks(
-                self.pause_at_start,
-                Duration::from_nanos(interval_nano_sec),
-            );
+            let keyboard_control = if self.enable_control {
+                let (control_callbacks, keyboard_control) =
+                    crate::callback::standard_control_callbacks(
+                        self.pause_at_start,
+                        Duration::from_nanos(interval_nano_sec),
+                    );
+                callbacks = control_callbacks;
+                Some(keyboard_control)
+            } else {
+                None
+            };
             let board_shape = match &self.board {
                 BoardConfig::Grid2D {
                     shape,
                     initial_states: _,
                 } => shape.clone(),
             };
-            callbacks = control_callbacks;
             let binary_states_callback: BinaryStatesCallback<GridPoint2D<IntIdx>, BinaryState> =
                 BinaryStatesCallback::new(BinaryState::Dead, BinaryState::Alive);
             let states_read_only = binary_states_callback.clone_read_only();
@@ -407,11 +416,14 @@ impl CellularAutomatonConfig {
 
                         match graphical_renderer {
                             Ok(val) => {
-                                let boxed = Box::new(
-                                    val.with_title(self.title.clone())
-                                        .with_keyboard_control(keyboard_control.clone()),
-                                );
-                                renderers.push(boxed);
+                                let real_gui_renderer = val.with_title(self.title.clone());
+                                let res = match &keyboard_control {
+                                    Some(control) => {
+                                        real_gui_renderer.with_keyboard_control(control.clone())
+                                    }
+                                    None => real_gui_renderer,
+                                };
+                                renderers.push(Box::new(res));
                             }
                             Err(err) => eprintln!("Error creating graphical renderer: {:?}", err),
                         };
@@ -429,10 +441,14 @@ impl CellularAutomatonConfig {
                                 BinaryStateCharMap::new(),
                                 states_read_only.clone(),
                             )
-                            .with_title(self.title.clone())
-                            .with_keyboard_control(keyboard_control.clone());
-
-                            renderers.push(Box::new(text_renderer));
+                            .with_title(self.title.clone());
+                            let res = match &keyboard_control {
+                                Some(control) => {
+                                    text_renderer.with_keyboard_control(control.clone())
+                                }
+                                None => text_renderer,
+                            };
+                            renderers.push(Box::new(res));
                         }
                     }
                 }
