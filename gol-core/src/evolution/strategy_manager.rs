@@ -27,18 +27,15 @@ where
 
 #[cfg(test)]
 mod shared_strat_manager_test {
-    use crate::{
-        BinaryState, BinaryStrategy, BoardStrategyManager, IndexedDataOwned, SharedStrategyManager,
-    };
+    use crate::{BoardStrategyManager, DiscreteStrategy, IndexedDataOwned, SharedStrategyManager};
 
     #[test]
     fn shared_strat_test_1() {
-        let strat = Box::new(BinaryStrategy::conway());
-        let strat_manager = SharedStrategyManager::<
-            i32,
-            BinaryState,
-            std::vec::IntoIter<IndexedDataOwned<i32, BinaryState>>,
-        >::new(strat);
+        let strat = Box::new(DiscreteStrategy::gol());
+        let strat_manager =
+            SharedStrategyManager::<i32, u8, std::vec::IntoIter<IndexedDataOwned<i32, u8>>>::new(
+                strat,
+            );
         let _ = strat_manager.get_strategy_at_index(0);
     }
 }

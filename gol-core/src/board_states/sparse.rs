@@ -46,25 +46,16 @@ where
 
 #[cfg(test)]
 mod sparse_state_manager_test {
-    use crate::{BinaryState, BoardStateManager, GridPoint2D, SparseStates};
+    use crate::{BoardStateManager, GridPoint2D, SparseStates};
     use std::collections::HashMap;
 
     #[test]
     fn sparse_state_test_1() {
         let mut initial_maps = HashMap::new();
-        initial_maps.insert(GridPoint2D { x: 0, y: 0 }, BinaryState::Alive);
-        let states = SparseStates::new(BinaryState::Dead, initial_maps);
-        assert_eq!(
-            states.get_cell_state(&GridPoint2D { x: 0, y: 0 }),
-            BinaryState::Alive
-        );
-        assert_eq!(
-            states.get_cell_state(&GridPoint2D { x: 1, y: 0 }),
-            BinaryState::Dead
-        );
-        assert_eq!(
-            states.get_cell_state(&GridPoint2D { x: 1, y: -5 }),
-            BinaryState::Dead
-        );
+        initial_maps.insert(GridPoint2D { x: 0, y: 0 }, 1u8);
+        let states = SparseStates::new(0, initial_maps);
+        assert_eq!(states.get_cell_state(&GridPoint2D { x: 0, y: 0 }), 1);
+        assert_eq!(states.get_cell_state(&GridPoint2D { x: 1, y: 0 }), 0);
+        assert_eq!(states.get_cell_state(&GridPoint2D { x: 1, y: -5 }), 0);
     }
 }

@@ -46,4 +46,10 @@ impl DiscreteStrategy {
             newborn_counts,
         }
     }
+
+    pub fn gol() -> Self {
+        let survive: HashSet<usize> = vec![2, 3].into_iter().collect();
+        let born: HashSet<usize> = vec![3].into_iter().collect();
+        Self::new(2, survive, born)
+    }
 }
