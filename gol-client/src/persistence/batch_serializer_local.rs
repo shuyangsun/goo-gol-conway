@@ -1,9 +1,9 @@
 use super::batch_serializer::{BatchIndexedSerializer, IndexedBatchData};
 use gol_core::{BoardCallbackWithStates, IndexedDataOwned};
+use rayon::prelude::*;
 use serde::Serialize;
 use shellexpand;
 use std::fs::{self, File};
-use std::io::prelude::*;
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::path::Path;
@@ -15,6 +15,15 @@ where
 {
     path: String,
     serializer: BatchIndexedSerializer<T, U>,
+}
+
+pub struct StateSerializerLocal<T, U, S>
+where
+    T: Serialize,
+    U: Serialize,
+{
+    serializer: BatchSerializerLocal<T, U>,
+    trivial_state: S,
 }
 
 impl<T, U> BatchSerializerLocal<T, U>
@@ -60,6 +69,19 @@ where
     }
 }
 
+impl<T, U, S> StateSerializerLocal<T, U, S>
+where
+    T: Serialize,
+    U: Serialize,
+{
+    pub fn new(serializer: BatchSerializerLocal<T, U>, trivial_state: S) -> Self {
+        Self {
+            serializer,
+            trivial_state,
+        }
+    }
+}
+
 impl<T, U> Drop for BatchSerializerLocal<T, U>
 where
     T: Serialize,
@@ -80,5 +102,18 @@ where
 {
     fn execute(&mut self, states: I) {
         self.push(states.collect());
+    }
+}
+
+impl<T, CI, I, S> BoardCallbackWithStates<T, CI, I> for StateSerializerLocal<Vec<(CI, T)>, S, T>
+where
+    T: Send + Sync + Serialize + std::cmp::PartialEq,
+    CI: Send + Sync + Serialize,
+    S: Send + Sync + Serialize,
+    I: rayon::iter::ParallelIterator<Item = IndexedDataOwned<CI, T>>,
+{
+    fn execute(&mut self, states: I) {
+        self.serializer
+            .push(states.filter(|ele| ele.1 != self.trivial_state).collect());
     }
 }

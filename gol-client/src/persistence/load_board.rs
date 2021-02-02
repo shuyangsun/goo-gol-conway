@@ -1,5 +1,6 @@
 use crate::persistence::{
-    batch_serializer::BatchIndexedSerializer, batch_serializer_local::BatchSerializerLocal,
+    batch_serializer::BatchIndexedSerializer,
+    batch_serializer_local::{BatchSerializerLocal, StateSerializerLocal},
 };
 use gol_core::{
     util::grid_util::Shape2D, Board, BoardCallback, BoardNeighborManager, BoardSpaceManager,
@@ -438,6 +439,7 @@ impl CellularAutomatonConfig {
                         Shape2D,
                     > = BatchIndexedSerializer::new(100).with_header(shape.clone());
                     let serializer = BatchSerializerLocal::new(dir, serializer);
+                    let serializer = StateSerializerLocal::new(serializer, 0);
                     callbacks.push(BoardCallback::WithStates(Box::new(serializer)));
                 }
             }
