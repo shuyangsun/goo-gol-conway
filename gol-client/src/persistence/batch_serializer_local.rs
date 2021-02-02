@@ -2,9 +2,10 @@ use super::batch_serializer::{BatchIndexedSerializer, IndexedBatchData};
 use gol_core::{BoardCallbackWithStates, IndexedDataOwned};
 use serde::Serialize;
 use shellexpand;
-use std::fs;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::prelude::*;
+use std::io::prelude::*;
+use std::io::BufWriter;
 use std::path::Path;
 
 pub struct BatchSerializerLocal<T, U>
@@ -52,8 +53,10 @@ where
         let data = bytes.unwrap();
         let file_name = format!("{}_{}.{}", data.idx_beg, data.idx_end, file_extension);
         let file_path = Path::new(&self.path).join(&file_name);
-        let mut file = File::create(&file_path).unwrap();
-        file.write_all(&data.data).unwrap();
+        let file = File::create(&file_path).unwrap();
+        let mut buffer = BufWriter::new(file);
+        buffer.write_all(&data.data).unwrap();
+        buffer.flush().unwrap();
     }
 }
 
