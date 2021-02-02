@@ -59,7 +59,7 @@ where
         let idx_beg = self.iter_count - self.history_buffer.len();
         let idx_end = self.iter_count;
         let data = bincode::serialize(&(self.header.as_ref(), &self.history_buffer)).unwrap();
-        let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
         encoder.write_all(&data).unwrap();
         let data = encoder.finish().unwrap();
         self.history_buffer = Vec::with_capacity(self.batch_size);
