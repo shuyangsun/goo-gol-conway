@@ -22,7 +22,7 @@ pub use callback::{model_states::StatesCallback, model_states::StatesReadOnly};
 pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use evolution::strategy::EvolutionStrategy;
-pub use evolution::strategy_discrete::DiscreteStrategy;
+pub use evolution::strategy_discrete::DecayMultiAliveStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
     grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,

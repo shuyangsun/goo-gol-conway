@@ -2,13 +2,13 @@ use crate::{EvolutionStrategy, IndexedDataOwned};
 use num_traits::{FromPrimitive, PrimInt, Unsigned};
 use std::collections::HashSet;
 
-pub struct DiscreteStrategy {
+pub struct DecayMultiAliveStrategy {
     state_count: usize,
     alive_surive_counts: HashSet<usize>,
     newborn_counts: HashSet<usize>,
 }
 
-impl<CI, T, I> EvolutionStrategy<CI, T, I> for DiscreteStrategy
+impl<CI, T, I> EvolutionStrategy<CI, T, I> for DecayMultiAliveStrategy
 where
     T: PrimInt + Unsigned + FromPrimitive + std::ops::Sub<Output = T>,
     I: Iterator<Item = IndexedDataOwned<CI, T>>,
@@ -34,7 +34,7 @@ where
     }
 }
 
-impl DiscreteStrategy {
+impl DecayMultiAliveStrategy {
     pub fn new(
         state_count: usize,
         alive_surive_counts: HashSet<usize>,

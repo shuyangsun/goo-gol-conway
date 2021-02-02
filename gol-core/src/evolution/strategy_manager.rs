@@ -27,11 +27,13 @@ where
 
 #[cfg(test)]
 mod shared_strat_manager_test {
-    use crate::{BoardStrategyManager, DiscreteStrategy, IndexedDataOwned, SharedStrategyManager};
+    use crate::{
+        BoardStrategyManager, DecayMultiAliveStrategy, IndexedDataOwned, SharedStrategyManager,
+    };
 
     #[test]
     fn shared_strat_test_1() {
-        let strat = Box::new(DiscreteStrategy::gol());
+        let strat = Box::new(DecayMultiAliveStrategy::gol());
         let strat_manager =
             SharedStrategyManager::<i32, u8, std::vec::IntoIter<IndexedDataOwned<i32, u8>>>::new(
                 strat,

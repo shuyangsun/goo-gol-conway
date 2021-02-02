@@ -4,9 +4,9 @@ use crate::persistence::{
 };
 use gol_core::{
     util::grid_util::Shape2D, Board, BoardCallback, BoardNeighborManager, BoardSpaceManager,
-    BoardStateManager, BoardStrategyManager, DiscreteStrategy, Grid, GridFactory, GridPoint2D,
-    IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
-    SharedStrategyManager, SparseStates, StandardBoard, StatesCallback,
+    BoardStateManager, BoardStrategyManager, DecayMultiAliveStrategy, Grid, GridFactory,
+    GridPoint2D, IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut,
+    NeighborsGridSurround, SharedStrategyManager, SparseStates, StandardBoard, StatesCallback,
 };
 use gol_renderer::{
     CellularAutomatonRenderer, DiscreteStateCharMap, DiscreteStateColorMap,
@@ -302,7 +302,7 @@ impl CellularAutomatonConfig {
         };
         match &self.evolution_rule {
             EvolutionRuleConfig::AliveCount { survive, born } => Ok(Box::new(
-                SharedStrategyManager::new(Box::new(DiscreteStrategy::new(
+                SharedStrategyManager::new(Box::new(DecayMultiAliveStrategy::new(
                     state_count.clone(),
                     collect_cell_counts(&survive),
                     collect_cell_counts(&born),
