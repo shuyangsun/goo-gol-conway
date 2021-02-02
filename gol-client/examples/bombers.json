@@ -1,0 +1,45 @@
+{
+    "title": "Bombers",
+    "max_iter": null,
+    "delay": 1.0,
+    "pause_at_start": true,
+    "enable_control": true,
+    "save": null,
+    "visual": {
+        "on": true,
+        "styles": [
+            "Graphical"
+        ]
+    },
+    "neighbor_rule": {
+        "type": "Moore",
+        "margin": 1
+    },
+    "state": {
+        "type": "UInt",
+        "count": 25
+    },
+    "evolution_rule": {
+        "type": "AliveCount",
+        "survive": [
+            3,
+            4,
+            5
+        ],
+        "born": [
+            2,
+            4
+        ]
+    },
+    "board": {
+        "type": "Grid2D",
+        "shape": {
+            "width": 192,
+            "height": 108
+        },
+        "initial_states": {
+            "type": "Random",
+            "alive_ratio": 0.5
+        }
+    }
+}

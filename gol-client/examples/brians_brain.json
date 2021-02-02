@@ -1,0 +1,40 @@
+{
+    "title": "BriansBrain",
+    "max_iter": null,
+    "delay": 1.0,
+    "pause_at_start": true,
+    "enable_control": true,
+    "save": null,
+    "visual": {
+        "on": true,
+        "styles": [
+            "Graphical"
+        ]
+    },
+    "neighbor_rule": {
+        "type": "Moore",
+        "margin": 1
+    },
+    "state": {
+        "type": "UInt",
+        "count": 3
+    },
+    "evolution_rule": {
+        "type": "AliveCount",
+        "survive": [],
+        "born": [
+            2
+        ]
+    },
+    "board": {
+        "type": "Grid2D",
+        "shape": {
+            "width": 192,
+            "height": 108
+        },
+        "initial_states": {
+            "type": "Random",
+            "alive_ratio": 0.5
+        }
+    }
+}

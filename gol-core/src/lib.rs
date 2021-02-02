@@ -23,6 +23,7 @@ pub use cell::common::IndexedDataOwned;
 pub use cell::index::{GridPoint1D, GridPoint2D, GridPoint3D, GridPointND};
 pub use evolution::strategy::EvolutionStrategy;
 pub use evolution::strategy_discrete::DecayMultiAliveStrategy;
+pub use evolution::strategy_life_like::DecayLifeLikeStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
     grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,

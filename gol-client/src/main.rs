@@ -20,6 +20,10 @@ fn main() {
         include_str!("../examples/random_gol.json"),
         include_str!("../examples/and_gate_4_neighbors.json"),
         include_str!("../examples/byte_state.json"),
+        include_str!("../examples/star_wars.json"),
+        include_str!("../examples/brians_brain.json"),
+        include_str!("../examples/bombers.json"),
+        include_str!("../examples/sedimental.json"),
     ];
     let configs: Vec<CellularAutomatonConfig> = jsons
         .par_iter()
