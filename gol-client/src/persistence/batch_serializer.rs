@@ -1,4 +1,6 @@
+use flate2::{write::GzEncoder, Compression};
 use serde::Serialize;
+use std::io::prelude::*;
 
 pub struct IndexedBatchData {
     pub idx_beg: usize,
@@ -57,6 +59,9 @@ where
         let idx_beg = self.iter_count - self.history_buffer.len();
         let idx_end = self.iter_count;
         let data = bincode::serialize(&(self.header.as_ref(), &self.history_buffer)).unwrap();
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+        encoder.write_all(&data).unwrap();
+        let data = encoder.finish().unwrap();
         self.history_buffer = Vec::with_capacity(self.batch_size);
         IndexedBatchData {
             idx_beg,
