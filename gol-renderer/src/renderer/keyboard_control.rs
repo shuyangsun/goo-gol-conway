@@ -29,16 +29,6 @@ impl KeyboardControl {
         }
     }
 
-    pub fn start_monitoring<F>(&self, func: F)
-    where
-        F: 'static + Send + Sync + Fn() -> char,
-    {
-        let sender_clone = self.sender.clone();
-        thread::spawn(move || loop {
-            sender_clone.send(func()).unwrap();
-        });
-    }
-
     pub fn is_receive_only(&self) -> bool {
         self.is_receive_only
     }

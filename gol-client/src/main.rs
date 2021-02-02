@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs;
 
 fn main() {
-    let jsons = vec![
+    let mut jsons = vec![
         include_str!("../examples/tetris.json"),
         include_str!("../examples/glider.json"),
         include_str!("../examples/glider_gun.json"),
@@ -25,6 +25,10 @@ fn main() {
         include_str!("../examples/bombers.json"),
         include_str!("../examples/sedimental.json"),
     ];
+
+    #[cfg(feature = "ascii")]
+    jsons.push(include_str!("../examples/tetris_ascii.json"));
+
     let configs: Vec<CellularAutomatonConfig> = jsons
         .par_iter()
         .map(|ele| serde_json::from_str(ele).unwrap())

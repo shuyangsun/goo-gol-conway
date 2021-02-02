@@ -11,6 +11,7 @@ use ncurses::*;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::char;
 use std::hash::Hash;
+use std::io::{self, Read};
 
 const TITLE_ROW: i32 = 1;
 const GENERATION_ROW: i32 = 3;
@@ -50,7 +51,14 @@ where
 
     pub fn with_keyboard_control(self, control: KeyboardControl) -> Self {
         let mut res = self;
-        control.start_monitoring(move || char::from_u32(getch() as u32).unwrap());
+        let mut reader = io::stdin();
+        let mut buffer = [0; 1];
+        let control_clone = control.clone();
+        std::thread::spawn(move || loop {
+            reader.read_exact(&mut buffer).unwrap();
+            let ch = char::from_u32(buffer[0] as u32).unwrap();
+            control_clone.broadcast(ch);
+        });
         res.control = Some(control);
         res
     }
@@ -161,9 +169,8 @@ where
                             let y_max = board_shape.y_idx_max();
                             let cur_x = (idx.x.clone() - U::from_i64(x_min).unwrap())
                                 .to_i32()
-                                .unwrap()
-                                + 1;
-                            let cur_y = (y_max - idx.y.to_i64().unwrap()).to_i32().unwrap() + 2;
+                                .unwrap();
+                            let cur_y = (y_max - idx.y.to_i64().unwrap()).to_i32().unwrap();
                             let ch: char = char_map.to_visual(state);
                             mvwprintw(win, cur_y, cur_x, ch.to_string().as_str());
                         }

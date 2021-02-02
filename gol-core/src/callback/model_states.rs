@@ -92,4 +92,8 @@ where
             .collect();
         self.set_non_trivial_lookup(new_lookup);
     }
+
+    fn cleanup(&mut self) {
+        self.set_non_trivial_lookup(HashMap::new());
+    }
 }
