@@ -21,8 +21,8 @@ where
     T: Serialize,
     U: Serialize,
 {
-    pub fn new(dir_path: String, serializer: BatchIndexedSerializer<T, U>) -> Self {
-        let expanded = shellexpand::full(&dir_path).unwrap();
+    pub fn new(dir_path: &String, serializer: BatchIndexedSerializer<T, U>) -> Self {
+        let expanded = shellexpand::full(dir_path).unwrap();
         let dir_path = Path::new(expanded.as_ref());
         let exists = dir_path.exists();
         if exists {
