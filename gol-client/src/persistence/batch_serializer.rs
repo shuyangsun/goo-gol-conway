@@ -6,19 +6,17 @@ pub struct IndexedBatchData {
     pub data: Vec<u8>,
 }
 
-pub struct BatchIndexedSerializer<T, U, W> {
+pub struct BatchIndexedSerializer<T, U> {
     batch_size: usize,
     iter_count: usize,
     history_buffer: Vec<(usize, T)>,
     header: Option<U>,
-    footer: Option<W>,
 }
 
-impl<T, U, W> BatchIndexedSerializer<T, U, W>
+impl<T, U> BatchIndexedSerializer<T, U>
 where
     T: Serialize,
     U: Serialize,
-    W: Serialize,
 {
     pub fn new(batch_size: usize) -> Self {
         let batch_size = std::cmp::max(batch_size, 1);
@@ -27,19 +25,12 @@ where
             iter_count: 0,
             history_buffer: Vec::with_capacity(batch_size),
             header: None,
-            footer: None,
         }
     }
 
     pub fn with_header(self, header: U) -> Self {
         let mut res = self;
         res.header = Some(header);
-        res
-    }
-
-    pub fn with_footer(self, footer: W) -> Self {
-        let mut res = self;
-        res.footer = Some(footer);
         res
     }
 
@@ -66,12 +57,7 @@ where
     fn serialize_history(&self) -> IndexedBatchData {
         let idx_beg = self.iter_count - self.history_buffer.len();
         let idx_end = self.iter_count;
-        let data = bincode::serialize(&(
-            self.header.as_ref(),
-            &self.history_buffer,
-            self.footer.as_ref(),
-        ))
-        .unwrap();
+        let data = bincode::serialize(&(self.header.as_ref(), &self.history_buffer)).unwrap();
         IndexedBatchData {
             idx_beg,
             idx_end,
@@ -80,7 +66,7 @@ where
     }
 }
 
-impl<T, U, W> Drop for BatchIndexedSerializer<T, U, W> {
+impl<T, U> Drop for BatchIndexedSerializer<T, U> {
     fn drop(&mut self) {
         if !self.history_buffer.is_empty() {
             eprintln!(

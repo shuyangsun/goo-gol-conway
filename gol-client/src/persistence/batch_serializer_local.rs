@@ -1,4 +1,5 @@
 use super::batch_serializer::{BatchIndexedSerializer, IndexedBatchData};
+use gol_core::{BoardCallbackWithStates, IndexedDataOwned};
 use serde::Serialize;
 use shellexpand;
 use std::fs;
@@ -6,23 +7,21 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-pub struct BatchSerializerLocal<T, U, W>
+pub struct BatchSerializerLocal<T, U>
 where
     T: Serialize,
     U: Serialize,
-    W: Serialize,
 {
     path: String,
-    serializer: BatchIndexedSerializer<T, U, W>,
+    serializer: BatchIndexedSerializer<T, U>,
 }
 
-impl<T, U, W> BatchSerializerLocal<T, U, W>
+impl<T, U> BatchSerializerLocal<T, U>
 where
     T: Serialize,
     U: Serialize,
-    W: Serialize,
 {
-    pub fn new(dir_path: String, serializer: BatchIndexedSerializer<T, U, W>) -> Self {
+    pub fn new(dir_path: String, serializer: BatchIndexedSerializer<T, U>) -> Self {
         let expanded = shellexpand::full(&dir_path).unwrap();
         let dir_path = Path::new(expanded.as_ref());
         let exists = dir_path.exists();
@@ -58,14 +57,25 @@ where
     }
 }
 
-impl<T, U, W> Drop for BatchSerializerLocal<T, U, W>
+impl<T, U> Drop for BatchSerializerLocal<T, U>
 where
     T: Serialize,
     U: Serialize,
-    W: Serialize,
 {
     fn drop(&mut self) {
         let remaining = self.serializer.remaining();
         self.save_bytes(remaining);
+    }
+}
+
+impl<T, CI, I, S> BoardCallbackWithStates<T, CI, I> for BatchSerializerLocal<Vec<(CI, T)>, S>
+where
+    T: Send + Sync + Serialize,
+    CI: Send + Sync + Serialize,
+    S: Send + Sync + Serialize,
+    I: rayon::iter::ParallelIterator<Item = IndexedDataOwned<CI, T>>,
+{
+    fn execute(&mut self, states: I) {
+        self.push(states.collect());
     }
 }
