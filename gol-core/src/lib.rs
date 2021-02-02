@@ -16,7 +16,6 @@ pub use board::board_space::BoardSpaceManager;
 pub use board::board_state::BoardStateManager;
 pub use board::board_strategy::BoardStrategyManager;
 pub use board::standard::{StandardBoard, StandardBoardFactory};
-pub use board_states::predefined as predefined_states;
 pub use board_states::sparse::SparseStates;
 pub use callback::{model_states::StatesCallback, model_states::StatesReadOnly};
 pub use cell::common::IndexedDataOwned;
