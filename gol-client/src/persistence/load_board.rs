@@ -329,23 +329,6 @@ impl CellularAutomatonConfig {
         let mut color_renderers: Vec<Box<dyn CellularAutomatonRenderer<IntState, RGBA16>>> =
             Vec::new();
 
-        if self.save.is_some() {
-            let dir = self.save.as_ref().unwrap();
-            match &self.board {
-                BoardConfig::Grid2D {
-                    shape,
-                    initial_states: _,
-                } => {
-                    let serializer: BatchIndexedSerializer<
-                        Vec<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
-                        Shape2D,
-                    > = BatchIndexedSerializer::new(100).with_header(shape.clone());
-                    let serializer = BatchSerializerLocal::new(dir, serializer);
-                    callbacks.push(BoardCallback::WithStates(Box::new(serializer)));
-                }
-            }
-        }
-
         if self.visual.on && !self.visual.styles.is_empty() {
             let one_billion_nano_sec: f64 = 1_000_000_000f64;
             let interval_nano_sec = (self.delay * one_billion_nano_sec) as u64;
@@ -439,6 +422,23 @@ impl CellularAutomatonConfig {
                     panic!("More than one visual style need to be ran on main thread, try reducing the number of styles.");
                 } else {
                     found_must_main_thread = true;
+                }
+            }
+        }
+
+        if self.save.is_some() {
+            let dir = self.save.as_ref().unwrap();
+            match &self.board {
+                BoardConfig::Grid2D {
+                    shape,
+                    initial_states: _,
+                } => {
+                    let serializer: BatchIndexedSerializer<
+                        Vec<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
+                        Shape2D,
+                    > = BatchIndexedSerializer::new(100).with_header(shape.clone());
+                    let serializer = BatchSerializerLocal::new(dir, serializer);
+                    callbacks.push(BoardCallback::WithStates(Box::new(serializer)));
                 }
             }
         }

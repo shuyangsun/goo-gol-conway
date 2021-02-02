@@ -49,7 +49,7 @@ where
             cur_iter += 1;
             match max_iter {
                 Some(val) => {
-                    if cur_iter >= val {
+                    if cur_iter >= val - 1 {
                         break;
                     }
                 }
