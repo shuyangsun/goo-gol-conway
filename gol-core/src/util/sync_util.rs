@@ -5,7 +5,7 @@ pub struct ReadOnlyLock<T> {
 }
 
 impl<T> ReadOnlyLock<T> {
-    pub fn new(value: Arc<RwLock<T>>) -> Self {
+    pub fn from(value: Arc<RwLock<T>>) -> Self {
         Self { value }
     }
 
@@ -16,6 +16,6 @@ impl<T> ReadOnlyLock<T> {
 
 impl<T> Clone for ReadOnlyLock<T> {
     fn clone(&self) -> Self {
-        Self::new(Arc::clone(&self.value))
+        Self::from(Arc::clone(&self.value))
     }
 }

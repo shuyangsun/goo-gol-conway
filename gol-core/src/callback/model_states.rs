@@ -74,7 +74,7 @@ where
     {
         StatesReadOnly::new(
             self.trivial_state.clone(),
-            ReadOnlyLock::new(Arc::clone(&self.non_trivial_lookup)),
+            ReadOnlyLock::from(Arc::clone(&self.non_trivial_lookup)),
         )
     }
 }
