@@ -85,6 +85,7 @@ where
     }
 
     pub fn cleanup_all(&mut self) {
+        self.block_until_finish();
         self.callbacks
             .lock()
             .unwrap()
