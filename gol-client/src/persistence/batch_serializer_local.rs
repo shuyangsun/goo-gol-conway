@@ -7,6 +7,7 @@ use std::fs::{self, File};
 use std::io::prelude::*;
 use std::io::BufWriter;
 use std::path::Path;
+use std::thread::{self, JoinHandle};
 
 pub struct BatchSerializerLocal<T, U>
 where
@@ -15,6 +16,7 @@ where
 {
     path: String,
     serializer: BatchIndexedSerializer<T, U>,
+    last_handle: Option<JoinHandle<()>>,
 }
 
 pub struct StateSerializerLocal<T, U, S>
@@ -46,6 +48,7 @@ where
         Self {
             path: String::from(dir_path.to_str().unwrap()),
             serializer,
+            last_handle: None,
         }
     }
 
@@ -54,7 +57,7 @@ where
         self.save_bytes(bytes);
     }
 
-    fn save_bytes(&self, bytes: Option<IndexedBatchData>) {
+    fn save_bytes(&mut self, bytes: Option<IndexedBatchData>) {
         if bytes.is_none() {
             return;
         }
@@ -64,8 +67,19 @@ where
         let file_path = Path::new(&self.path).join(&file_name);
         let file = File::create(&file_path).unwrap();
         let mut buffer = BufWriter::new(file);
-        buffer.write_all(&data.data).unwrap();
-        buffer.flush().unwrap();
+        self.wait_on_last_handle();
+        self.last_handle = Some(thread::spawn(move || {
+            buffer.write_all(&data.data).unwrap();
+            buffer.flush().unwrap();
+        }));
+    }
+
+    fn wait_on_last_handle(&mut self) {
+        if self.last_handle.is_none() {
+            return;
+        }
+        self.last_handle.take().unwrap().join().unwrap();
+        self.last_handle = None;
     }
 }
 
@@ -90,6 +104,7 @@ where
     fn drop(&mut self) {
         let remaining = self.serializer.remaining();
         self.save_bytes(remaining);
+        self.wait_on_last_handle();
     }
 }
 
