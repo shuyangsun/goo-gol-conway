@@ -1,4 +1,3 @@
-use std::thread;
 use tokio::sync::broadcast::{self, error::TryRecvError, Receiver, Sender};
 
 pub struct KeyboardControl {
