@@ -1,4 +1,5 @@
 use super::batch_serializer::{BatchIndexedSerializer, IndexedBatchData};
+use super::HISTORY_EXTENSION;
 use gol_core::{BoardCallbackWithStates, IndexedDataOwned};
 use rayon::prelude::*;
 use serde::Serialize;
@@ -61,9 +62,8 @@ where
         if bytes.is_none() {
             return;
         }
-        let file_extension = "cahist";
         let data = bytes.unwrap();
-        let file_name = format!("{}_{}.{}", data.idx_beg, data.idx_end, file_extension);
+        let file_name = format!("{}_{}.{}", data.idx_beg, data.idx_end, HISTORY_EXTENSION);
         let file_path = Path::new(&self.path).join(&file_name);
         let file = File::create(&file_path).unwrap();
         let mut buffer = BufWriter::new(file);
