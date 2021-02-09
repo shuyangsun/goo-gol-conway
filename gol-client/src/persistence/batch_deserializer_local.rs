@@ -45,6 +45,18 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         U: Deserialize<'de>,
     {
         // TODO: implementation
+        let s = [100, 200, 300];
+
+        println!("{:?}", s.binary_search(&99));
+        println!("{:?}", s.binary_search(&100));
+        println!("{:?}", s.binary_search(&101));
+        println!("{:?}", s.binary_search(&199));
+        println!("{:?}", s.binary_search(&200));
+        println!("{:?}", s.binary_search(&201));
+        println!("{:?}", s.binary_search(&299));
+        println!("{:?}", s.binary_search(&300));
+        println!("{:?}", s.binary_search(&301));
+
         None
     }
 }
