@@ -47,6 +47,10 @@ impl<T, U> BatchDeserializerLocal<T, U> {
     where
         T: DeserializeOwned,
     {
+        if &idx >= self.idx_ranges.last().unwrap() {
+            return None;
+        }
+
         let left_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
         match left_idx {
             Some(buffer_idx) => {
@@ -55,6 +59,7 @@ impl<T, U> BatchDeserializerLocal<T, U> {
                 let data = &buffer_for_file[idx - start_idx];
                 assert_eq!(data.0, idx);
                 Some(Arc::clone(&data.1))
+                // TODO: perload data to buffer
             }
             None => {
                 // TODO: replace the whole array
