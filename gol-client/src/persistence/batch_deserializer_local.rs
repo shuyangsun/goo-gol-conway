@@ -6,15 +6,24 @@ use serde::de::DeserializeOwned;
 use std::collections::HashSet;
 use std::fs::{self, read_dir, File};
 use std::io::Read;
+use std::iter::FromIterator;
 use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
+use std::thread::JoinHandle;
+
+struct MultiRowData<T> {
+    start: usize,
+    end: usize,
+    data: Vec<Arc<T>>,
+}
 
 pub struct BatchDeserializerLocal<T, U> {
     path: String,
     idx_ranges: Vec<usize>,
-    buffer_size: usize,
-    buffer: Arc<Mutex<Vec<(U, Vec<(usize, Arc<T>)>)>>>, // U is header
-    buffer_ranges: Arc<Mutex<Vec<usize>>>,
+    forward_buffer_size: usize,
+    backward_buffer_size: usize,
+    buffer: Arc<RwLock<Vec<(U, MultiRowData<T>)>>>, // U is header
+    buffer_append_handles: Arc<RwLock<Vec<JoinHandle<MultiRowData<T>>>>>,
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
@@ -23,23 +32,33 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         let path = Path::new(expanded.as_ref());
         let idx_ranges = match Self::construct_ranges(&path) {
             Ok(val) => val,
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
         };
-        let default_buffer_size = 5;
-        Self {
+        let res = Self {
             path: String::from(path.to_str().unwrap()),
             idx_ranges,
-            buffer_size: default_buffer_size,
-            buffer: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size))),
-            buffer_ranges: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size + 1))),
-        }
+            forward_buffer_size: 1,
+            backward_buffer_size: 1,
+            buffer: Arc::new(RwLock::new(Vec::new())),
+            buffer_append_handles: Arc::new(RwLock::new(Vec::new())),
+        };
+
+        res.with_forward_buffer_size(2).with_backward_buffer_size(1)
     }
 
-    pub fn with_buffer_size(self, buffer_size: usize) -> Self {
+    pub fn with_forward_buffer_size(self, size: usize) -> Self {
         let mut res = self;
-        res.buffer_size = buffer_size;
-        res.buffer = Arc::new(Mutex::new(Vec::with_capacity(buffer_size)));
-        res.buffer_ranges = Arc::new(Mutex::new(Vec::with_capacity(buffer_size + 1)));
+        res.forward_buffer_size = size;
+        let arr_len = 1 + res.backward_buffer_size + size;
+        res.buffer = Arc::new(RwLock::new(Vec::with_capacity(arr_len)));
+        res
+    }
+
+    pub fn with_backward_buffer_size(self, size: usize) -> Self {
+        let mut res = self;
+        res.backward_buffer_size = size;
+        let arr_len = 1 + size + res.forward_buffer_size;
+        res.buffer = Arc::new(RwLock::new(Vec::with_capacity(arr_len)));
         res
     }
 
@@ -47,30 +66,56 @@ impl<T, U> BatchDeserializerLocal<T, U> {
     where
         T: DeserializeOwned,
     {
-        if &idx >= self.idx_ranges.last().unwrap() {
+        if &idx >= self.idx_ranges.last().unwrap() || &idx < self.idx_ranges.first().unwrap() {
             return None;
         }
 
-        let left_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
-        match left_idx {
-            Some(buffer_idx) => {
-                let start_idx = self.buffer_ranges.lock().unwrap()[buffer_idx];
-                let buffer_for_file = &self.buffer.lock().unwrap()[buffer_idx].1;
+        // Try to find index in current buffer.
+        let (mut left_buffer_idx, mut left_data_idx): (Option<usize>, Option<usize>) = (None, None);
+        loop {
+            let read = self.buffer_ranges.try_read();
+            if read.is_ok() {
+                let buffer_ranges_ref: &Vec<usize> = read.unwrap().as_ref();
+                left_buffer_idx = Self::find_range_left_idx(&idx, buffer_ranges_ref);
+                if left_buffer_idx.is_some() {
+                    left_data_idx = Some(buffer_ranges_ref[left_buffer_idx.unwrap()]);
+                }
+                break;
+            }
+        }
+
+        match left_buffer_idx {
+            // Cache hit
+            Some(range_idx) => {
+                let start_idx = self.buffer_ranges.read().unwrap()[buffer_idx];
+                let buffer_for_file = &self.buffer.read().unwrap()[buffer_idx].1;
                 let data = &buffer_for_file[idx - start_idx];
                 assert_eq!(data.0, idx);
+
+                let desired_indices = self.desired_buffer_indices(buffer_idx);
+
                 Some(Arc::clone(&data.1))
-                // TODO: perload data to buffer
+                // TODO: preload data to buffer
             }
-            None => {
-                // TODO: replace the whole array
-                None
-            }
+            // Cache miss
+            None => None,
         }
     }
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
-    fn data_for_idx(&self, idx: &usize) -> Option<(U, Vec<(usize, Arc<T>)>)>
+    fn desired_buffer_indices(&self, buffer_idx: &usize) -> Vec<usize> {
+        let idx = *buffer_idx;
+
+        let mut start = 0usize;
+        if idx > self.buffer_size {
+            start = idx - self.buffer_size;
+        }
+        let end = std::cmp::min(self.idx_ranges.len() - 1, idx + self.buffer_size);
+        Vec::from_iter(start..end)
+    }
+
+    fn data_for_idx(&self, idx: &usize) -> Option<(U, MultiRowData<T>)>
     where
         T: Send + Sync + DeserializeOwned,
         U: DeserializeOwned,
@@ -142,24 +187,5 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         let mut res_vec: Vec<usize> = res_set.into_iter().collect();
         res_vec.sort();
         Ok(res_vec)
-    }
-
-    fn find_range_left_idx(idx: &usize, ranges: &Vec<usize>) -> Option<usize> {
-        match ranges.binary_search(idx) {
-            Ok(val) => {
-                if val >= ranges.len() - 1 {
-                    None
-                } else {
-                    Some(val)
-                }
-            }
-            Err(val) => {
-                if val > 0 && val < ranges.len() - 1 {
-                    Some(val - 1)
-                } else {
-                    None
-                }
-            }
-        }
     }
 }

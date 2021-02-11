@@ -1,0 +1,96 @@
+use std::sync::{Arc, RwLock};
+use std::thread::JoinHandle;
+
+pub struct IndexedBuffer<T> {
+    forward_size: usize,
+    backward_size: usize,
+    buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
+    buffer_update: Arc<RwLock<Option<(usize, JoinHandle<T>)>>>,
+    history_size: usize,
+    history: Arc<RwLock<(usize, Vec<usize>)>>, // Keeps track of avg index request
+}
+
+pub trait IndexedBufferDelegate<T> {
+    fn get(&self, index: usize) -> Option<T>;
+}
+
+impl<T> IndexedBuffer<T> {
+    pub fn new() -> Self {
+        Self {
+            forward_size: 0usize,
+            backward_size: 0usize,
+            buffer: Arc::new(RwLock::new(Vec::with_capacity(1))),
+            buffer_update: Arc::new(RwLock::new(None)),
+            history_size: 10usize,
+        }
+    }
+
+    pub fn with_forward_size(self, size: usize) -> Self {
+        assert!(
+            self.buffer.read().unwrap().is_empty(),
+            "Expected empty buffer."
+        );
+        let mut res = self;
+        res.forward_size = size;
+        let buf_len = 1 + size + res.backward_size;
+        res.buffer = Arc::new(RwLock::new(Vec::with_capacity(buf_len)));
+        res
+    }
+
+    pub fn with_backward_size(self, size: usize) -> Self {
+        assert!(
+            self.buffer.read().unwrap().is_empty(),
+            "Expected empty buffer."
+        );
+        let mut res = self;
+        res.backward_size = size;
+        let buf_len = 1 + size + res.forward_size;
+        res.buffer = Arc::new(RwLock::new(Vec::with_capacity(buf_len)));
+        res
+    }
+
+    pub fn get(&self, idx: usize) -> Option<Arc<T>> {
+        loop {
+            let unlocked = self.buffer.try_read();
+            if unlocked.is_err() {
+                continue;
+            }
+            let buffer = unlocked.unwrap();
+            if buffer.is_empty() {}
+            let buf_beg_idx = buffer.first().unwrap();
+        }
+    }
+}
+
+impl<T> IndexedBuffer<T> {
+    fn schedule_buffer_update(
+        &self,
+        delegate: &dyn IndexedBufferDelegate<T>,
+        start: usize,
+        end: usize,
+    ) {
+    }
+
+    fn buffer_len(&self) -> usize {
+        1 + self.forward_size + self.backward_size
+    }
+
+    fn find_range_left_idx(idx: &usize, ranges: &Vec<usize>) -> Option<usize> {
+        match ranges.binary_search(idx) {
+            Ok(val) => {
+                if val >= ranges.len() - 1 {
+                    None
+                } else {
+                    Some(val)
+                }
+            }
+            Err(val) => {
+                if val > 0 && val < ranges.len() - 1 {
+                    Some(val - 1)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
