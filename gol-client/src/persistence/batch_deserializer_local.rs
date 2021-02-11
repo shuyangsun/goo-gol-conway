@@ -25,12 +25,12 @@ impl<T, U> BatchDeserializerLocal<T, U> {
             Ok(val) => val,
             Err(err) => panic!(err),
         };
-        let default_buffer_size = 1;
+        let default_buffer_size = 5;
         Self {
             path: String::from(path.to_str().unwrap()),
             idx_ranges,
             buffer_size: default_buffer_size,
-            buffer: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size + 1))),
+            buffer: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size))),
             buffer_ranges: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size + 1))),
         }
     }
@@ -38,7 +38,7 @@ impl<T, U> BatchDeserializerLocal<T, U> {
     pub fn with_buffer_size(self, buffer_size: usize) -> Self {
         let mut res = self;
         res.buffer_size = buffer_size;
-        res.buffer = Arc::new(Mutex::new(Vec::with_capacity(buffer_size + 1)));
+        res.buffer = Arc::new(Mutex::new(Vec::with_capacity(buffer_size)));
         res.buffer_ranges = Arc::new(Mutex::new(Vec::with_capacity(buffer_size + 1)));
         res
     }
