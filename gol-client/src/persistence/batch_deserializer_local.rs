@@ -2,7 +2,7 @@ use super::HISTORY_EXTENSION;
 use bincode;
 use flate2::read::GzDecoder;
 use rayon::prelude::*;
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use std::collections::HashSet;
 use std::fs::{self, read_dir, File};
 use std::io::Read;
@@ -43,9 +43,9 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         res
     }
 
-    pub fn get<'de>(&self, idx: usize) -> Option<Arc<T>>
+    pub fn get(&self, idx: usize) -> Option<Arc<T>>
     where
-        T: Deserialize<'de>,
+        T: DeserializeOwned,
     {
         let left_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
         match left_idx {
@@ -65,10 +65,10 @@ impl<T, U> BatchDeserializerLocal<T, U> {
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
-    fn data_for_idx<'de>(&self, idx: &usize) -> Option<(U, Vec<(usize, Arc<T>)>)>
+    fn data_for_idx(&self, idx: &usize) -> Option<(U, Vec<(usize, Arc<T>)>)>
     where
-        T: Send + Sync + Deserialize<'de>,
-        U: Deserialize<'de>,
+        T: Send + Sync + DeserializeOwned,
+        U: DeserializeOwned,
     {
         let byte_data = self.byte_data_for_idx(idx);
         if byte_data.is_none() {
