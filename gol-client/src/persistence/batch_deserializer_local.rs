@@ -9,7 +9,7 @@ pub struct BatchDeserializerLocal<T, U> {
     path: String,
     idx_ranges: Vec<usize>,
     buffer_size: usize,
-    buffer: Arc<Mutex<Vec<(U, Vec<(usize, T)>)>>>, // U is header
+    buffer: Arc<Mutex<Vec<(U, Vec<(usize, Arc<T>)>)>>>, // U is header
     buffer_ranges: Arc<Mutex<Vec<usize>>>,
 }
 
@@ -26,38 +26,36 @@ impl<T, U> BatchDeserializerLocal<T, U> {
             path: String::from(path.to_str().unwrap()),
             idx_ranges,
             buffer_size: default_buffer_size,
-            buffer: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size))),
-            buffer_ranges: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size))),
+            buffer: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size + 1))),
+            buffer_ranges: Arc::new(Mutex::new(Vec::with_capacity(default_buffer_size + 1))),
         }
     }
 
     pub fn with_buffer_size(self, buffer_size: usize) -> Self {
         let mut res = self;
         res.buffer_size = buffer_size;
-        res.buffer = Arc::new(Mutex::new(Vec::with_capacity(buffer_size)));
-        res.buffer_ranges = Arc::new(Mutex::new(Vec::with_capacity(buffer_size)));
+        res.buffer = Arc::new(Mutex::new(Vec::with_capacity(buffer_size + 1)));
+        res.buffer_ranges = Arc::new(Mutex::new(Vec::with_capacity(buffer_size + 1)));
         res
     }
 
-    pub fn get<'de>(&self, idx: usize) -> Option<&T>
+    pub fn get<'de>(&self, idx: usize) -> Option<Arc<T>>
     where
         T: Deserialize<'de>,
-        U: Deserialize<'de>,
     {
-        // TODO: implementation
-        let s = [100, 200, 300];
-
-        println!("{:?}", s.binary_search(&99));
-        println!("{:?}", s.binary_search(&100));
-        println!("{:?}", s.binary_search(&101));
-        println!("{:?}", s.binary_search(&199));
-        println!("{:?}", s.binary_search(&200));
-        println!("{:?}", s.binary_search(&201));
-        println!("{:?}", s.binary_search(&299));
-        println!("{:?}", s.binary_search(&300));
-        println!("{:?}", s.binary_search(&301));
-
-        None
+        let left_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
+        match left_idx {
+            Some(buffer_idx) => {
+                let start_idx = self.buffer_ranges.lock().unwrap()[buffer_idx];
+                let buffer_for_file = &self.buffer.lock().unwrap()[buffer_idx].1;
+                let data = &buffer_for_file[idx - start_idx].1;
+                Some(Arc::clone(&data))
+            }
+            None => {
+                // TODO: replace the whole array
+                None
+            }
+        }
     }
 }
 
@@ -84,14 +82,20 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         Ok(res_vec)
     }
 
-    fn find(idx: &usize, ranges: &Vec<usize>) -> Result<usize, ()> {
+    fn find_range_left_idx(idx: &usize, ranges: &Vec<usize>) -> Option<usize> {
         match ranges.binary_search(idx) {
-            Ok(val) => Ok(val),
-            Err(val) => {
-                if val < ranges.len() - 1 {
-                    Ok(val)
+            Ok(val) => {
+                if val >= ranges.len() - 1 {
+                    None
                 } else {
-                    Err(())
+                    Some(val)
+                }
+            }
+            Err(val) => {
+                if val > 0 && val < ranges.len() - 1 {
+                    Some(val - 1)
+                } else {
+                    None
                 }
             }
         }
