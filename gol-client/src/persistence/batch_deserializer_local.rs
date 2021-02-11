@@ -1,7 +1,11 @@
 use super::HISTORY_EXTENSION;
+use bincode;
+use flate2::read::GzDecoder;
+use rayon::prelude::*;
 use serde::Deserialize;
 use std::collections::HashSet;
-use std::fs::read_dir;
+use std::fs::{self, read_dir, File};
+use std::io::Read;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
@@ -48,8 +52,9 @@ impl<T, U> BatchDeserializerLocal<T, U> {
             Some(buffer_idx) => {
                 let start_idx = self.buffer_ranges.lock().unwrap()[buffer_idx];
                 let buffer_for_file = &self.buffer.lock().unwrap()[buffer_idx].1;
-                let data = &buffer_for_file[idx - start_idx].1;
-                Some(Arc::clone(&data))
+                let data = &buffer_for_file[idx - start_idx];
+                assert_eq!(data.0, idx);
+                Some(Arc::clone(&data.1))
             }
             None => {
                 // TODO: replace the whole array
@@ -60,6 +65,58 @@ impl<T, U> BatchDeserializerLocal<T, U> {
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
+    fn data_for_idx<'de>(&self, idx: &usize) -> Option<(U, Vec<(usize, Arc<T>)>)>
+    where
+        T: Send + Sync + Deserialize<'de>,
+        U: Deserialize<'de>,
+    {
+        let byte_data = self.byte_data_for_idx(idx);
+        if byte_data.is_none() {
+            return None;
+        }
+        let byte_data = byte_data.unwrap();
+        let deserialized: (U, Vec<(usize, T)>) =
+            bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
+        let (header, history) = deserialized;
+        let history = history
+            .into_par_iter()
+            .map(|ele| (ele.0, Arc::new(ele.1)))
+            .collect();
+        Some((header, history))
+    }
+
+    fn byte_data_for_idx(&self, idx: &usize) -> Option<Vec<u8>> {
+        let file_path = self.path_for_idx(idx);
+        if file_path.is_none() {
+            return None;
+        }
+        let file_path = file_path.unwrap();
+        let mut file = File::open(&file_path).expect("File not found.");
+        let metadata = fs::metadata(&file_path).expect("Cannot read file metadata.");
+        let mut buffer = vec![0; metadata.len() as usize];
+        file.read(&mut buffer).expect("Cannot read file.");
+        let mut decoder = GzDecoder::new(&buffer[..]);
+
+        // Uncompressed data should be larger, but good starting size.
+        let mut res = Vec::with_capacity(metadata.len() as usize);
+        decoder.read(&mut res[..]);
+
+        Some(res)
+    }
+
+    fn path_for_idx(&self, idx: &usize) -> Option<String> {
+        let range_idx = Self::find_range_left_idx(idx, &self.idx_ranges);
+        match range_idx {
+            Some(idx) => {
+                let (start, end) = (self.idx_ranges[idx], self.idx_ranges[idx + 1]);
+                let file_name = format!("{}_{}.{}", start, end, HISTORY_EXTENSION);
+                let path_to_file = Path::new(&self.path).join(&file_name);
+                Some(String::from(path_to_file.to_str().unwrap()))
+            }
+            None => None,
+        }
+    }
+
     fn construct_ranges(path: &Path) -> Result<Vec<usize>, &'static str> {
         if !path.is_dir() {
             return Err("Path specified for deserialization is not a directory.");

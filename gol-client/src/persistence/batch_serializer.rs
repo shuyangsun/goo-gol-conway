@@ -1,3 +1,4 @@
+use bincode;
 use flate2::{write::GzEncoder, Compression};
 use serde::Serialize;
 use std::io::prelude::*;
