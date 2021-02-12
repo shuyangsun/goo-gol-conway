@@ -7,22 +7,35 @@ pub struct IndexedBuffer<T> {
     buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
     buffer_update: Arc<RwLock<Option<(usize, JoinHandle<T>)>>>,
     history_size: usize,
-    history: Arc<RwLock<(usize, Vec<usize>)>>, // Keeps track of avg index request
+    history: Arc<RwLock<(usize, Vec<usize>)>>, // Keeps track of avg index request, first value sum.
 }
 
 pub trait IndexedBufferDelegate<T> {
-    fn get(&self, index: usize) -> Option<T>;
+    fn raw_get(&self, index: usize) -> Option<T>;
 }
 
 impl<T> IndexedBuffer<T> {
     pub fn new() -> Self {
+        let default_history_size = 10;
         Self {
             forward_size: 0usize,
             backward_size: 0usize,
             buffer: Arc::new(RwLock::new(Vec::with_capacity(1))),
             buffer_update: Arc::new(RwLock::new(None)),
-            history_size: 10usize,
+            history_size: default_history_size,
+            history: Arc::new(RwLock::new((0, Vec::with_capacity(default_history_size)))),
         }
+    }
+
+    pub fn with_history_size(self, size: usize) -> Self {
+        assert!(
+            self.history.read().unwrap().1.is_empty(),
+            "Expected empty history."
+        );
+        let mut res = self;
+        res.history_size = size;
+        res.history = Arc::new(RwLock::new((0, Vec::with_capacity(size))));
+        res
     }
 
     pub fn with_forward_size(self, size: usize) -> Self {
@@ -50,6 +63,7 @@ impl<T> IndexedBuffer<T> {
     }
 
     pub fn get(&self, idx: usize) -> Option<Arc<T>> {
+        let avg_idx = self.updated_avg(idx);
         loop {
             let unlocked = self.buffer.try_read();
             if unlocked.is_err() {
@@ -63,6 +77,25 @@ impl<T> IndexedBuffer<T> {
 }
 
 impl<T> IndexedBuffer<T> {
+    fn updated_avg(&self, idx: usize) -> usize {
+        loop {
+            match self.history.try_write() {
+                Ok(guard) => {
+                    let (sum, history) = (guard.0, guard.1);
+                    history.push(idx);
+                    sum += idx;
+                    if history.len() > self.history_size {
+                        let pop = history.remove(0);
+                        sum -= pop;
+                    }
+                    guard.0 = sum;
+                    return sum / history.len();
+                }
+                Err(_) => continue,
+            }
+        }
+    }
+
     fn schedule_buffer_update(
         &self,
         delegate: &dyn IndexedBufferDelegate<T>,
