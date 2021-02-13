@@ -1,87 +1,10 @@
-use std::collections::HashSet;
+use super::preload_prediction::PreloadPrediction;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
-use std::thread::JoinHandle;
-
-pub trait PreloadPrediction<T> {
-    fn register(&mut self, value: &T);
-    fn predict(&self) -> HashSet<T>;
-}
-
-pub struct AdjacentIndexPrediction {
-    forward_size: usize,
-    backward_size: usize,
-    history_size: usize,
-    history: (usize, Vec<usize>), // Keeps track of avg index request, first value sum.
-}
-
-impl PreloadPrediction<usize> for AdjacentIndexPrediction {
-    fn register(&mut self, value: &usize) {
-        self.history.1.push(*value);
-        self.history.0 += value;
-        if self.history.1.len() > self.history_size {
-            let pop = self.history.1.remove(0);
-            self.history.0 -= pop;
-        }
-    }
-
-    fn predict(&self) -> HashSet<usize> {
-        let cur_avg = self.cur_avg();
-        let sub = std::cmp::min(self.backward_size, cur_avg);
-        let start = cur_avg - sub;
-        let end = cur_avg + self.forward_size + 1;
-        (start..end).collect()
-    }
-}
-
-impl AdjacentIndexPrediction {
-    pub fn new() -> Self {
-        let default_history_size = 10;
-        Self {
-            forward_size: 0usize,
-            backward_size: 0usize,
-            history_size: default_history_size,
-            history: (0, Vec::with_capacity(default_history_size)),
-        }
-    }
-
-    pub fn with_history_size(self, size: usize) -> Self {
-        assert!(self.history.1.is_empty(), "Expected empty history.");
-        let mut res = self;
-        res.history_size = size;
-        res.history = (0, Vec::with_capacity(size));
-        res
-    }
-
-    pub fn with_forward_size(self, size: usize) -> Self {
-        assert!(self.history.1.is_empty(), "Expected empty buffer.");
-        let mut res = self;
-        res.forward_size = size;
-        res
-    }
-
-    pub fn with_backward_size(self, size: usize) -> Self {
-        assert!(self.history.1.is_empty(), "Expected empty buffer.");
-        let mut res = self;
-        res.backward_size = size;
-        res
-    }
-
-    fn buffer_len(&self) -> usize {
-        1 + self.forward_size + self.backward_size
-    }
-
-    fn cur_avg(&self) -> usize {
-        if self.history.1.is_empty() {
-            0
-        } else {
-            self.history.0 / self.history.1.len()
-        }
-    }
-}
 
 pub struct PreLoadBuffer<T> {
-    buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
-    buffer_update: Arc<RwLock<Vec<(usize, JoinHandle<T>)>>>,
+    predictor: Arc<RwLock<Box<dyn PreloadPrediction<usize>>>>,
+    buffer: Arc<RwLock<HashMap<usize, Arc<T>>>>,
 }
 
 pub trait PreLoadBufferDelegate<T> {
@@ -89,15 +12,27 @@ pub trait PreLoadBufferDelegate<T> {
 }
 
 impl<T> PreLoadBuffer<T> {
-    pub fn new() -> Self {
+    pub fn new(predictor: Box<dyn PreloadPrediction<usize>>) -> Self {
+        let predictor = Arc::new(RwLock::new(predictor));
         Self {
-            buffer: Arc::new(RwLock::new(Vec::with_capacity(1))),
-            buffer_update: Arc::new(RwLock::new(Vec::new())),
+            predictor,
+            buffer: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     pub fn get(&self, idx: usize) -> Option<Arc<T>> {
-        // let avg_idx = self.updated_avg(idx);
+        let mut prediction: HashSet<usize>;
+        loop {
+            let predictor_unlocked = self.predictor.try_read();
+            if predictor_unlocked.is_err() {
+                continue;
+            }
+            let predictor = predictor_unlocked.unwrap();
+            predictor.as_mut().register(&idx);
+            prediction = predictor.as_ref().predict();
+            break;
+        }
+
         loop {
             let unlocked = self.buffer.try_read();
             if unlocked.is_err() {
@@ -105,36 +40,8 @@ impl<T> PreLoadBuffer<T> {
             }
             let buffer = unlocked.unwrap();
             if buffer.is_empty() {}
-            let buf_beg_idx = buffer.first().unwrap();
         }
     }
 }
 
-impl<T> PreLoadBuffer<T> {
-    fn schedule_buffer_update(
-        &self,
-        delegate: &dyn PreLoadBufferDelegate<T>,
-        start: usize,
-        end: usize,
-    ) {
-    }
-
-    fn find_range_left_idx(idx: &usize, ranges: &Vec<usize>) -> Option<usize> {
-        match ranges.binary_search(idx) {
-            Ok(val) => {
-                if val >= ranges.len() - 1 {
-                    None
-                } else {
-                    Some(val)
-                }
-            }
-            Err(val) => {
-                if val > 0 && val < ranges.len() - 1 {
-                    Some(val - 1)
-                } else {
-                    None
-                }
-            }
-        }
-    }
-}
+impl<T> PreLoadBuffer<T> {}
