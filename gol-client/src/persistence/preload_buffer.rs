@@ -1,13 +1,26 @@
+use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 use std::thread::JoinHandle;
 
-pub struct PreLoadBuffer<T> {
+pub trait PreloadCachePrediction<T> {
+    fn register(&mut self, value: &T);
+    fn predict(&self) -> HashSet<T>;
+}
+
+pub struct AdjacentIndexGuess {
     forward_size: usize,
     backward_size: usize,
-    buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
-    buffer_update: Arc<RwLock<Vec<(usize, JoinHandle<T>)>>>,
     history_size: usize,
     history: Arc<RwLock<(usize, Vec<usize>)>>, // Keeps track of avg index request, first value sum.
+}
+
+impl PreLoadGuess<usize> for AdjacentIndexGuess {}
+
+impl 
+
+pub struct PreLoadBuffer<T> {
+    buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
+    buffer_update: Arc<RwLock<Vec<(usize, JoinHandle<T>)>>>,
 }
 
 pub trait PreLoadBufferDelegate<T> {
