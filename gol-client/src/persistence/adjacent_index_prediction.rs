@@ -23,7 +23,11 @@ impl PreloadPrediction<usize> for AdjacentIndexPrediction {
         let sub = std::cmp::min(self.backward_size, cur_avg);
         let start = cur_avg - sub;
         let end = cur_avg + self.forward_size + 1;
-        (start..end).collect()
+        let mut res: HashSet<usize> = (start..end).collect();
+        if let Some(last) = self.history.1.last() {
+            res.insert(*last);
+        }
+        res
     }
 }
 
