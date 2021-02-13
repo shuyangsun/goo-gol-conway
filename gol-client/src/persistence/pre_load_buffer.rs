@@ -1,27 +1,27 @@
 use std::sync::{Arc, RwLock};
 use std::thread::JoinHandle;
 
-pub struct IndexedBuffer<T> {
+pub struct PreLoadBuffer<T> {
     forward_size: usize,
     backward_size: usize,
     buffer: Arc<RwLock<Vec<(usize, Arc<T>)>>>,
-    buffer_update: Arc<RwLock<Option<(usize, JoinHandle<T>)>>>,
+    buffer_update: Arc<RwLock<Vec<(usize, JoinHandle<T>)>>>,
     history_size: usize,
     history: Arc<RwLock<(usize, Vec<usize>)>>, // Keeps track of avg index request, first value sum.
 }
 
-pub trait IndexedBufferDelegate<T> {
+pub trait PreLoadBufferDelegate<T> {
     fn raw_get(&self, index: usize) -> Option<T>;
 }
 
-impl<T> IndexedBuffer<T> {
+impl<T> PreLoadBuffer<T> {
     pub fn new() -> Self {
         let default_history_size = 10;
         Self {
             forward_size: 0usize,
             backward_size: 0usize,
             buffer: Arc::new(RwLock::new(Vec::with_capacity(1))),
-            buffer_update: Arc::new(RwLock::new(None)),
+            buffer_update: Arc::new(RwLock::new(Vec::new())),
             history_size: default_history_size,
             history: Arc::new(RwLock::new((0, Vec::with_capacity(default_history_size)))),
         }
@@ -76,20 +76,18 @@ impl<T> IndexedBuffer<T> {
     }
 }
 
-impl<T> IndexedBuffer<T> {
+impl<T> PreLoadBuffer<T> {
     fn updated_avg(&self, idx: usize) -> usize {
         loop {
             match self.history.try_write() {
-                Ok(guard) => {
-                    let (sum, history) = (guard.0, guard.1);
-                    history.push(idx);
-                    sum += idx;
-                    if history.len() > self.history_size {
-                        let pop = history.remove(0);
-                        sum -= pop;
+                Ok(mut guard) => {
+                    guard.1.push(idx);
+                    guard.0 += idx;
+                    if guard.1.len() > self.history_size {
+                        let pop = guard.1.remove(0);
+                        guard.0 -= pop;
                     }
-                    guard.0 = sum;
-                    return sum / history.len();
+                    return guard.0 / guard.1.len();
                 }
                 Err(_) => continue,
             }
@@ -98,7 +96,7 @@ impl<T> IndexedBuffer<T> {
 
     fn schedule_buffer_update(
         &self,
-        delegate: &dyn IndexedBufferDelegate<T>,
+        delegate: &dyn PreLoadBufferDelegate<T>,
         start: usize,
         end: usize,
     ) {
