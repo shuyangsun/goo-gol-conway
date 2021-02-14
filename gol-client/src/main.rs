@@ -6,6 +6,36 @@ use std::collections::HashMap;
 use std::fs;
 
 fn main() {
+    {
+        use gol_client::persistence::adjacent_index_prediction::AdjacentIndexPrediction;
+        use gol_client::persistence::preload_cache::{PreloadCache, PreloadCacheDelegate};
+
+        struct VecWrapper<T> {
+            vec: Vec<T>,
+        }
+
+        impl PreloadCacheDelegate<usize, usize> for VecWrapper<usize> {
+            fn get(&self, key: &usize) -> Option<usize> {
+                self.vec.get(*key).cloned()
+            }
+        }
+
+        let predictor = Box::new(
+            AdjacentIndexPrediction::new()
+                .with_history_size(10)
+                .with_forward_size(3)
+                .with_backward_size(1),
+        );
+        let delegate = Box::new(VecWrapper {
+            vec: (0..100).collect(),
+        });
+        let preload_cache = PreloadCache::new(predictor, delegate);
+        for i in 0usize..100 {
+            eprintln!("{}", i);
+            assert_eq!(*preload_cache.get(&i).unwrap(), i);
+        }
+    }
+
     let mut jsons = vec![
         include_str!("../examples/tetris.json"),
         include_str!("../examples/glider.json"),
