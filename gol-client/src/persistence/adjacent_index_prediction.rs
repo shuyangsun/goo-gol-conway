@@ -64,10 +64,6 @@ impl AdjacentIndexPrediction {
         res
     }
 
-    fn buffer_len(&self) -> usize {
-        1 + self.forward_size + self.backward_size
-    }
-
     fn cur_avg(&self) -> usize {
         if self.history.1.is_empty() {
             0

@@ -39,7 +39,7 @@ impl<T, U> PreloadCache<T, U> {
 
         let mut res = None;
         let mut should_insert_res = false;
-        let mut cur_keys = HashSet::new();
+        let mut cur_keys: HashSet<T>;
         loop {
             let unlocked = self.cache.try_read();
             if unlocked.is_err() {
@@ -49,8 +49,7 @@ impl<T, U> PreloadCache<T, U> {
 
             let cache_res = cache.get(key);
 
-            let is_updating = self.update.read().unwrap().is_some();
-            if is_updating && cache_res.is_none() {
+            if self.is_updating() && cache_res.is_none() {
                 drop(cache);
                 self.wait_for_update();
                 return self.get(key);
@@ -84,8 +83,7 @@ impl<T, U> PreloadCache<T, U> {
             }
         }
 
-        let is_updating = self.update.read().unwrap().is_some();
-        if !is_updating {
+        if !self.is_updating() {
             let extra = cur_keys.difference(&prediction).cloned().collect();
             let to_be_added: HashSet<T> = prediction.difference(&cur_keys).cloned().collect();
 
@@ -158,6 +156,16 @@ impl<T, U> PreloadCache<T, U> {
             let mut predictor = predictor_unlocked.unwrap();
             predictor.register(key);
             return predictor.predict();
+        }
+    }
+
+    fn is_updating(&self) -> bool {
+        loop {
+            let update_unlocked = self.update.try_read();
+            if update_unlocked.is_err() {
+                continue;
+            }
+            return update_unlocked.unwrap().is_some();
         }
     }
 }
