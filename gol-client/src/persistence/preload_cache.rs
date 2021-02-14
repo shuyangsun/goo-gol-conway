@@ -51,6 +51,7 @@ impl<T, U> PreloadCache<T, U> {
 
             let is_updating = self.update.read().unwrap().is_some();
             if is_updating && cache_res.is_none() {
+                drop(cache);
                 self.wait_for_update();
                 return self.get(key);
             } else if cache_res.is_some() {
@@ -189,6 +190,12 @@ mod preload_cache_test {
         });
         let preload_cache = PreloadCache::new(predictor, delegate);
         for i in 0usize..100 {
+            assert_eq!(*preload_cache.get(&i).unwrap(), i);
+        }
+        for i in 100usize..150 {
+            assert!(preload_cache.get(&i).is_none());
+        }
+        for i in (0usize..100).rev() {
             assert_eq!(*preload_cache.get(&i).unwrap(), i);
         }
     }
