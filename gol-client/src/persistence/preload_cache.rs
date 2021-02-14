@@ -116,15 +116,34 @@ impl<T, U> PreloadCache<T, U> {
 }
 
 impl<T, U> PreloadCache<T, U> {
-    fn wait_for_update(&self) {
+    fn wait_for_update(&self)
+    where
+        T: Eq + Hash,
+    {
         loop {
-            let unlocked = self.update.try_read();
+            let unlocked = self.update.try_write();
             if unlocked.is_err() {
                 continue;
             }
-            if unlocked.unwrap().is_some() {
-                continue;
+            let mut unlocked = unlocked.unwrap();
+            if unlocked.is_some() {
+                let update = unlocked.take().unwrap();
+                let update_res = update.join().unwrap();
+                let (extra, appending) = update_res;
+                loop {
+                    let cache_unlocked = self.cache.try_write();
+                    if cache_unlocked.is_err() {
+                        continue;
+                    }
+                    let mut cache = cache_unlocked.unwrap();
+                    for key in extra.iter() {
+                        cache.remove_entry(key);
+                    }
+                    cache.extend(appending);
+                    break;
+                }
             }
+            *unlocked = None;
             break;
         }
     }
@@ -144,9 +163,7 @@ impl<T, U> PreloadCache<T, U> {
 
 #[cfg(test)]
 mod preload_cache_test {
-    use super::super::{
-        adjacent_index_prediction::AdjacentIndexPrediction, preload_prediction::PreloadPrediction,
-    };
+    use super::super::adjacent_index_prediction::AdjacentIndexPrediction;
     use super::{PreloadCache, PreloadCacheDelegate};
 
     struct VecWrapper<T> {
