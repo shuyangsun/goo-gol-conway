@@ -86,7 +86,7 @@ impl<T, U> PreLoadCache<T, U> {
         let is_updating = self.update.read().unwrap().is_some();
         if !is_updating {
             let extra = cur_keys.difference(&prediction).cloned().collect();
-            let to_be_added = prediction.difference(&cur_keys);
+            let to_be_added: HashSet<U> = prediction.difference(&cur_keys).cloned().collect();
 
             loop {
                 let unlocked = self.update.try_write();
@@ -98,7 +98,7 @@ impl<T, U> PreLoadCache<T, U> {
                 *update = Some(thread::spawn(move || {
                     let mut appending = HashMap::new();
                     for key in to_be_added {
-                        match delegate.get(key) {
+                        match delegate.get(&key) {
                             Some(val) => {
                                 appending.insert(key.clone(), Arc::new(val));
                             }
