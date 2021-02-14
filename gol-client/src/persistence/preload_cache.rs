@@ -4,21 +4,21 @@ use std::hash::Hash;
 use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 
-pub trait PreLoadCacheDelegate<T, U>: Send + Sync {
-    fn get(&self, key: &U) -> Option<T>;
+pub trait PreloadCacheDelegate<T, U>: Send + Sync {
+    fn get(&self, key: &T) -> Option<U>;
 }
 
-pub struct PreLoadCache<T, U> {
-    predictor: Arc<RwLock<Box<dyn PreloadPrediction<U>>>>,
-    delegate: Arc<Box<dyn PreLoadCacheDelegate<T, U>>>,
-    cache: Arc<RwLock<HashMap<U, Arc<T>>>>,
-    update: Arc<RwLock<Option<JoinHandle<(HashSet<U>, HashMap<U, Arc<T>>)>>>>,
+pub struct PreloadCache<T, U> {
+    predictor: Arc<RwLock<Box<dyn PreloadPrediction<T>>>>,
+    delegate: Arc<Box<dyn PreloadCacheDelegate<T, U>>>,
+    cache: Arc<RwLock<HashMap<T, Arc<U>>>>,
+    update: Arc<RwLock<Option<JoinHandle<(HashSet<T>, HashMap<T, Arc<U>>)>>>>,
 }
 
-impl<T, U> PreLoadCache<T, U> {
+impl<T, U> PreloadCache<T, U> {
     pub fn new(
-        predictor: Box<dyn PreloadPrediction<U>>,
-        delegate: Box<dyn PreLoadCacheDelegate<T, U>>,
+        predictor: Box<dyn PreloadPrediction<T>>,
+        delegate: Box<dyn PreloadCacheDelegate<T, U>>,
     ) -> Self {
         let predictor = Arc::new(RwLock::new(predictor));
         let delegate = Arc::new(delegate);
@@ -30,10 +30,10 @@ impl<T, U> PreLoadCache<T, U> {
         }
     }
 
-    pub fn get(&self, key: &U) -> Option<Arc<T>>
+    pub fn get(&self, key: &T) -> Option<Arc<U>>
     where
-        T: 'static + Send + Sync,
-        U: 'static + Send + Sync + Clone + Eq + Hash,
+        T: 'static + Send + Sync + Clone + Eq + Hash,
+        U: 'static + Send + Sync,
     {
         let prediction = self.cur_prediction(key);
 
@@ -86,7 +86,7 @@ impl<T, U> PreLoadCache<T, U> {
         let is_updating = self.update.read().unwrap().is_some();
         if !is_updating {
             let extra = cur_keys.difference(&prediction).cloned().collect();
-            let to_be_added: HashSet<U> = prediction.difference(&cur_keys).cloned().collect();
+            let to_be_added: HashSet<T> = prediction.difference(&cur_keys).cloned().collect();
 
             loop {
                 let unlocked = self.update.try_write();
@@ -115,7 +115,7 @@ impl<T, U> PreLoadCache<T, U> {
     }
 }
 
-impl<T, U> PreLoadCache<T, U> {
+impl<T, U> PreloadCache<T, U> {
     fn wait_for_update(&self) {
         loop {
             let unlocked = self.update.try_read();
@@ -129,7 +129,7 @@ impl<T, U> PreLoadCache<T, U> {
         }
     }
 
-    fn cur_prediction(&self, key: &U) -> HashSet<U> {
+    fn cur_prediction(&self, key: &T) -> HashSet<T> {
         loop {
             let predictor_unlocked = self.predictor.try_write();
             if predictor_unlocked.is_err() {
@@ -138,6 +138,41 @@ impl<T, U> PreLoadCache<T, U> {
             let mut predictor = predictor_unlocked.unwrap();
             predictor.register(key);
             return predictor.predict();
+        }
+    }
+}
+
+#[cfg(test)]
+mod preload_cache_test {
+    use super::super::{
+        adjacent_index_prediction::AdjacentIndexPrediction, preload_prediction::PreloadPrediction,
+    };
+    use super::{PreloadCache, PreloadCacheDelegate};
+
+    struct VecWrapper<T> {
+        vec: Vec<T>,
+    }
+
+    impl PreloadCacheDelegate<usize, usize> for VecWrapper<usize> {
+        fn get(&self, key: &usize) -> Option<usize> {
+            self.vec.get(*key).cloned()
+        }
+    }
+
+    #[test]
+    fn preload_cache_test_1() {
+        let predictor = Box::new(
+            AdjacentIndexPrediction::new()
+                .with_history_size(10)
+                .with_forward_size(3)
+                .with_backward_size(1),
+        );
+        let delegate = Box::new(VecWrapper {
+            vec: (0..100).collect(),
+        });
+        let preload_cache = PreloadCache::new(predictor, delegate);
+        for i in 0usize..100 {
+            assert_eq!(*preload_cache.get(&i).unwrap(), i);
         }
     }
 }
