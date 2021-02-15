@@ -194,6 +194,7 @@ mod preload_cache_test {
         }
     }
 
+    #[test]
     fn preload_cache_test_1() {
         let predictor = Box::new(
             AdjacentIndexPrediction::new()
@@ -216,7 +217,6 @@ mod preload_cache_test {
         }
     }
 
-    #[test]
     fn preload_cache_test_multithread_1() {
         let predictor = Box::new(
             AdjacentIndexPrediction::new()
