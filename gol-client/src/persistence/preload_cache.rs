@@ -1,8 +1,10 @@
 use super::preload_prediction::PreloadPrediction;
+use futures::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
+use tokio::task;
 
 pub trait PreloadCacheDelegate<T, U>: Send + Sync {
     fn get(&self, key: &T) -> Option<U>;
@@ -174,6 +176,13 @@ impl<T, U> PreloadCache<T, U> {
             }
             return update_unlocked.unwrap().is_some();
         }
+    }
+
+    async fn delegate_get(&self, key: &T) -> Option<U>
+    where
+        T: 'static + Send + Future,
+    {
+        self.delegate.get(key)
     }
 }
 

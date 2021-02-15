@@ -15,7 +15,7 @@ ascii = ["ncurses"]
 [dependencies]
 rayon = "1.5.0"
 rgb = "0.8.25"
-tokio = { version = "1.0.2", features = ["sync"] }
+tokio = { version = "1.2.0", features = ["sync"] }
 num-traits = "0.2.14"
 gfx-hal = "0.6.0"
 shaderc = "0.7.0"
