@@ -49,10 +49,10 @@ impl<T, U> PreloadCache<T, U> {
 
             let cache_res = cache.get(key);
 
-            if self.is_updating() && cache_res.is_none() {
+            if cache_res.is_none() && self.is_updating() {
                 drop(cache);
                 self.wait_for_update();
-                return self.get(key);
+                continue;
             } else if cache_res.is_some() {
                 res = Some(Arc::clone(cache_res.unwrap()));
             } else {
@@ -119,7 +119,9 @@ impl<T, U> PreloadCache<T, U> {
     where
         T: Eq + Hash,
     {
+        eprintln!();
         loop {
+            eprintln!("{:?}: Waiting for update...", thread::current().id());
             let unlocked = self.update.try_write();
             if unlocked.is_err() {
                 continue;
@@ -130,11 +132,13 @@ impl<T, U> PreloadCache<T, U> {
                 let update_res = update.join().unwrap();
                 let (extra, appending) = update_res;
                 loop {
+                    eprintln!("{:?}: Waiting for cache...", thread::current().id());
                     let cache_unlocked = self.cache.try_write();
                     if cache_unlocked.is_err() {
                         continue;
                     }
                     let mut cache = cache_unlocked.unwrap();
+                    eprintln!("{:?}: Unlocked cache...", thread::current().id());
                     for key in extra.iter() {
                         cache.remove_entry(key);
                     }
@@ -143,6 +147,7 @@ impl<T, U> PreloadCache<T, U> {
                 }
             }
             *unlocked = None;
+            eprintln!("Update finished.");
             break;
         }
     }
@@ -160,7 +165,9 @@ impl<T, U> PreloadCache<T, U> {
     }
 
     fn is_updating(&self) -> bool {
+        eprintln!();
         loop {
+            eprintln!("{:?}: Reading update...", thread::current().id());
             let update_unlocked = self.update.try_read();
             if update_unlocked.is_err() {
                 continue;
@@ -174,6 +181,8 @@ impl<T, U> PreloadCache<T, U> {
 mod preload_cache_test {
     use super::super::adjacent_index_prediction::AdjacentIndexPrediction;
     use super::{PreloadCache, PreloadCacheDelegate};
+    use std::sync::Arc;
+    use std::thread;
 
     struct VecWrapper<T> {
         vec: Vec<T>,
@@ -185,7 +194,6 @@ mod preload_cache_test {
         }
     }
 
-    #[test]
     fn preload_cache_test_1() {
         let predictor = Box::new(
             AdjacentIndexPrediction::new()
@@ -205,6 +213,36 @@ mod preload_cache_test {
         }
         for i in (0usize..100).rev() {
             assert_eq!(*preload_cache.get(&i).unwrap(), i);
+        }
+    }
+
+    #[test]
+    fn preload_cache_test_multithread_1() {
+        let predictor = Box::new(
+            AdjacentIndexPrediction::new()
+                .with_history_size(10)
+                .with_forward_size(5)
+                .with_backward_size(2),
+        );
+        let delegate = Box::new(VecWrapper {
+            vec: (0..100).collect(),
+        });
+        let preload_cache = Arc::new(PreloadCache::new(predictor, delegate));
+        let mut handles = Vec::new();
+        let cache_clone_1 = Arc::clone(&preload_cache);
+        handles.push(thread::spawn(move || {
+            for i in 0usize..100 {
+                assert_eq!(*cache_clone_1.get(&i).unwrap(), i);
+            }
+        }));
+        for i in 100usize..150 {
+            assert!(preload_cache.get(&i).is_none());
+        }
+        for i in (0usize..100).rev() {
+            assert_eq!(*preload_cache.get(&i).unwrap(), i);
+        }
+        for handle in handles.into_iter() {
+            handle.join().unwrap();
         }
     }
 }
