@@ -6,7 +6,10 @@ use crate::{
 };
 use gfx_hal::{
     adapter::PhysicalDevice,
-    command::{ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, SubpassContents},
+    command::{
+        ClearColor, ClearValue, CommandBuffer, CommandBufferFlags, Level, RenderAttachmentInfo,
+        SubpassContents,
+    },
     device::Device,
     format::{ChannelType, Format},
     image::{Extent, Layout},
@@ -17,7 +20,7 @@ use gfx_hal::{
         InputAssemblerDesc, Primitive, PrimitiveAssemblerDesc, Rasterizer, Rect, ShaderStageFlags,
         Specialization, Viewport,
     },
-    queue::{CommandQueue, QueueFamily, Submission},
+    queue::{CommandQueue, QueueFamily},
     window::{Extent2D, PresentationSurface, Surface, SwapchainConfig},
     Instance, UnsupportedBackend,
 };
@@ -195,7 +198,11 @@ where
 
             unsafe {
                 device
-                    .create_render_pass(&[color_attachment], &[subpass], &[])
+                    .create_render_pass(
+                        vec![color_attachment].into_iter(),
+                        vec![subpass].into_iter(),
+                        vec![].into_iter(),
+                    )
                     .expect("Out of memory")
             }
         };
@@ -211,7 +218,10 @@ where
             // but here we can start at zero since there's no data before our
             // struct.
             device
-                .create_pipeline_layout(&[], &[(ShaderStageFlags::VERTEX, 0..push_constant_bytes)])
+                .create_pipeline_layout(
+                    vec![].into_iter(),
+                    vec![(ShaderStageFlags::VERTEX, 0..push_constant_bytes)].into_iter(),
+                )
                 .expect("Out of memory")
         };
 
@@ -349,18 +359,17 @@ where
                             .expect("Out of memory or device lost");
 
                         res.device
-                            .reset_fence(&res.submission_complete_fence)
+                            .reset_fence(&mut res.submission_complete_fence)
                             .expect("Out of memory");
 
                         res.command_pool.reset(false);
                     }
 
+                    let caps = res.surface.capabilities(&adapter.physical_device);
+                    let mut swapchain_config =
+                        SwapchainConfig::from_caps(&caps, surface_color_format, surface_extent);
+                    let mut framebuffer_attachment = swapchain_config.framebuffer_attachment();
                     if should_configure_swapchain {
-                        let caps = res.surface.capabilities(&adapter.physical_device);
-
-                        let mut swapchain_config =
-                            SwapchainConfig::from_caps(&caps, surface_color_format, surface_extent);
-
                         // This seems to fix some fullscreen slowdown on macOS.
                         if caps.image_count.contains(&3) {
                             swapchain_config.image_count = 3;
@@ -368,6 +377,7 @@ where
 
                         // Uncomment to allow resizing to other aspects:
                         surface_extent = swapchain_config.extent;
+                        framebuffer_attachment = swapchain_config.framebuffer_attachment();
 
                         unsafe {
                             res.surface
@@ -395,7 +405,7 @@ where
                         res.device
                             .create_framebuffer(
                                 render_pass,
-                                vec![surface_image.borrow()],
+                                vec![framebuffer_attachment].into_iter(),
                                 Extent {
                                     width: surface_extent.width,
                                     height: surface_extent.height,
@@ -422,21 +432,25 @@ where
                     // efficiently draw the same thing multiple times with varying
                     // parameters.
 
+                    let render_attachment_info = RenderAttachmentInfo {
+                        image_view: surface_image.borrow(),
+                        clear_value: ClearValue {
+                            color: ClearColor {
+                                float32: [0.0, 0.0, 0.0, 1.0],
+                            },
+                        },
+                    };
                     unsafe {
                         command_buffer.begin_primary(CommandBufferFlags::ONE_TIME_SUBMIT);
 
-                        command_buffer.set_viewports(0, &[viewport.clone()]);
-                        command_buffer.set_scissors(0, &[viewport.rect]);
+                        command_buffer.set_viewports(0, vec![viewport.clone()].into_iter());
+                        command_buffer.set_scissors(0, vec![viewport.rect].into_iter());
 
                         command_buffer.begin_render_pass(
                             render_pass,
                             &framebuffer,
                             viewport.rect,
-                            &[ClearValue {
-                                color: ClearColor {
-                                    float32: [0.0, 0.0, 0.0, 1.0],
-                                },
-                            }],
+                            vec![render_attachment_info].into_iter(),
                             SubpassContents::Inline,
                         );
 
@@ -468,19 +482,21 @@ where
                     }
 
                     unsafe {
-                        let submission = Submission {
-                            command_buffers: vec![&command_buffer],
-                            wait_semaphores: None,
-                            signal_semaphores: vec![&res.rendering_complete_semaphore],
-                        };
+                        let command_buffer = vec![&command_buffer].into_iter();
+                        let wait_semaphores = vec![].into_iter();
+                        let signal_semaphores = vec![&res.rendering_complete_semaphore].into_iter();
 
-                        queue_group.queues[0]
-                            .submit(submission, Some(&res.submission_complete_fence));
+                        queue_group.queues[0].submit(
+                            command_buffer,
+                            wait_semaphores,
+                            signal_semaphores,
+                            Some(&mut res.submission_complete_fence),
+                        );
 
                         let result = queue_group.queues[0].present(
                             &mut res.surface,
                             surface_image,
-                            Some(&res.rendering_complete_semaphore),
+                            Some(&mut res.rendering_complete_semaphore),
                         );
 
                         should_configure_swapchain |= result.is_err();
