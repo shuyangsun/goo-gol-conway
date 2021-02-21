@@ -45,11 +45,12 @@ impl<T, U> PreloadCache<T, U> {
             if unlocked.is_err() {
                 continue;
             }
-            let cache = unlocked.unwrap();
 
+            let cache = unlocked.unwrap();
             let cache_res = cache.get(key);
 
-            if cache_res.is_none() && self.is_updating() {
+            let is_updating = self.is_updating();
+            if cache_res.is_none() && is_updating {
                 drop(cache);
                 self.wait_for_update();
                 continue;
@@ -83,7 +84,8 @@ impl<T, U> PreloadCache<T, U> {
             }
         }
 
-        if !self.is_updating() {
+        let is_updating = self.is_updating();
+        if is_updating {
             let extra = cur_keys.difference(&prediction).cloned().collect();
             let to_be_added: HashSet<T> = prediction.difference(&cur_keys).cloned().collect();
 
@@ -119,9 +121,7 @@ impl<T, U> PreloadCache<T, U> {
     where
         T: Eq + Hash,
     {
-        eprintln!();
         loop {
-            eprintln!("{:?}: Waiting for update...", thread::current().id());
             let unlocked = self.update.try_write();
             if unlocked.is_err() {
                 continue;
@@ -132,13 +132,11 @@ impl<T, U> PreloadCache<T, U> {
                 let update_res = update.join().unwrap();
                 let (extra, appending) = update_res;
                 loop {
-                    eprintln!("{:?}: Waiting for cache...", thread::current().id());
                     let cache_unlocked = self.cache.try_write();
                     if cache_unlocked.is_err() {
                         continue;
                     }
                     let mut cache = cache_unlocked.unwrap();
-                    eprintln!("{:?}: Unlocked cache...", thread::current().id());
                     for key in extra.iter() {
                         cache.remove_entry(key);
                     }
@@ -147,7 +145,6 @@ impl<T, U> PreloadCache<T, U> {
                 }
             }
             *unlocked = None;
-            eprintln!("Update finished.");
             break;
         }
     }
@@ -165,9 +162,7 @@ impl<T, U> PreloadCache<T, U> {
     }
 
     fn is_updating(&self) -> bool {
-        eprintln!();
         loop {
-            eprintln!("{:?}: Reading update...", thread::current().id());
             let update_unlocked = self.update.try_read();
             if update_unlocked.is_err() {
                 continue;
@@ -235,12 +230,17 @@ mod preload_cache_test {
                 assert_eq!(*cache_clone_1.get(&i).unwrap(), i);
             }
         }));
-        for i in 100usize..150 {
-            assert!(preload_cache.get(&i).is_none());
-        }
-        for i in (0usize..100).rev() {
-            assert_eq!(*preload_cache.get(&i).unwrap(), i);
-        }
+        let cache_clone_2 = Arc::clone(&preload_cache);
+        handles.push(thread::spawn(move || {
+            for i in 100usize..150 {
+                assert!(cache_clone_2.get(&i).is_none());
+            }
+        }));
+        handles.push(thread::spawn(move || {
+            for i in (0usize..100).rev() {
+                assert_eq!(*preload_cache.get(&i).unwrap(), i);
+            }
+        }));
         for handle in handles.into_iter() {
             handle.join().unwrap();
         }
