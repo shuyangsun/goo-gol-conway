@@ -100,8 +100,8 @@ impl<T, U> BatchDeserializerLocal<T, U> {
 
     pub fn get(&self, idx: usize) -> Option<(Arc<T>, Arc<(usize, U)>)>
     where
-        T: Send + Sync + DeserializeOwned,
-        U: Send + Sync + DeserializeOwned,
+        T: 'static + Send + Sync + DeserializeOwned,
+        U: 'static + Send + Sync + DeserializeOwned,
     {
         let file_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
         match file_idx {
