@@ -23,7 +23,7 @@ impl DirFileDelegate {
     pub fn new(dir_path: &String) -> Self {
         let expanded = shellexpand::full(dir_path).unwrap();
         let path = Path::new(expanded.as_ref());
-        let idx_ranges = match Self::construct_ranges(&path) {
+        let idx_ranges = match construct_ranges(&path) {
             Ok(val) => val,
             Err(err) => panic!("{}", err),
         };
@@ -35,11 +35,12 @@ impl DirFileDelegate {
     }
 }
 
-impl<T> PreloadCacheDelegate<usize, T> for DirFileDelegate
+impl<T, U> PreloadCacheDelegate<usize, (T, Vec<Arc<(usize, U)>>)> for DirFileDelegate
 where
-    T: DeserializeOwned,
+    T: Send + Sync + DeserializeOwned,
+    U: Send + Sync + DeserializeOwned,
 {
-    fn get(&self, key: &usize) -> Option<T> {
+    fn get(&self, key: &usize) -> Option<(T, Vec<Arc<(usize, U)>>)> {
         if key >= &(self.idx_ranges.len() - 1) {
             return None;
         }
@@ -57,90 +58,44 @@ where
         let mut byte_data = Vec::with_capacity(metadata.len() as usize);
         decoder.read(&mut byte_data[..]);
 
-        let res = bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
+        let res: (T, Vec<(usize, U)>) =
+            bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
+        let res_arc: Vec<Arc<(usize, U)>> = res
+            .1
+            .into_par_iter()
+            .map(|ele| Arc::new((ele.0, ele.1)))
+            .collect();
 
-        Some(res)
-    }
-}
-
-impl DirFileDelegate {
-    fn construct_ranges(path: &Path) -> Result<Vec<usize>, &'static str> {
-        if !path.is_dir() {
-            return Err("Path specified for deserialization is not a directory.");
-        }
-        let mut res_set = HashSet::new();
-        for ele in read_dir(path).unwrap() {
-            let entry = ele.unwrap();
-            let cur = entry.path();
-            if !path.is_dir() && path.extension().unwrap() == HISTORY_EXTENSION {
-                let file_name = cur.file_name().unwrap().to_str().unwrap();
-                let split: Vec<&str> = file_name.split("_").collect();
-                let start: usize = split[0].parse().expect("Expected integer in file name.");
-                let end: usize = split[1].parse().expect("Expected integer in file name.");
-                res_set.insert(start);
-                res_set.insert(end);
-            }
-        }
-        let mut res_vec: Vec<usize> = res_set.into_iter().collect();
-        res_vec.sort();
-        Ok(res_vec)
+        Some((res.0, res_arc))
     }
 }
 
 pub struct BatchDeserializerLocal<T, U> {
-    cache: PreloadCache<usize, (T, Vec<(usize, U)>)>,
+    cache: PreloadCache<usize, (T, Vec<Arc<(usize, U)>>)>,
     idx_ranges: Vec<usize>,
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
-    fn desired_buffer_indices(&self, buffer_idx: &usize) -> Vec<usize> {
-        let idx = *buffer_idx;
-
-        let mut start = 0usize;
-        if idx > self.buffer_size {
-            start = idx - self.buffer_size;
-        }
-        let end = std::cmp::min(self.idx_ranges.len() - 1, idx + self.buffer_size);
-        Vec::from_iter(start..end)
-    }
-
-    fn data_for_idx(&self, idx: &usize) -> Option<(U, MultiRowData<T>)>
+    fn new(path: &String) -> Self
     where
         T: Send + Sync + DeserializeOwned,
-        U: DeserializeOwned,
+        U: Send + Sync + DeserializeOwned,
     {
-        let byte_data = self.byte_data_for_idx(idx);
-        if byte_data.is_none() {
-            return None;
-        }
-        let byte_data = byte_data.unwrap();
-        let deserialized: (U, Vec<(usize, T)>) =
-            bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
-        let (header, history) = deserialized;
-        let history = history
-            .into_par_iter()
-            .map(|ele| (ele.0, Arc::new(ele.1)))
-            .collect();
-        Some((header, history))
-    }
+        let file_get_delegate = DirFileDelegate::new(path);
+        let predictor = AdjacentIndexPrediction::new()
+            .with_history_size(10)
+            .with_backward_size(1)
+            .with_forward_size(2);
+        let cache = PreloadCache::new(Box::new(predictor), Box::new(file_get_delegate));
 
-    fn byte_data_for_idx(&self, idx: &usize) -> Option<Vec<u8>> {
-        let file_path = self.path_for_idx(idx);
-        if file_path.is_none() {
-            return None;
-        }
-        let file_path = file_path.unwrap();
-        let mut file = File::open(&file_path).expect("File not found.");
-        let metadata = fs::metadata(&file_path).expect("Cannot read file metadata.");
-        let mut buffer = vec![0; metadata.len() as usize];
-        file.read(&mut buffer).expect("Cannot read file.");
-        let mut decoder = GzDecoder::new(&buffer[..]);
+        let expanded = shellexpand::full(path).unwrap();
+        let path = Path::new(expanded.as_ref());
+        let idx_ranges = match construct_ranges(&path) {
+            Ok(val) => val,
+            Err(err) => panic!("{}", err),
+        };
 
-        // Uncompressed data should be larger, but good starting size.
-        let mut res = Vec::with_capacity(metadata.len() as usize);
-        decoder.read(&mut res[..]);
-
-        Some(res)
+        Self { cache, idx_ranges }
     }
 
     fn path_for_idx(&self, idx: &usize) -> Option<String> {
@@ -155,4 +110,28 @@ impl<T, U> BatchDeserializerLocal<T, U> {
             None => None,
         }
     }
+}
+
+impl<T, U> BatchDeserializerLocal<T, U> {}
+
+fn construct_ranges(path: &Path) -> Result<Vec<usize>, &'static str> {
+    if !path.is_dir() {
+        return Err("Path specified for deserialization is not a directory.");
+    }
+    let mut res_set = HashSet::new();
+    for ele in read_dir(path).unwrap() {
+        let entry = ele.unwrap();
+        let cur = entry.path();
+        if !path.is_dir() && path.extension().unwrap() == HISTORY_EXTENSION {
+            let file_name = cur.file_name().unwrap().to_str().unwrap();
+            let split: Vec<&str> = file_name.split("_").collect();
+            let start: usize = split[0].parse().expect("Expected integer in file name.");
+            let end: usize = split[1].parse().expect("Expected integer in file name.");
+            res_set.insert(start);
+            res_set.insert(end);
+        }
+    }
+    let mut res_vec: Vec<usize> = res_set.into_iter().collect();
+    res_vec.sort();
+    Ok(res_vec)
 }
