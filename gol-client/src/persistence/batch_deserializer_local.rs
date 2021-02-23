@@ -34,12 +34,12 @@ impl DirFileDelegate {
     }
 }
 
-impl<T, U> PreloadCacheDelegate<usize, (Arc<T>, Vec<Arc<(usize, U)>>)> for DirFileDelegate
+impl<T, U> PreloadCacheDelegate<usize, (Arc<Option<T>>, Vec<Arc<(usize, U)>>)> for DirFileDelegate
 where
     T: Send + Sync + DeserializeOwned,
     U: Send + Sync + DeserializeOwned,
 {
-    fn get(&self, key: &usize) -> Option<(Arc<T>, Vec<Arc<(usize, U)>>)> {
+    fn get(&self, key: &usize) -> Option<(Arc<Option<T>>, Vec<Arc<(usize, U)>>)> {
         if key >= &(self.idx_ranges.len() - 1) {
             return None;
         }
@@ -57,7 +57,7 @@ where
         let mut byte_data = Vec::with_capacity(metadata.len() as usize);
         decoder.read(&mut byte_data[..]).unwrap();
 
-        let res: (T, Vec<(usize, U)>) =
+        let res: (Option<T>, Vec<(usize, U)>) =
             bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
         let res_arc: Vec<Arc<(usize, U)>> = res
             .1
@@ -70,7 +70,7 @@ where
 }
 
 pub struct BatchDeserializerLocal<T, U> {
-    cache: PreloadCache<usize, (Arc<T>, Vec<Arc<(usize, U)>>)>,
+    cache: PreloadCache<usize, (Arc<Option<T>>, Vec<Arc<(usize, U)>>)>,
     idx_ranges: Vec<usize>,
 }
 
@@ -97,7 +97,7 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         Self { cache, idx_ranges }
     }
 
-    pub fn get(&self, idx: usize) -> Option<(Arc<T>, Arc<(usize, U)>)>
+    pub fn get(&self, idx: usize) -> Option<(Arc<Option<T>>, Arc<(usize, U)>)>
     where
         T: 'static + Send + Sync + DeserializeOwned,
         U: 'static + Send + Sync + DeserializeOwned,

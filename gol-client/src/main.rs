@@ -24,13 +24,15 @@ fn main() {
                             alive_count += 1;
                         }
                     }
-                    println!(
-                        "({}, {}), {}: {}",
-                        header.width(),
-                        header.height(),
-                        content.0,
-                        alive_count
-                    );
+                    if let Some(header) = header.as_ref() {
+                        println!(
+                            "({}, {}), {}: {}",
+                            header.width(),
+                            header.height(),
+                            content.0,
+                            alive_count
+                        );
+                    }
                 }
                 None => break,
             }
