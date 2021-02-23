@@ -10,7 +10,6 @@ use serde::de::DeserializeOwned;
 use std::collections::HashSet;
 use std::fs::{self, read_dir, File};
 use std::io::Read;
-use std::iter::FromIterator;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -56,7 +55,7 @@ where
 
         // Uncompressed data should be larger, but good starting size.
         let mut byte_data = Vec::with_capacity(metadata.len() as usize);
-        decoder.read(&mut byte_data[..]);
+        decoder.read(&mut byte_data[..]).unwrap();
 
         let res: (T, Vec<(usize, U)>) =
             bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
@@ -150,8 +149,8 @@ fn construct_ranges(path: &Path) -> Result<Vec<usize>, &'static str> {
     for ele in read_dir(path).unwrap() {
         let entry = ele.unwrap();
         let cur = entry.path();
-        if !path.is_dir() && path.extension().unwrap() == HISTORY_EXTENSION {
-            let file_name = cur.file_name().unwrap().to_str().unwrap();
+        if !cur.is_dir() && cur.extension().unwrap() == HISTORY_EXTENSION {
+            let file_name = cur.file_stem().unwrap().to_str().unwrap();
             let split: Vec<&str> = file_name.split("_").collect();
             let start: usize = split[0].parse().expect("Expected integer in file name.");
             let end: usize = split[1].parse().expect("Expected integer in file name.");
