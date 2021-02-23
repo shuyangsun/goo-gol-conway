@@ -35,12 +35,12 @@ impl DirFileDelegate {
     }
 }
 
-impl<T, U> PreloadCacheDelegate<usize, (T, Vec<Arc<(usize, U)>>)> for DirFileDelegate
+impl<T, U> PreloadCacheDelegate<usize, (Arc<T>, Vec<Arc<(usize, U)>>)> for DirFileDelegate
 where
     T: Send + Sync + DeserializeOwned,
     U: Send + Sync + DeserializeOwned,
 {
-    fn get(&self, key: &usize) -> Option<(T, Vec<Arc<(usize, U)>>)> {
+    fn get(&self, key: &usize) -> Option<(Arc<T>, Vec<Arc<(usize, U)>>)> {
         if key >= &(self.idx_ranges.len() - 1) {
             return None;
         }
@@ -66,17 +66,17 @@ where
             .map(|ele| Arc::new((ele.0, ele.1)))
             .collect();
 
-        Some((res.0, res_arc))
+        Some((Arc::new(res.0), res_arc))
     }
 }
 
 pub struct BatchDeserializerLocal<T, U> {
-    cache: PreloadCache<usize, (T, Vec<Arc<(usize, U)>>)>,
+    cache: PreloadCache<usize, (Arc<T>, Vec<Arc<(usize, U)>>)>,
     idx_ranges: Vec<usize>,
 }
 
 impl<T, U> BatchDeserializerLocal<T, U> {
-    fn new(path: &String) -> Self
+    pub fn new(path: &String) -> Self
     where
         T: Send + Sync + DeserializeOwned,
         U: Send + Sync + DeserializeOwned,
@@ -98,21 +98,49 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         Self { cache, idx_ranges }
     }
 
-    fn path_for_idx(&self, idx: &usize) -> Option<String> {
-        let range_idx = Self::find_range_left_idx(idx, &self.idx_ranges);
-        match range_idx {
-            Some(idx) => {
-                let (start, end) = (self.idx_ranges[idx], self.idx_ranges[idx + 1]);
-                let file_name = format!("{}_{}.{}", start, end, HISTORY_EXTENSION);
-                let path_to_file = Path::new(&self.path).join(&file_name);
-                Some(String::from(path_to_file.to_str().unwrap()))
+    pub fn get(&self, idx: usize) -> Option<(Arc<T>, Arc<(usize, U)>)>
+    where
+        T: Send + Sync + DeserializeOwned,
+        U: Send + Sync + DeserializeOwned,
+    {
+        let file_idx = Self::find_range_left_idx(&idx, &self.idx_ranges);
+        match file_idx {
+            Some(file_idx) => {
+                let start = self.idx_ranges[file_idx];
+                let inner_idx = idx - start;
+                let file_res = self.cache.get(&file_idx);
+                match file_res {
+                    Some(file_res) => {
+                        Some((Arc::clone(&file_res.0), Arc::clone(&file_res.1[inner_idx])))
+                    }
+                    None => None,
+                }
             }
             None => None,
         }
     }
 }
 
-impl<T, U> BatchDeserializerLocal<T, U> {}
+impl<T, U> BatchDeserializerLocal<T, U> {
+    fn find_range_left_idx(idx: &usize, ranges: &Vec<usize>) -> Option<usize> {
+        match ranges.binary_search(idx) {
+            Ok(val) => {
+                if val >= ranges.len() - 1 {
+                    None
+                } else {
+                    Some(val)
+                }
+            }
+            Err(val) => {
+                if val > 0 && val < ranges.len() - 1 {
+                    Some(val - 1)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
 
 fn construct_ranges(path: &Path) -> Result<Vec<usize>, &'static str> {
     if !path.is_dir() {
