@@ -5,39 +5,42 @@ use serde_json;
 use std::collections::HashMap;
 use std::fs;
 
-fn main() {
-    {
-        use gol_client::persistence::batch_deserializer_local::BatchDeserializerLocal;
-        use gol_core::{util::grid_util::Shape2D, GridPoint2D, IndexedDataOwned};
+fn deserializer_test_main() {
+    use gol_client::persistence::batch_deserializer_local::BatchDeserializerLocal;
+    use gol_core::{util::grid_util::Shape2D, GridPoint2D, IndexedDataOwned};
 
-        let deserializer: BatchDeserializerLocal<
-            Shape2D,
-            Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>,
-        > = BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
-        for i in 0usize..999999 {
-            match deserializer.get(i) {
-                Some(val) => {
-                    let (header, content) = val;
-                    let mut alive_count = 0usize;
-                    for ele in &content.1 {
-                        if ele.1 > 0 {
-                            alive_count += 1;
-                        }
-                    }
-                    if let Some(header) = header.as_ref() {
-                        println!(
-                            "({}, {}), {}: {}",
-                            header.width(),
-                            header.height(),
-                            content.0,
-                            alive_count
-                        );
+    let deserializer: BatchDeserializerLocal<
+        Shape2D,
+        Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>,
+    > = BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
+    for i in 0usize..999999 {
+        match deserializer.get(i) {
+            Some(val) => {
+                let (header, content) = val;
+                let mut alive_count = 0usize;
+                for ele in &content.1 {
+                    if ele.1 > 0 {
+                        alive_count += 1;
                     }
                 }
-                None => break,
+                if let Some(header) = header.as_ref() {
+                    println!(
+                        "({}, {}), {}: {}",
+                        header.width(),
+                        header.height(),
+                        content.0,
+                        alive_count
+                    );
+                }
             }
+            None => break,
         }
     }
+}
+
+fn main() {
+    
+    // deserializer_test_main();
 
     let mut jsons = vec![
         include_str!("../examples/tetris.json"),
