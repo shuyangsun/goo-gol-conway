@@ -9,10 +9,8 @@ fn deserializer_test_main() {
     use gol_client::persistence::batch_deserializer_local::BatchDeserializerLocal;
     use gol_core::{util::grid_util::Shape2D, GridPoint2D, IndexedDataOwned};
 
-    let deserializer: BatchDeserializerLocal<
-        Shape2D,
-        Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>,
-    > = BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
+    let deserializer: BatchDeserializerLocal<Shape2D, Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>> =
+        BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
     for i in 0usize..999999 {
         match deserializer.get(i) {
             Some(val) => {
@@ -39,8 +37,7 @@ fn deserializer_test_main() {
 }
 
 fn main() {
-    
-    // deserializer_test_main();
+    deserializer_test_main();
 
     let mut jsons = vec![
         include_str!("../examples/tetris.json"),
