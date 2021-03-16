@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Shape1D {
     width: usize,
 }
@@ -27,7 +27,7 @@ impl Shape1D {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Shape2D {
     width: usize,
     height: usize,
@@ -67,7 +67,7 @@ impl Shape2D {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Shape3D {
     width: usize,
     height: usize,
