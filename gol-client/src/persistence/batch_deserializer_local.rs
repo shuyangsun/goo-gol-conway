@@ -55,7 +55,7 @@ where
 
         // Uncompressed data should be larger, but good starting size.
         let mut byte_data = Vec::with_capacity(metadata.len() as usize);
-        decoder.read(&mut byte_data[..]).unwrap();
+        decoder.read_to_end(&mut byte_data).unwrap();
 
         let res: (Option<T>, Vec<(usize, U)>) =
             bincode::deserialize(&byte_data[..]).expect("Cannot deserialize data.");
