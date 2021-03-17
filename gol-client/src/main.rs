@@ -15,9 +15,9 @@ fn deserializer_test_main() {
     for i in 0usize..999999 {
         match deserializer.get(i) {
             Some(val) => {
-                let (header, content) = val;
+                let (header, idx_states) = val;
                 let mut alive_count = 0usize;
-                for ele in &content.1 {
+                for ele in &idx_states.1 {
                     if ele.1 > 0 {
                         alive_count += 1;
                     }
@@ -27,7 +27,7 @@ fn deserializer_test_main() {
                         "({}, {}), {}: {}",
                         header.width(),
                         header.height(),
-                        content.0,
+                        idx_states.0,
                         alive_count
                     );
                 }
