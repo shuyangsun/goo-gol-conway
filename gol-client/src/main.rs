@@ -11,6 +11,7 @@ fn deserializer_test_main() {
 
     let deserializer: BatchDeserializerLocal<Shape2D, Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>> =
         BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
+
     for i in 0usize..999999 {
         match deserializer.get(i) {
             Some(val) => {
