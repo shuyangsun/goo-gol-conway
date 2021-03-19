@@ -4,7 +4,8 @@ use rayon::prelude::*;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::time::Duration;
+use std::sync::{Arc, RwLock};
+use std::time::{Duration, Instant};
 
 pub trait Replay {
     fn play(&mut self);
@@ -33,9 +34,9 @@ where
     T: Send + Sync,
     CI: Send + Sync + Hash,
 {
-    idx: usize,
-    delay: Duration,
-    is_paused: bool,
+    idx: Arc<RwLock<usize>>,
+    delay: Arc<RwLock<Duration>>,
+    is_paused: Arc<RwLock<bool>>,
     deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>>,
     states: StatesCallback<CI, T>,
 }
@@ -53,11 +54,46 @@ where
     {
         let deserializer = BatchDeserializerLocal::new(history_path);
         let states = StatesCallback::new(trivial_state);
-        // TODO: create thread to update model.
+        let idx = Arc::new(RwLock::new(0));
+        let delay = Arc::new(RwLock::new(Duration::new(1, 0)));
+        let is_paused = Arc::new(RwLock::new(true));
+
+        let idx_clone = Arc::clone(&idx);
+        let delay_clone = Arc::clone(&delay);
+        let is_paused_clone = Arc::clone(&is_paused);
+
+        std::thread::spawn(move || {
+            let last_update = Instant::now();
+
+            loop {
+                let is_paused;
+                loop {
+                    let unlocked = is_paused_clone.try_read();
+                    if unlocked.is_err() {
+                        continue;
+                    }
+                    is_paused = *unlocked.unwrap();
+                    break;
+                }
+
+                if !is_paused {
+                    let unlocked = delay_clone.try_read();
+                    if unlocked.is_err() {
+                        continue;
+                    }
+                    let cur_delay = *unlocked.unwrap();
+                    let now = Instant::now();
+                    if now - last_update < cur_delay {
+                        continue;
+                    }
+                }
+            }
+        });
+
         Self {
-            idx: 0,
-            delay: Duration::new(1, 0),
-            is_paused: true,
+            idx,
+            delay,
+            is_paused,
             deserializer,
             states,
         }
@@ -89,6 +125,16 @@ where
     fn update_states(&mut self, states: HashMap<CI, T>) {
         self.states.set_non_trivial_lookup(states)
     }
+
+    fn set_paused(&mut self, is_paused: bool) {
+        loop {
+            let unlocked = self.is_paused.try_write();
+            if unlocked.is_err() {
+                continue;
+            }
+            *unlocked.unwrap() = is_paused;
+        }
+    }
 }
 
 impl<T, CI, U> Replay for ReplayerLocal<T, CI, U>
@@ -98,23 +144,41 @@ where
     U: 'static + Send + Sync + DeserializeOwned,
 {
     fn play(&mut self) {
-        self.is_paused = false;
+        self.set_paused(false);
     }
 
     fn pause(&mut self) {
-        self.is_paused = true;
+        self.set_paused(true);
     }
 
     fn get_delay(&self) -> Duration {
-        self.delay
+        loop {
+            let unlocked = self.delay.try_read();
+            if unlocked.is_err() {
+                continue;
+            }
+            return unlocked.unwrap().clone();
+        }
     }
 
     fn set_delay(&mut self, delay: Duration) {
-        self.delay = delay;
+        loop {
+            let unlocked = self.delay.try_write();
+            if unlocked.is_err() {
+                continue;
+            }
+            *unlocked.unwrap() = delay;
+        }
     }
 
     fn get_idx(&self) -> usize {
-        self.idx
+        loop {
+            let unlocked = self.idx.try_read();
+            if unlocked.is_err() {
+                continue;
+            }
+            return unlocked.unwrap().clone();
+        }
     }
 
     fn set_idx(&mut self, idx: usize) {
@@ -131,12 +195,18 @@ where
                 .map(|ele| (ele.0.clone(), ele.1.clone()))
                 .collect();
             self.update_states(new_states);
-            self.idx = idx;
+            loop {
+                let unlocked = self.idx.try_write();
+                if unlocked.is_err() {
+                    continue;
+                }
+                *unlocked.unwrap() = idx;
+            }
         } else {
             if idx > 0 {
                 self.set_idx(0);
             }
-            self.is_paused = true;
+            self.set_paused(true);
         }
     }
 }
