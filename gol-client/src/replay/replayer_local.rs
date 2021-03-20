@@ -131,10 +131,11 @@ where
         CI: 'static + Clone + Eq + DeserializeOwned,
         U: 'static + Send + Sync + Clone + DeserializeOwned,
     {
-        let states = IndexedStates::new(trivial_state, history_path);
+        let states = Arc::new(RwLock::new(IndexedStates::new(trivial_state, history_path)));
         let delay = Arc::new(RwLock::new(Duration::new(1, 0)));
         let is_paused = Arc::new(RwLock::new(true));
 
+        let states_clone = Arc::clone(&states);
         let delay_clone = Arc::clone(&delay);
         let is_paused_clone = Arc::clone(&is_paused);
 
@@ -162,12 +163,31 @@ where
                     if now - last_update < cur_delay {
                         continue;
                     }
+
+                    let cur_idx;
+                    loop {
+                        let unlocked = states_clone.try_read();
+                        if unlocked.is_err() {
+                            continue;
+                        }
+                        cur_idx = unlocked.ok().unwrap().get_idx();
+                        break;
+                    }
+
+                    loop {
+                        let unlocked = states_clone.try_write();
+                        if unlocked.is_err() {
+                            continue;
+                        }
+                        unlocked.ok().unwrap().set_idx(cur_idx + 1);
+                        break;
+                    }
                 }
             }
         });
 
         Self {
-            states: Arc::new(RwLock::new(states)),
+            states,
             delay,
             is_paused,
         }
