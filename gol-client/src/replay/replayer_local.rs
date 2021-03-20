@@ -29,16 +29,95 @@ pub trait Replay {
     }
 }
 
+struct IndexedStates<T, CI, U>
+where
+    T: Send + Sync,
+    CI: Send + Sync + Hash,
+{
+    idx: usize,
+    deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>>,
+    states: StatesCallback<CI, T>,
+    board_shape: U,
+}
+
+impl<T, CI, U> IndexedStates<T, CI, U>
+where
+    T: 'static + Send + Sync + Clone + DeserializeOwned,
+    CI: 'static + Send + Sync + Clone + Eq + Hash + DeserializeOwned,
+    U: 'static + Send + Sync + Clone + DeserializeOwned,
+{
+    pub fn new(trivial_state: T, deserializer_path: &String) -> Self {
+        let deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>> =
+            BatchDeserializerLocal::new(deserializer_path);
+        let initial_states = deserializer.get(0).expect("No data at index 0.");
+        let board_shape = initial_states
+            .0
+            .as_ref()
+            .clone()
+            .expect("No board shape at index 0.");
+        let initial_states = initial_states
+            .1
+             .1
+            .par_iter()
+            .map(|ele| (ele.0.clone(), ele.1.clone()))
+            .collect();
+
+        let mut states = StatesCallback::new(trivial_state);
+        states.set_non_trivial_lookup(initial_states);
+
+        Self {
+            idx: 0,
+            deserializer,
+            states,
+            board_shape,
+        }
+    }
+
+    pub fn get_board_shape(&self) -> &U {
+        &self.board_shape
+    }
+
+    pub fn get_idx(&self) -> usize {
+        self.idx
+    }
+
+    pub fn set_idx(&mut self, idx: usize) -> bool {
+        if self.get_idx() == idx {
+            return true;
+        }
+
+        if let Some(data) = self.deserializer.get(idx) {
+            let (_, idx_states) = data;
+            assert_eq!(idx_states.0, idx);
+            let new_states: HashMap<CI, T> = idx_states
+                .1
+                .par_iter()
+                .map(|ele| (ele.0.clone(), ele.1.clone()))
+                .collect();
+            self.states.set_non_trivial_lookup(new_states);
+            self.idx = idx;
+            return true;
+        }
+
+        return false;
+    }
+
+    pub fn get_readonly_states(&self) -> StatesReadOnly<CI, T>
+    where
+        T: Clone,
+    {
+        self.states.clone_read_only()
+    }
+}
+
 pub struct ReplayerLocal<T, CI, U>
 where
     T: Send + Sync,
     CI: Send + Sync + Hash,
 {
-    idx: Arc<RwLock<usize>>,
+    states: Arc<RwLock<IndexedStates<T, CI, U>>>,
     delay: Arc<RwLock<Duration>>,
     is_paused: Arc<RwLock<bool>>,
-    deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>>,
-    states: StatesCallback<CI, T>,
 }
 
 impl<T, CI, U> ReplayerLocal<T, CI, U>
@@ -49,16 +128,13 @@ where
     pub fn new(trivial_state: T, history_path: &String) -> Self
     where
         T: 'static + Clone + DeserializeOwned,
-        CI: 'static + Clone + DeserializeOwned,
-        U: Send + Sync + DeserializeOwned,
+        CI: 'static + Clone + Eq + DeserializeOwned,
+        U: 'static + Send + Sync + Clone + DeserializeOwned,
     {
-        let deserializer = BatchDeserializerLocal::new(history_path);
-        let states = StatesCallback::new(trivial_state);
-        let idx = Arc::new(RwLock::new(0));
+        let states = IndexedStates::new(trivial_state, history_path);
         let delay = Arc::new(RwLock::new(Duration::new(1, 0)));
         let is_paused = Arc::new(RwLock::new(true));
 
-        let idx_clone = Arc::clone(&idx);
         let delay_clone = Arc::clone(&delay);
         let is_paused_clone = Arc::clone(&is_paused);
 
@@ -91,39 +167,40 @@ where
         });
 
         Self {
-            idx,
+            states: Arc::new(RwLock::new(states)),
             delay,
             is_paused,
-            deserializer,
-            states,
         }
     }
 
     pub fn get_readonly_states(&self) -> StatesReadOnly<CI, T>
     where
-        T: Clone,
+        T: 'static + Clone + DeserializeOwned,
+        CI: 'static + Clone + Eq + DeserializeOwned,
+        U: 'static + Send + Sync + Clone + DeserializeOwned,
     {
-        self.states.clone_read_only()
+        loop {
+            let unlocked = self.states.try_read();
+            if unlocked.is_err() {
+                continue;
+            }
+            return unlocked.unwrap().get_readonly_states();
+        }
     }
 
     pub fn get_board_shape(&self) -> U
     where
-        T: 'static + Send + Sync + DeserializeOwned,
-        CI: 'static + Send + Sync + DeserializeOwned,
+        T: 'static + Clone + DeserializeOwned,
+        CI: 'static + Clone + Eq + DeserializeOwned,
         U: 'static + Send + Sync + Clone + DeserializeOwned,
     {
-        if let Some(data) = self.deserializer.get(0) {
-            return data
-                .0
-                .as_ref()
-                .clone()
-                .expect("Cannot find board shape header at index 0.");
+        loop {
+            let unlocked = self.states.try_read();
+            if unlocked.is_err() {
+                continue;
+            }
+            return unlocked.unwrap().get_board_shape().clone();
         }
-        panic!("Cannot find board history at index 0.");
-    }
-
-    fn update_states(&mut self, states: HashMap<CI, T>) {
-        self.states.set_non_trivial_lookup(states)
     }
 
     fn set_paused(&mut self, is_paused: bool) {
@@ -141,7 +218,7 @@ impl<T, CI, U> Replay for ReplayerLocal<T, CI, U>
 where
     T: 'static + Send + Sync + Clone + DeserializeOwned,
     CI: 'static + Send + Sync + Clone + Eq + Hash + DeserializeOwned,
-    U: 'static + Send + Sync + DeserializeOwned,
+    U: 'static + Send + Sync + Clone + DeserializeOwned,
 {
     fn play(&mut self) {
         self.set_paused(false);
@@ -173,40 +250,25 @@ where
 
     fn get_idx(&self) -> usize {
         loop {
-            let unlocked = self.idx.try_read();
+            let unlocked = self.states.try_read();
             if unlocked.is_err() {
                 continue;
             }
-            return unlocked.unwrap().clone();
+            return unlocked.ok().unwrap().get_idx();
         }
     }
 
     fn set_idx(&mut self, idx: usize) {
-        if self.get_idx() == idx {
+        loop {
+            let unlocked = self.states.try_write();
+            if unlocked.is_err() {
+                continue;
+            }
+            let succeed = unlocked.ok().unwrap().set_idx(idx);
+            if !succeed {
+                self.set_paused(true);
+            }
             return;
-        }
-
-        if let Some(data) = self.deserializer.get(idx) {
-            let (_, idx_states) = data;
-            assert_eq!(idx_states.0, idx);
-            let new_states: HashMap<CI, T> = idx_states
-                .1
-                .par_iter()
-                .map(|ele| (ele.0.clone(), ele.1.clone()))
-                .collect();
-            self.update_states(new_states);
-            loop {
-                let unlocked = self.idx.try_write();
-                if unlocked.is_err() {
-                    continue;
-                }
-                *unlocked.unwrap() = idx;
-            }
-        } else {
-            if idx > 0 {
-                self.set_idx(0);
-            }
-            self.set_paused(true);
         }
     }
 }
