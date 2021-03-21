@@ -38,8 +38,9 @@ where
     }
 
     pub fn push(&mut self, item: T) -> Option<IndexedBatchData> {
-        self.iter_count += 1;
         self.history_buffer.push((self.iter_count, item));
+
+        self.iter_count += 1;
         if self.history_buffer.len() >= self.batch_size {
             let serialized = self.serialize_and_clear_buffer();
             Some(serialized)
