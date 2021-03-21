@@ -8,20 +8,20 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
 pub trait Replay {
-    fn play(&mut self);
-    fn pause(&mut self);
+    fn play(&self);
+    fn pause(&self);
 
     fn get_delay(&self) -> Duration;
     fn set_delay(&mut self, delay: Duration);
 
     fn get_idx(&self) -> usize;
-    fn set_idx(&mut self, idx: usize);
+    fn set_idx(&self, idx: usize);
 
-    fn forward(&mut self) {
+    fn forward(&self) {
         self.set_idx(self.get_idx() + 1);
     }
 
-    fn backward(&mut self) {
+    fn backward(&self) {
         let cur_idx = self.get_idx();
         if cur_idx > 0 {
             self.set_idx(cur_idx - 1);
@@ -235,13 +235,14 @@ where
         }
     }
 
-    fn set_paused(&mut self, is_paused: bool) {
+    fn set_paused(&self, is_paused: bool) {
         loop {
             let unlocked = self.is_paused.try_write();
             if unlocked.is_err() {
                 continue;
             }
             *unlocked.unwrap() = is_paused;
+            break;
         }
     }
 }
@@ -252,11 +253,11 @@ where
     CI: 'static + Send + Sync + Clone + Eq + Hash + DeserializeOwned,
     U: 'static + Send + Sync + Clone + DeserializeOwned,
 {
-    fn play(&mut self) {
+    fn play(&self) {
         self.set_paused(false);
     }
 
-    fn pause(&mut self) {
+    fn pause(&self) {
         self.set_paused(true);
     }
 
@@ -277,6 +278,7 @@ where
                 continue;
             }
             *unlocked.unwrap() = delay;
+            break;
         }
     }
 
@@ -290,7 +292,7 @@ where
         }
     }
 
-    fn set_idx(&mut self, idx: usize) {
+    fn set_idx(&self, idx: usize) {
         loop {
             let unlocked = self.states.try_write();
             if unlocked.is_err() {
