@@ -6,35 +6,23 @@ use std::collections::HashMap;
 use std::fs;
 
 fn deserializer_test_main() {
-    use gol_client::persistence::batch_deserializer_local::BatchDeserializerLocal;
-    use gol_core::{util::grid_util::Shape2D, GridPoint2D, IndexedDataOwned};
+    use gol_client::replay::replayer_local::{Replay, ReplayerLocal};
+    use gol_core::{util::grid_util::Shape2D, GridPoint2D};
+    use gol_renderer::{CellularAutomatonRenderer, DiscreteStateColorMap, GraphicalRendererGrid2D};
 
-    let deserializer: BatchDeserializerLocal<Shape2D, Vec<IndexedDataOwned<GridPoint2D<i32>, u8>>> =
-        BatchDeserializerLocal::new(&String::from("~/Desktop/ca_tests/history/tetris"));
+    let mut replayer: ReplayerLocal<u8, GridPoint2D<i32>, Shape2D> =
+        ReplayerLocal::new(0, &String::from("~/Desktop/ca_tests/history/tetris"));
+    let board_shape = replayer.get_board_shape();
+    let mut renderer = GraphicalRendererGrid2D::new(
+        board_shape.width(),
+        board_shape.height(),
+        replayer.get_readonly_states(),
+    )
+    .ok()
+    .unwrap();
 
-    for i in 0usize..999999 {
-        match deserializer.get(i) {
-            Some(val) => {
-                let (header, idx_states) = val;
-                let mut alive_count = 0usize;
-                for ele in &idx_states.1 {
-                    if ele.1 > 0 {
-                        alive_count += 1;
-                    }
-                }
-                if let Some(header) = header.as_ref() {
-                    println!(
-                        "({}, {}), {}: {}",
-                        header.width(),
-                        header.height(),
-                        idx_states.0,
-                        alive_count
-                    );
-                }
-            }
-            None => break,
-        }
-    }
+    replayer.play();
+    renderer.run(Box::new(DiscreteStateColorMap::new(2)));
 }
 
 fn main() {
