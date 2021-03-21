@@ -140,7 +140,7 @@ where
         let is_paused_clone = Arc::clone(&is_paused);
 
         std::thread::spawn(move || {
-            let last_update = Instant::now();
+            let mut last_update = Instant::now();
 
             loop {
                 let is_paused;
@@ -179,7 +179,19 @@ where
                         if unlocked.is_err() {
                             continue;
                         }
-                        unlocked.ok().unwrap().set_idx(cur_idx + 1);
+
+                        loop {
+                            let delay = delay_clone.try_read();
+                            if unlocked.is_err() {
+                                continue;
+                            }
+                            let delay = delay.ok().unwrap();
+                            if Instant::now() - last_update >= delay.clone() {
+                                unlocked.ok().unwrap().set_idx(cur_idx + 1);
+                                last_update = Instant::now();
+                                break;
+                            }
+                        }
                         break;
                     }
                 }
