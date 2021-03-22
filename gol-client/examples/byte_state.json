@@ -4,10 +4,11 @@
     "delay": 1.0,
     "pause_at_start": true,
     "enable_control": true,
-    "save": null,
     "visual": {
         "on": true,
-        "styles": ["Graphical"]
+        "styles": [
+            "Graphical"
+        ]
     },
     "neighbor_rule": {
         "type": "Moore",
@@ -19,8 +20,16 @@
     },
     "evolution_rule": {
         "type": "AliveCount",
-        "survive": [[2, 4]],
-        "born": [5, 10]
+        "survive": [
+            [
+                2,
+                4
+            ]
+        ],
+        "born": [
+            5,
+            10
+        ]
     },
     "board": {
         "type": "Grid2D",

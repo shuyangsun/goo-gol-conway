@@ -77,6 +77,17 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("save")
+                .long("save")
+                .value_name("RUN_HISTORY_DIR")
+                .help(
+                    "Path to the directory to save run history for replay or analysis later.
+If the directory does not exist it will be created,
+if it does exist it must be empty, otherwise the program will terminate with error.",
+                )
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("replay")
                 .long("replay")
                 .value_name("REPLAY_PATH")
@@ -90,11 +101,16 @@ fn main() {
         None => (),
     };
 
+    let save_dir = match matches.value_of("save") {
+        Some(save_dir) => Some(String::from(save_dir)),
+        None => None,
+    };
+
     match matches.value_of("demo") {
-        Some(demo_name) => title_to_config
-            .get(&demo_name.to_lowercase())
-            .unwrap()
-            .run_board(),
+        Some(demo_name) => {
+            let board_config = title_to_config.get(&demo_name.to_lowercase()).unwrap();
+            board_config.run_board(save_dir.clone());
+        }
         None => (),
     };
 
@@ -102,7 +118,7 @@ fn main() {
         Some(path) => {
             let content = fs::read_to_string(path).expect("Cannot read configuration file.");
             let config = CellularAutomatonConfig::from_json(content.as_str());
-            config.run_board();
+            config.run_board(save_dir);
         }
         None => (),
     };

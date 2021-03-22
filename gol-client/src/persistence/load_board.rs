@@ -106,7 +106,6 @@ pub struct CellularAutomatonConfig {
     delay: f64,
     pause_at_start: bool,
     enable_control: bool,
-    save: Option<String>,
     visual: VisualConfig,
     neighbor_rule: NeighborRuleConfig,
     state: StateConfig,
@@ -123,7 +122,7 @@ impl CellularAutomatonConfig {
         &self.title
     }
 
-    pub fn run_board(&self) {
+    pub fn run_board(&self, save_dir: Option<String>) {
         let max_iter = self.max_iter.clone();
         let (mut char_renderers, mut color_renderers) = match self.board {
             BoardConfig::Grid2D {
@@ -137,7 +136,7 @@ impl CellularAutomatonConfig {
                         let state = self.gen_state_manager_grid_2d_discrete().unwrap();
                         let strat = self.gen_strat_grid_2d_discrete().unwrap();
                         let (callbacks, char_renderers, color_renderers) =
-                            self.gen_callback_grid_2d_discrete_state();
+                            self.gen_callback_grid_2d_discrete_state(save_dir);
                         let mut board =
                             StandardBoard::new(space, neighbor, state, strat, callbacks);
                         std::thread::spawn(move || {
@@ -313,6 +312,7 @@ impl CellularAutomatonConfig {
 
     fn gen_callback_grid_2d_discrete_state(
         &self,
+        save_dir: Option<String>,
     ) -> (
         Vec<
             BoardCallback<
@@ -427,8 +427,8 @@ impl CellularAutomatonConfig {
             }
         }
 
-        if self.save.is_some() {
-            let dir = self.save.as_ref().unwrap();
+        if save_dir.is_some() {
+            let dir = save_dir.unwrap();
             match &self.board {
                 BoardConfig::Grid2D {
                     shape,
@@ -442,7 +442,7 @@ impl CellularAutomatonConfig {
                         Vec<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
                         (Shape2D, usize), // Header with shape and number of states.
                     > = BatchIndexedSerializer::new(100).with_header((shape.clone(), num_states));
-                    let serializer = BatchSerializerLocal::new(dir, serializer);
+                    let serializer = BatchSerializerLocal::new(&dir, serializer);
                     let serializer = StateSerializerLocal::new(serializer, 0);
                     callbacks.push(BoardCallback::WithStates(Box::new(serializer)));
                 }

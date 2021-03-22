@@ -4,10 +4,11 @@
     "delay": 1.0,
     "pause_at_start": true,
     "enable_control": true,
-    "save": null,
     "visual": {
         "on": true,
-        "styles": ["Graphical"]
+        "styles": [
+            "Graphical"
+        ]
     },
     "neighbor_rule": {
         "type": "Moore",
@@ -19,8 +20,13 @@
     },
     "evolution_rule": {
         "type": "AliveCount",
-        "survive": [2, 3],
-        "born": [3]
+        "survive": [
+            2,
+            3
+        ],
+        "born": [
+            3
+        ]
     },
     "board": {
         "type": "Grid2D",
@@ -32,10 +38,22 @@
             "type": "Deterministic",
             "positions": {
                 "1": [
-                    {"x": 0, "y": 0},
-                    {"x": 0, "y": 1},
-                    {"x": -1, "y": 0},
-                    {"x": 1, "y": 0}
+                    {
+                        "x": 0,
+                        "y": 0
+                    },
+                    {
+                        "x": 0,
+                        "y": 1
+                    },
+                    {
+                        "x": -1,
+                        "y": 0
+                    },
+                    {
+                        "x": 1,
+                        "y": 0
+                    }
                 ]
             }
         }
