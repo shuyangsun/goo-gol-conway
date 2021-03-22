@@ -283,11 +283,29 @@ where
                                         VirtualKeyCode::Q => {
                                             control.broadcast('q');
                                         }
+                                        VirtualKeyCode::H => {
+                                            control.broadcast('h');
+                                        }
+                                        VirtualKeyCode::Left => {
+                                            control.broadcast('h');
+                                        }
                                         VirtualKeyCode::J => {
+                                            control.broadcast('j');
+                                        }
+                                        VirtualKeyCode::Down => {
                                             control.broadcast('j');
                                         }
                                         VirtualKeyCode::K => {
                                             control.broadcast('k');
+                                        }
+                                        VirtualKeyCode::Up => {
+                                            control.broadcast('k');
+                                        }
+                                        VirtualKeyCode::L => {
+                                            control.broadcast('l');
+                                        }
+                                        VirtualKeyCode::Right => {
+                                            control.broadcast('l');
                                         }
                                         VirtualKeyCode::Space => {
                                             control.broadcast(' ');

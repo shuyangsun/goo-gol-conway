@@ -1,5 +1,5 @@
 use super::super::persistence::batch_deserializer_local::BatchDeserializerLocal;
-use gol_core::{BoardCallbackManager, IndexedDataOwned, StatesCallback, StatesReadOnly};
+use gol_core::{IndexedDataOwned, StatesCallback, StatesReadOnly};
 use gol_renderer::renderer::keyboard_control::KeyboardControl;
 use rayon::prelude::*;
 use serde::de::DeserializeOwned;
@@ -206,23 +206,47 @@ where
         }
     }
 
-    pub fn with_keyboard_control(self, keyboard_control: KeyboardControl) -> Self {
-        let mut res = self;
+    pub fn with_keyboard_control(self, keyboard_control: KeyboardControl) -> Self
+    where
+        T: 'static + Clone + DeserializeOwned,
+        CI: 'static + Clone + Eq + DeserializeOwned,
+        U: 'static + Send + Sync + Clone + DeserializeOwned,
+    {
+        let res = self;
 
+        let states = Arc::clone(&res.states);
         let pause = Arc::clone(&res.is_paused);
         let delay = Arc::clone(&res.delay);
         let mut control = keyboard_control.clone_receive_only();
 
         std::thread::spawn(move || loop {
             let ch = control.receive();
-            if ch == ' ' {
+            if ch == ' ' || ch == 'h' || ch == 'l' {
                 loop {
                     let unlocked = pause.try_write();
                     if unlocked.is_err() {
                         continue;
                     }
                     let mut is_paused = unlocked.ok().unwrap();
-                    *is_paused = !*is_paused;
+                    *is_paused = if ch == ' ' { !*is_paused } else { true };
+
+                    if ch != ' ' {
+                        loop {
+                            let states = states.try_write();
+                            if states.is_err() {
+                                continue;
+                            }
+                            let mut states = states.ok().unwrap();
+                            let mut new_idx = states.get_idx();
+                            if ch == 'h' && new_idx > 0 {
+                                new_idx -= 1;
+                            } else {
+                                new_idx += 1;
+                            }
+                            states.set_idx(new_idx);
+                            break;
+                        }
+                    }
                     break;
                 }
             } else if ch == 'j' || ch == 'k' {

@@ -109,7 +109,7 @@ fn main() {
 }
 
 fn start_replay(local_path: &String) {
-    use gol_client::replay::replayer_local::{Replay, ReplayerLocal};
+    use gol_client::replay::replayer_local::ReplayerLocal;
     use gol_core::{util::grid_util::Shape2D, GridPoint2D};
     use gol_renderer::{
         renderer::keyboard_control::KeyboardControl, CellularAutomatonRenderer,
