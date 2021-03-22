@@ -8,18 +8,27 @@ use std::fs;
 fn deserializer_test_main() {
     use gol_client::replay::replayer_local::{Replay, ReplayerLocal};
     use gol_core::{util::grid_util::Shape2D, GridPoint2D};
-    use gol_renderer::{CellularAutomatonRenderer, DiscreteStateColorMap, GraphicalRendererGrid2D};
+    use gol_renderer::{
+        renderer::keyboard_control::KeyboardControl, CellularAutomatonRenderer,
+        DiscreteStateColorMap, GraphicalRendererGrid2D,
+    };
+
+    let control = KeyboardControl::new();
+    let control_receiver = control.clone_receive_only();
 
     let replayer: ReplayerLocal<u8, GridPoint2D<i32>, (Shape2D, usize)> =
-        ReplayerLocal::new(0, &String::from("~/Desktop/ca_tests/history/tetris"));
+        ReplayerLocal::new(0, &String::from("~/Desktop/ca_tests/history/tetris"))
+            .with_keyboard_control(control_receiver);
     let (board_shape, num_states) = replayer.get_header();
+
     let mut renderer = GraphicalRendererGrid2D::new(
         board_shape.width(),
         board_shape.height(),
         replayer.get_readonly_states(),
     )
     .ok()
-    .unwrap();
+    .unwrap()
+    .with_keyboard_control(control);
 
     replayer.play();
     renderer.run(Box::new(DiscreteStateColorMap::new(num_states)));

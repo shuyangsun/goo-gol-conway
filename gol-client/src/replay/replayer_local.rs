@@ -1,5 +1,6 @@
 use super::super::persistence::batch_deserializer_local::BatchDeserializerLocal;
 use gol_core::{BoardCallbackManager, IndexedDataOwned, StatesCallback, StatesReadOnly};
+use gol_renderer::renderer::keyboard_control::KeyboardControl;
 use rayon::prelude::*;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -118,6 +119,7 @@ where
     states: Arc<RwLock<IndexedStates<T, CI, U>>>,
     delay: Arc<RwLock<Duration>>,
     is_paused: Arc<RwLock<bool>>,
+    keyboard_control: Option<KeyboardControl>,
 }
 
 impl<T, CI, U> ReplayerLocal<T, CI, U>
@@ -182,7 +184,7 @@ where
 
                         loop {
                             let delay = delay_clone.try_read();
-                            if unlocked.is_err() {
+                            if delay.is_err() {
                                 continue;
                             }
                             let delay = delay.ok().unwrap();
@@ -202,7 +204,52 @@ where
             states,
             delay,
             is_paused,
+            keyboard_control: None,
         }
+    }
+
+    pub fn with_keyboard_control(self, keyboard_control: KeyboardControl) -> Self {
+        let mut res = self;
+        res.keyboard_control = Some(keyboard_control.clone_receive_only());
+
+        let pause = Arc::clone(&res.is_paused);
+        let delay = Arc::clone(&res.delay);
+        let mut control = keyboard_control.clone_receive_only();
+
+        std::thread::spawn(move || loop {
+            let ch = control.receive();
+            if ch == ' ' {
+                loop {
+                    let unlocked = pause.try_write();
+                    if unlocked.is_err() {
+                        continue;
+                    }
+                    let mut is_paused = unlocked.ok().unwrap();
+                    *is_paused = !*is_paused;
+                    break;
+                }
+            } else if ch == 'j' || ch == 'k' {
+                loop {
+                    let unlocked = delay.try_write();
+                    if unlocked.is_err() {
+                        continue;
+                    }
+                    let mut delay = unlocked.ok().unwrap();
+                    if ch == 'j' {
+                        *delay = *delay * 2;
+                    } else {
+                        *delay = *delay / 2;
+                    }
+                    break;
+                }
+            } else if ch == 'q' {
+                // TODO: Hacky solution to give other callbacks a time buffer to do cleanup.
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                std::process::exit(0);
+            }
+        });
+
+        res
     }
 
     pub fn get_readonly_states(&self) -> StatesReadOnly<CI, T>

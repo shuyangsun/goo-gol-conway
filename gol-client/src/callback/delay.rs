@@ -45,15 +45,10 @@ impl Delay {
         loop {
             match self.control.as_mut().unwrap().try_receive() {
                 Some(ch) => {
-                    let duration = if self.duration.as_nanos() == 0 {
-                        Duration::from_millis(1)
-                    } else {
-                        self.duration
-                    };
                     if ch == 'k' {
-                        self.duration = Duration::from_nanos(duration.as_nanos() as u64 / 2);
+                        self.duration = self.duration / 2;
                     } else if ch == 'j' {
-                        self.duration = Duration::from_nanos(duration.as_nanos() as u64 * 2);
+                        self.duration = self.duration * 2;
                     }
                     break;
                 }
