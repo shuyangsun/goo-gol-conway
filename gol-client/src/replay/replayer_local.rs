@@ -37,7 +37,7 @@ where
     idx: usize,
     deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>>,
     states: StatesCallback<CI, T>,
-    board_shape: U,
+    header: U,
 }
 
 impl<T, CI, U> IndexedStates<T, CI, U>
@@ -50,7 +50,7 @@ where
         let deserializer: BatchDeserializerLocal<U, Vec<IndexedDataOwned<CI, T>>> =
             BatchDeserializerLocal::new(deserializer_path);
         let initial_states = deserializer.get(0).expect("No data at index 0.");
-        let board_shape = initial_states
+        let header = initial_states
             .0
             .as_ref()
             .clone()
@@ -69,12 +69,12 @@ where
             idx: 0,
             deserializer,
             states,
-            board_shape,
+            header,
         }
     }
 
-    pub fn get_board_shape(&self) -> &U {
-        &self.board_shape
+    pub fn get_header(&self) -> &U {
+        &self.header
     }
 
     pub fn get_idx(&self) -> usize {
@@ -220,7 +220,7 @@ where
         }
     }
 
-    pub fn get_board_shape(&self) -> U
+    pub fn get_header(&self) -> U
     where
         T: 'static + Clone + DeserializeOwned,
         CI: 'static + Clone + Eq + DeserializeOwned,
@@ -231,7 +231,7 @@ where
             if unlocked.is_err() {
                 continue;
             }
-            return unlocked.unwrap().get_board_shape().clone();
+            return unlocked.unwrap().get_header().clone();
         }
     }
 

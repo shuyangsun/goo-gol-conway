@@ -434,10 +434,14 @@ impl CellularAutomatonConfig {
                     shape,
                     initial_states: _,
                 } => {
+                    let num_states = match &self.state {
+                        StateConfig::UInt { count } => count,
+                    }
+                    .clone();
                     let serializer: BatchIndexedSerializer<
                         Vec<IndexedDataOwned<GridPoint2D<IntIdx>, IntState>>,
-                        Shape2D,
-                    > = BatchIndexedSerializer::new(100).with_header(shape.clone());
+                        (Shape2D, usize), // Header with shape and number of states.
+                    > = BatchIndexedSerializer::new(100).with_header((shape.clone(), num_states));
                     let serializer = BatchSerializerLocal::new(dir, serializer);
                     let serializer = StateSerializerLocal::new(serializer, 0);
                     callbacks.push(BoardCallback::WithStates(Box::new(serializer)));

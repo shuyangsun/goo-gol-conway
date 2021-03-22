@@ -10,9 +10,9 @@ fn deserializer_test_main() {
     use gol_core::{util::grid_util::Shape2D, GridPoint2D};
     use gol_renderer::{CellularAutomatonRenderer, DiscreteStateColorMap, GraphicalRendererGrid2D};
 
-    let mut replayer: ReplayerLocal<u8, GridPoint2D<i32>, Shape2D> =
+    let replayer: ReplayerLocal<u8, GridPoint2D<i32>, (Shape2D, usize)> =
         ReplayerLocal::new(0, &String::from("~/Desktop/ca_tests/history/tetris"));
-    let board_shape = replayer.get_board_shape();
+    let (board_shape, num_states) = replayer.get_header();
     let mut renderer = GraphicalRendererGrid2D::new(
         board_shape.width(),
         board_shape.height(),
@@ -22,7 +22,7 @@ fn deserializer_test_main() {
     .unwrap();
 
     replayer.play();
-    renderer.run(Box::new(DiscreteStateColorMap::new(2)));
+    renderer.run(Box::new(DiscreteStateColorMap::new(num_states)));
 }
 
 fn main() {
