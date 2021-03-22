@@ -119,7 +119,6 @@ where
     states: Arc<RwLock<IndexedStates<T, CI, U>>>,
     delay: Arc<RwLock<Duration>>,
     is_paused: Arc<RwLock<bool>>,
-    keyboard_control: Option<KeyboardControl>,
 }
 
 impl<T, CI, U> ReplayerLocal<T, CI, U>
@@ -204,13 +203,11 @@ where
             states,
             delay,
             is_paused,
-            keyboard_control: None,
         }
     }
 
     pub fn with_keyboard_control(self, keyboard_control: KeyboardControl) -> Self {
         let mut res = self;
-        res.keyboard_control = Some(keyboard_control.clone_receive_only());
 
         let pause = Arc::clone(&res.is_paused);
         let delay = Arc::clone(&res.delay);

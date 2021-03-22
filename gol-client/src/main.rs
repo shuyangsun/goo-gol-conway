@@ -5,38 +5,7 @@ use serde_json;
 use std::collections::HashMap;
 use std::fs;
 
-fn deserializer_test_main() {
-    use gol_client::replay::replayer_local::{Replay, ReplayerLocal};
-    use gol_core::{util::grid_util::Shape2D, GridPoint2D};
-    use gol_renderer::{
-        renderer::keyboard_control::KeyboardControl, CellularAutomatonRenderer,
-        DiscreteStateColorMap, GraphicalRendererGrid2D,
-    };
-
-    let control = KeyboardControl::new();
-    let control_receiver = control.clone_receive_only();
-
-    let replayer: ReplayerLocal<u8, GridPoint2D<i32>, (Shape2D, usize)> =
-        ReplayerLocal::new(0, &String::from("~/Desktop/ca_tests/history/tetris"))
-            .with_keyboard_control(control_receiver);
-    let (board_shape, num_states) = replayer.get_header();
-
-    let mut renderer = GraphicalRendererGrid2D::new(
-        board_shape.width(),
-        board_shape.height(),
-        replayer.get_readonly_states(),
-    )
-    .ok()
-    .unwrap()
-    .with_keyboard_control(control);
-
-    replayer.play();
-    renderer.run(Box::new(DiscreteStateColorMap::new(num_states)));
-}
-
 fn main() {
-    deserializer_test_main();
-
     let mut jsons = vec![
         include_str!("../examples/tetris.json"),
         include_str!("../examples/glider.json"),
@@ -107,7 +76,19 @@ fn main() {
                 .help("Path to config file.")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("replay")
+                .long("replay")
+                .value_name("REPLAY_PATH")
+                .help("Path to replay directory.")
+                .takes_value(true),
+        )
         .get_matches();
+
+    match matches.value_of("replay") {
+        Some(replay_path) => start_replay(&String::from(replay_path)),
+        None => (),
+    };
 
     match matches.value_of("demo") {
         Some(demo_name) => title_to_config
@@ -125,4 +106,31 @@ fn main() {
         }
         None => (),
     };
+}
+
+fn start_replay(local_path: &String) {
+    use gol_client::replay::replayer_local::{Replay, ReplayerLocal};
+    use gol_core::{util::grid_util::Shape2D, GridPoint2D};
+    use gol_renderer::{
+        renderer::keyboard_control::KeyboardControl, CellularAutomatonRenderer,
+        DiscreteStateColorMap, GraphicalRendererGrid2D,
+    };
+
+    let control = KeyboardControl::new();
+    let control_receiver = control.clone_receive_only();
+
+    let replayer: ReplayerLocal<u8, GridPoint2D<i32>, (Shape2D, usize)> =
+        ReplayerLocal::new(0, local_path).with_keyboard_control(control_receiver);
+    let (board_shape, num_states) = replayer.get_header();
+
+    let mut renderer = GraphicalRendererGrid2D::new(
+        board_shape.width(),
+        board_shape.height(),
+        replayer.get_readonly_states(),
+    )
+    .ok()
+    .unwrap()
+    .with_keyboard_control(control);
+
+    renderer.run(Box::new(DiscreteStateColorMap::new(num_states)));
 }
