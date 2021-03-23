@@ -10,9 +10,9 @@ layout(push_constant) uniform PushConstants {
 layout(location = 0) out vec4 vertex_color;
 
 vec2 positions[3] = vec2[](
-    vec2(0.0, 0.0),
-    vec2(1.0, 0.0),
-    vec2(0.5, 0.866)
+    vec2(0.0, 1.0),
+    vec2(1.0, 1.0),
+    vec2(0.5, 0.0)
 );
 
 void main() {
