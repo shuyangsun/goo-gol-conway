@@ -225,8 +225,8 @@ where
                 .expect("Out of memory")
         };
 
-        let vertex_shader = include_str!("shaders/square.vert");
-        let fragment_shader = include_str!("shaders/square.frag");
+        let vertex_shader = include_str!("shaders/triangle.vert");
+        let fragment_shader = include_str!("shaders/triangle.frag");
 
         let pipeline = unsafe {
             make_pipeline::<backend::Backend>(
@@ -492,7 +492,7 @@ where
                                 push_constant_bytes(square),
                             );
 
-                            command_buffer.draw(0..4, 0..1);
+                            command_buffer.draw(0..3, 0..1);
                         }
 
                         command_buffer.end_render_pass();
