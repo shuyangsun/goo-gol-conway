@@ -47,6 +47,7 @@ where
     fps_counter: FPSCounter, // TODO: show FPS
     states_read_only: StatesReadOnly<CI, T>,
     cell_scale: f32,
+    is_triangle: bool,
 }
 
 impl<T, U> GraphicalRendererGrid2D<GridPoint2D<U>, T>
@@ -66,6 +67,7 @@ where
             fps_counter: FPSCounter::new(240),
             states_read_only: states_storage,
             cell_scale: 0.95,
+            is_triangle: false,
         })
     }
 
@@ -84,6 +86,18 @@ where
     pub fn with_keyboard_control(self, control: KeyboardControl) -> Self {
         let mut res = self;
         res.control = Some(control);
+        res
+    }
+
+    pub fn with_squares(self) -> Self {
+        let mut res = self;
+        res.is_triangle = false;
+        res
+    }
+
+    pub fn with_triangles(self) -> Self {
+        let mut res = self;
+        res.is_triangle = true;
         res
     }
 }
@@ -225,8 +239,17 @@ where
                 .expect("Out of memory")
         };
 
-        let vertex_shader = include_str!("shaders/triangle.vert");
-        let fragment_shader = include_str!("shaders/triangle.frag");
+        let is_triangle = self.is_triangle;
+        let vertex_shader = if is_triangle {
+            include_str!("shaders/triangle.vert")
+        } else {
+            include_str!("shaders/square.vert")
+        };
+        let fragment_shader = if is_triangle {
+            include_str!("shaders/triangle.frag")
+        } else {
+            include_str!("shaders/square.frag")
+        };
 
         let pipeline = unsafe {
             make_pipeline::<backend::Backend>(
@@ -492,7 +515,7 @@ where
                                 push_constant_bytes(square),
                             );
 
-                            command_buffer.draw(0..3, 0..1);
+                            command_buffer.draw(0..if is_triangle { 3 } else { 4 }, 0..1);
                         }
 
                         command_buffer.end_render_pass();
