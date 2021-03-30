@@ -3,8 +3,7 @@
 
 layout(push_constant) uniform PushConstants {
     vec4 color;
-    vec2 pos;
-    vec2 scale;
+    mat4 transform;
 } push_constants;
 
 layout(location = 0) out vec4 vertex_color;
@@ -16,7 +15,7 @@ vec2 positions[3] = vec2[](
 );
 
 void main() {
-    vec2 pos = positions[gl_VertexIndex] * push_constants.scale;
+    vec2 pos = positions[gl_VertexIndex];
     vertex_color = push_constants.color;
-    gl_Position = vec4((pos + push_constants.pos), 0.0, 1.0);
+    gl_Position = push_constants.transform * vec4(pos, 0.0, 1.0);
 }

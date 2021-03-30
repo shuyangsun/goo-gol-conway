@@ -1,3 +1,4 @@
+// Large part of this file was originally copied from https://github.com/mistodon/gfx-hal-tutorials by @mistodon, then refactored, modified then upgraded to newest gfx-hal libraries, which did make breaking changes.
 use crate::{
     renderer::{
         board_info::RendererBoardInfo, fps_counter::FPSCounter, keyboard_control::KeyboardControl,
@@ -555,8 +556,20 @@ where
 #[derive(Debug, Clone, Copy)]
 struct PushConstants {
     color: [f32; 4],
-    pos: [f32; 2],
-    scale: [f32; 2],
+    transform: [[f32; 4]; 4],
+}
+
+fn make_transform(dx: f32, dy: f32, scale_x: f32, scale_y: f32, angle: f32) -> [[f32; 4]; 4] {
+    let c = angle.cos() * scale_x;
+    let s = angle.sin() * scale_y;
+    let dz = 0.;
+
+    [
+        [scale_x, 0., 0., 0.],
+        [0., scale_y, 0., 0.],
+        [0., 0., 1., 0.],
+        [dx, dy, dz, 1.],
+    ]
 }
 
 fn max_inner_rect_with_ratio<T, U>(width: &T, height: &T, desired_ratio: U, scale: U) -> (T, T)
@@ -642,15 +655,21 @@ fn create_squares(
 
     let mut res = Vec::new();
     for (idx, color) in states.iter() {
+        let x_transform =
+            -1.0 + left_padding + idx.0 as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x;
+        let y_transform = -1.0
+            + top_padding
+            + (grid_height - idx.1 - 1) as f32 * scale_y
+            + (1.0 - scale) / 2.0 * scale_y;
         res.push(PushConstants {
             color: [color.r, color.g, color.b, color.a],
-            pos: [
-                -1.0 + left_padding + idx.0 as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x,
-                -1.0 + top_padding
-                    + (grid_height - idx.1 - 1) as f32 * scale_y
-                    + (1.0 - scale) / 2.0 * scale_y,
-            ],
-            scale: [scale_x * scale, scale_y * scale],
+            transform: make_transform(
+                x_transform,
+                y_transform,
+                scale * scale_x,
+                scale * scale_y,
+                0.0,
+            ),
         });
     }
     res
