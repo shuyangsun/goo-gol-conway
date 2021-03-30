@@ -498,14 +498,24 @@ where
 
                         command_buffer.bind_graphics_pipeline(pipeline);
 
-                        let squares = create_squares(
-                            &surface_extent,
-                            grid_width,
-                            grid_height,
-                            constants,
-                            cell_scale,
-                        );
-                        for square in squares.as_slice() {
+                        let shapes = if is_triangle {
+                            create_triangles(
+                                &surface_extent,
+                                grid_width,
+                                grid_height,
+                                constants,
+                                cell_scale,
+                            )
+                        } else {
+                            create_squares(
+                                &surface_extent,
+                                grid_width,
+                                grid_height,
+                                constants,
+                                cell_scale,
+                            )
+                        };
+                        for shape in shapes.as_slice() {
                             // This encodes the actual push constants themselves
                             // into the command buffer. The vertex shader will be
                             // able to access these properties.
@@ -513,7 +523,7 @@ where
                                 pipeline_layout,
                                 ShaderStageFlags::VERTEX,
                                 0,
-                                push_constant_bytes(square),
+                                push_constant_bytes(shape),
                             );
 
                             command_buffer.draw(0..if is_triangle { 3 } else { 4 }, 0..1);
@@ -560,14 +570,13 @@ struct PushConstants {
 }
 
 fn make_transform(dx: f32, dy: f32, scale_x: f32, scale_y: f32, angle: f32) -> [[f32; 4]; 4] {
-    let c = angle.cos() * scale_x;
-    let s = angle.sin() * scale_y;
-    let dz = 0.;
+    let (sin, cos) = (angle.sin(), angle.cos());
+    let (dz, scale_z) = (0., 1.);
 
     [
-        [scale_x, 0., 0., 0.],
-        [0., scale_y, 0., 0.],
-        [0., 0., 1., 0.],
+        [scale_x * cos, -scale_x * sin, 0., 0.],
+        [scale_y * sin, scale_y * cos, 0., 0.],
+        [0., 0., scale_z, 0.],
         [dx, dy, dz, 1.],
     ]
 }
@@ -661,6 +670,8 @@ fn create_squares(
             + top_padding
             + (grid_height - idx.1 - 1) as f32 * scale_y
             + (1.0 - scale) / 2.0 * scale_y;
+        let rotation = 0.0;
+
         res.push(PushConstants {
             color: [color.r, color.g, color.b, color.a],
             transform: make_transform(
@@ -668,7 +679,76 @@ fn create_squares(
                 y_transform,
                 scale * scale_x,
                 scale * scale_y,
-                0.0,
+                rotation,
+            ),
+        });
+    }
+    res
+}
+
+fn create_triangles(
+    surface_extent: &Extent2D,
+    grid_width: u32,
+    grid_height: u32,
+    states: Vec<((u32, u32), ColorRGBA)>,
+    scale: f32,
+) -> Vec<PushConstants> {
+    assert!(scale >= 0.0 && scale <= 1.0);
+    let h = 3.0f32.sqrt() / 2.0;
+    let (mut left_padding, mut top_padding) = (0.0, 0.0);
+    let (triangle_width, triangle_height) = (
+        surface_extent.width as f32 / grid_width as f32 * 2.0,
+        surface_extent.height as f32 / grid_height as f32,
+    );
+    let need_left_padding = triangle_width * 2.0 > triangle_height / h;
+
+    let triangle_width = triangle_width.min(triangle_height / h);
+    let triangle_height = triangle_height.min(triangle_width * h);
+
+    let (scale_x, scale_y) = (
+        triangle_width / surface_extent.width as f32 * 2.0,
+        triangle_height / surface_extent.height as f32 * 2.0,
+    );
+
+    if need_left_padding {
+        left_padding = 1.0 - scale_x / 4.0 * grid_width as f32;
+    } else {
+        top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
+    }
+
+    let mut res = Vec::new();
+    for (idx, color) in states.iter() {
+        let mut x_transform =
+            -1.0 + left_padding + (idx.0 / 2) as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x;
+        let mut y_transform = -1.0
+            + top_padding
+            + (grid_height - idx.1 - 1) as f32 * scale_y
+            + (1.0 - scale) / 2.0 * scale_y;
+        let mut rotation = 0.0;
+
+        let is_pointing_up = (idx.0 + idx.1) % 2 == 0;
+        if !is_pointing_up {
+            rotation = std::f32::consts::PI;
+            x_transform += scale_x * scale;
+            y_transform += scale_y;
+        }
+
+        if idx.0 % 2 == 1 {
+            if idx.0 > 0 {
+                x_transform += scale_x * scale / 2.0;
+            } else {
+                x_transform -= scale_x * scale / 2.0;
+            }
+        }
+
+        res.push(PushConstants {
+            color: [color.r, color.g, color.b, color.a],
+            transform: make_transform(
+                x_transform,
+                y_transform,
+                scale * scale_x,
+                scale * scale_y,
+                rotation,
             ),
         });
     }
