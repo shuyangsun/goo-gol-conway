@@ -281,6 +281,9 @@ where
         let mut should_configure_swapchain = true;
 
         let (mut zoom, mut translate_x, mut translate_y) = (1., 0., 0.);
+        let mut click_start_pos: Option<PhysicalPosition<f64>> = None;
+        let mut click_start_translates = None;
+        let mut cur_cursor_pos: Option<PhysicalPosition<f64>> = None;
 
         event_loop.run(move |event, _, control_flow| {
             let mut cur_iter: Option<usize> = None;
@@ -300,6 +303,27 @@ where
                             height: new_inner_size.height,
                         };
                         should_configure_swapchain = true;
+                    }
+                    WindowEvent::MouseInput { state, .. } => match state {
+                        ElementState::Pressed => {
+                            click_start_pos = cur_cursor_pos;
+                            click_start_translates = Some((translate_x, translate_y));
+                        }
+                        ElementState::Released => {
+                            click_start_pos = None;
+                            click_start_translates = None;
+                        }
+                    },
+                    WindowEvent::CursorMoved { position, .. } => {
+                        cur_cursor_pos = Some(position);
+                        if click_start_pos.is_some() {
+                            let pxl_x = position.x - click_start_pos.unwrap().x;
+                            let pxl_y = position.y - click_start_pos.unwrap().y;
+                            translate_x = click_start_translates.unwrap().0
+                                + pxl_x as f32 / surface_extent.width as f32;
+                            translate_y = click_start_translates.unwrap().1
+                                + pxl_y as f32 / surface_extent.height as f32;
+                        }
                     }
                     WindowEvent::MouseWheel { delta, .. } => match delta {
                         MouseScrollDelta::PixelDelta(position) => {
