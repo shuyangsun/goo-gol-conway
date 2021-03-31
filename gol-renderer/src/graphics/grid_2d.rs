@@ -34,8 +34,8 @@ use std::borrow::Borrow;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
 use winit::{
-    dpi::{LogicalSize, PhysicalSize},
-    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
+    dpi::{LogicalSize, PhysicalPosition, PhysicalSize},
+    event::{ElementState, Event, MouseScrollDelta, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
 };
 
@@ -280,6 +280,8 @@ where
 
         let mut should_configure_swapchain = true;
 
+        let (mut zoom, mut translate_x, mut translate_y) = (1., 0., 0.);
+
         event_loop.run(move |event, _, control_flow| {
             let mut cur_iter: Option<usize> = None;
             match event {
@@ -299,6 +301,18 @@ where
                         };
                         should_configure_swapchain = true;
                     }
+                    WindowEvent::MouseWheel { delta, .. } => match delta {
+                        MouseScrollDelta::PixelDelta(position) => {
+                            let double_per_position = 512.;
+                            let ratio = position.y as f32 / double_per_position;
+                            zoom = if ratio >= 0. {
+                                zoom + ratio
+                            } else {
+                                zoom / (1. - ratio)
+                            };
+                        }
+                        _ => (),
+                    },
                     WindowEvent::KeyboardInput { input, .. } => {
                         if input.state == ElementState::Released {
                             if let Some(control) = control.as_mut() {
@@ -505,6 +519,9 @@ where
                                 grid_height,
                                 constants,
                                 cell_scale,
+                                zoom,
+                                translate_x,
+                                translate_y,
                             )
                         } else {
                             create_squares(
@@ -513,6 +530,9 @@ where
                                 grid_height,
                                 constants,
                                 cell_scale,
+                                zoom,
+                                translate_x,
+                                translate_y,
                             )
                         };
                         for shape in shapes.as_slice() {
@@ -643,33 +663,33 @@ fn create_squares(
     grid_height: u32,
     states: Vec<((u32, u32), ColorRGBA)>,
     scale: f32,
+    zoom: f32,
+    dx: f32,
+    dy: f32,
 ) -> Vec<PushConstants> {
     assert!(scale >= 0.0 && scale <= 1.0);
-    let (mut left_padding, mut top_padding) = (0.0, 0.0);
     let (square_width, square_height) = (
         surface_extent.width as f32 / grid_width as f32,
         surface_extent.height as f32 / grid_height as f32,
     );
     let square_len = square_width.min(square_height);
     let (scale_x, scale_y) = (
-        square_len / surface_extent.width as f32 * 2.0,
-        square_len / surface_extent.height as f32 * 2.0,
+        square_len / surface_extent.width as f32 * 2.0 * zoom,
+        square_len / surface_extent.height as f32 * 2.0 * zoom,
     );
 
-    if square_len < square_width {
-        left_padding = 1.0 - scale_x / 2.0 * grid_width as f32;
-    } else if square_len < square_height {
-        top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
-    }
+    let left_padding = 1.0 - scale_x / 2.0 * grid_width as f32;
+    let top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
 
     let mut res = Vec::new();
     for (idx, color) in states.iter() {
         let x_transform =
-            -1.0 + left_padding + idx.0 as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x;
+            -1.0 + left_padding + idx.0 as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x + dx;
         let y_transform = -1.0
             + top_padding
             + (grid_height - idx.1 - 1) as f32 * scale_y
-            + (1.0 - scale) / 2.0 * scale_y;
+            + (1.0 - scale) / 2.0 * scale_y
+            + dy;
         let rotation = 0.0;
 
         res.push(PushConstants {
@@ -692,38 +712,37 @@ fn create_triangles(
     grid_height: u32,
     states: Vec<((u32, u32), ColorRGBA)>,
     scale: f32,
+    zoom: f32,
+    dx: f32,
+    dy: f32,
 ) -> Vec<PushConstants> {
     assert!(scale >= 0.0 && scale <= 1.0);
     let h = 3.0f32.sqrt() / 2.0;
-    let (mut left_padding, mut top_padding) = (0.0, 0.0);
     let (triangle_width, triangle_height) = (
         surface_extent.width as f32 / grid_width as f32 * 2.0,
         surface_extent.height as f32 / grid_height as f32,
     );
-    let need_left_padding = triangle_width * 2.0 > triangle_height / h;
 
     let triangle_width = triangle_width.min(triangle_height / h);
     let triangle_height = triangle_height.min(triangle_width * h);
 
     let (scale_x, scale_y) = (
-        triangle_width / surface_extent.width as f32 * 2.0,
-        triangle_height / surface_extent.height as f32 * 2.0,
+        triangle_width / surface_extent.width as f32 * 2.0 * zoom,
+        triangle_height / surface_extent.height as f32 * 2.0 * zoom,
     );
 
-    if need_left_padding {
-        left_padding = 1.0 - scale_x / 4.0 * grid_width as f32;
-    } else {
-        top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
-    }
+    let left_padding = 1.0 - scale_x / 4.0 * grid_width as f32;
+    let top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
 
     let mut res = Vec::new();
     for (idx, color) in states.iter() {
         let mut x_transform =
-            -1.0 + left_padding + (idx.0 / 2) as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x;
+            -1.0 + left_padding + (idx.0 / 2) as f32 * scale_x + (1.0 - scale) / 2.0 * scale_x + dx;
         let mut y_transform = -1.0
             + top_padding
             + (grid_height - idx.1 - 1) as f32 * scale_y
-            + (1.0 - scale) / 2.0 * scale_y;
+            + (1.0 - scale) / 2.0 * scale_y
+            + dx;
         let mut rotation = 0.0;
 
         let is_pointing_up = (idx.0 + idx.1) % 2 == 0;
