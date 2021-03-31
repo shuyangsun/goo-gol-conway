@@ -89,8 +89,7 @@ Examples at https://github.com/shuyangsun/goo-gol-conway/tree/main/gol-client/ex
                 .help(
                     "Path to the directory to save run history for replay or analysis later.
 If the directory does not exist it will be created,
-if it does exist it must be empty, otherwise the program will terminate with error.
-(Saving triangular CA systems is not supported yet.)",
+if it does exist it must be empty, otherwise the program will terminate with error.",
                 )
                 .takes_value(true),
         )
@@ -99,7 +98,7 @@ if it does exist it must be empty, otherwise the program will terminate with err
                 .short("r")
                 .long("replay")
                 .value_name("DIR")
-                .help("Path to replay directory (replaying triangular CA systems is not supported yet).")
+                .help("Path to replay directory, use \"-t\" option to render the system with triangles.")
                 .takes_value(true),
         )
         .arg(
@@ -112,8 +111,10 @@ if it does exist it must be empty, otherwise the program will terminate with err
         )
         .get_matches();
 
+    let is_triangular = matches.is_present("triangular");
+
     match matches.value_of("replay") {
-        Some(replay_path) => start_replay(&String::from(replay_path)),
+        Some(replay_path) => start_replay(&String::from(replay_path), is_triangular),
         None => (),
     };
 
@@ -121,8 +122,6 @@ if it does exist it must be empty, otherwise the program will terminate with err
         Some(save_dir) => Some(String::from(save_dir)),
         None => None,
     };
-
-    let is_triangular = matches.is_present("triangular");
 
     match matches.value_of("demo") {
         Some(demo_name) => {
@@ -142,7 +141,7 @@ if it does exist it must be empty, otherwise the program will terminate with err
     };
 }
 
-fn start_replay(local_path: &String) {
+fn start_replay(local_path: &String, is_triangular: bool) {
     use gol_client::replay::replayer_local::ReplayerLocal;
     use gol_core::{util::grid_util::Shape2D, GridPoint2D};
     use gol_renderer::{
@@ -165,6 +164,10 @@ fn start_replay(local_path: &String) {
     .ok()
     .unwrap()
     .with_keyboard_control(control);
+
+    if is_triangular {
+        renderer = renderer.with_triangles();
+    }
 
     renderer.run(Box::new(DiscreteStateColorMap::new(num_states)));
 }
