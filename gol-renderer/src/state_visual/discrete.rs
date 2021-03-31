@@ -33,7 +33,7 @@ where
             }
         } else {
             let ratio = state.to_f64().unwrap() / (self.state_count() - 1) as f64;
-            let (hue_low, hue_high) = (-0.5, 0.55);
+            let (hue_low, hue_high) = (-0.7, 0.55);
             let (sat_low, sat_high) = (0.5, 1.0);
             let (lum_low, lum_high) = (0.2, 0.5);
 
