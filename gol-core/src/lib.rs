@@ -26,6 +26,6 @@ pub use evolution::strategy_life_like::DecayLifeLikeStrategy;
 pub use evolution::strategy_manager::SharedStrategyManager;
 pub use neighbors::{
     grid_donut::NeighborsGridDonut, grid_surround::NeighborsGridSurround, moore::NeighborMoore,
-    moore_donut::NeighborMooreDonut,
+    moore_donut::NeighborMooreDonut, moore_triangle::NeighborMooreTriangle,
 };
 pub use space::grid::{Grid, GridFactory, GridOrigin};
