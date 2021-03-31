@@ -41,7 +41,7 @@ fn main() {
 
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
-    let mut demos_description = String::from("Run demo, available demos: ");
+    let mut demos_description = String::from("Run demo, available demos are (case insensitive): ");
     let mut sorted_titiles: Vec<&String> = title_to_config.keys().collect();
     sorted_titiles.sort();
     for (i, title) in sorted_titiles.iter().enumerate() {
@@ -64,6 +64,7 @@ fn main() {
         .about("A research-oriented generic implementation of cellular automaton.")
         .arg(
             Arg::with_name("demo")
+                .short("d")
                 .long("demo")
                 .value_name("NAME")
                 .help(demos_description.as_str())
@@ -71,28 +72,43 @@ fn main() {
         )
         .arg(
             Arg::with_name("config")
+                .short("c")
                 .long("config")
-                .value_name("FILE_PATH")
-                .help("Path to config file.")
+                .value_name("FILE")
+                .help(
+                    "Path to JSON configuration file.
+Examples at https://github.com/shuyangsun/goo-gol-conway/tree/main/gol-client/examples",
+                )
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("save")
+                .short("s")
                 .long("save")
-                .value_name("RUN_HISTORY_DIR")
+                .value_name("DIR")
                 .help(
                     "Path to the directory to save run history for replay or analysis later.
 If the directory does not exist it will be created,
-if it does exist it must be empty, otherwise the program will terminate with error.",
+if it does exist it must be empty, otherwise the program will terminate with error.
+(Saving triangular CA systems is not supported yet.)",
                 )
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("replay")
+                .short("r")
                 .long("replay")
-                .value_name("REPLAY_PATH")
-                .help("Path to replay directory.")
+                .value_name("DIR")
+                .help("Path to replay directory (replaying triangular CA systems is not supported yet).")
                 .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("triangular")
+                .short("t")
+                .long("triangular")
+                .value_name("IS_TRIANGULAR")
+                .help("Convert the 2D square grid to triangular grid, only supported for configurations with non-extended Moore neighbor rule.")
+                .takes_value(false),
         )
         .get_matches();
 
@@ -106,10 +122,12 @@ if it does exist it must be empty, otherwise the program will terminate with err
         None => None,
     };
 
+    let is_triangular = matches.is_present("triangular");
+
     match matches.value_of("demo") {
         Some(demo_name) => {
             let board_config = title_to_config.get(&demo_name.to_lowercase()).unwrap();
-            board_config.run_board(save_dir.clone());
+            board_config.run_board(save_dir.clone(), is_triangular);
         }
         None => (),
     };
@@ -118,7 +136,7 @@ if it does exist it must be empty, otherwise the program will terminate with err
         Some(path) => {
             let content = fs::read_to_string(path).expect("Cannot read configuration file.");
             let config = CellularAutomatonConfig::from_json(content.as_str());
-            config.run_board(save_dir);
+            config.run_board(save_dir, is_triangular);
         }
         None => (),
     };

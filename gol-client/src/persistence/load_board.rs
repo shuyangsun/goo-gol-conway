@@ -5,8 +5,8 @@ use crate::persistence::{
 use gol_core::{
     util::grid_util::Shape2D, Board, BoardCallback, BoardNeighborManager, BoardSpaceManager,
     BoardStateManager, BoardStrategyManager, DecayLifeLikeStrategy, Grid, GridFactory, GridPoint2D,
-    IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborsGridDonut, NeighborsGridSurround,
-    SharedStrategyManager, SparseStates, StandardBoard, StatesCallback,
+    IndexedDataOwned, NeighborMoore, NeighborMooreDonut, NeighborMooreTriangle, NeighborsGridDonut,
+    NeighborsGridSurround, SharedStrategyManager, SparseStates, StandardBoard, StatesCallback,
 };
 use gol_renderer::{
     CellularAutomatonRenderer, DiscreteStateCharMap, DiscreteStateColorMap,
@@ -122,7 +122,7 @@ impl CellularAutomatonConfig {
         &self.title
     }
 
-    pub fn run_board(&self, save_dir: Option<String>) {
+    pub fn run_board(&self, save_dir: Option<String>, is_triangular: bool) {
         let max_iter = self.max_iter.clone();
         let (mut char_renderers, mut color_renderers) = match self.board {
             BoardConfig::Grid2D {
@@ -130,13 +130,13 @@ impl CellularAutomatonConfig {
                 initial_states: _,
             } => {
                 let space = self.gen_space_grid_2d().unwrap();
-                let neighbor = self.gen_neighbor_grid_2d().unwrap();
+                let neighbor = self.gen_neighbor_grid_2d(is_triangular).unwrap();
                 match self.state {
                     StateConfig::UInt { count: _ } => {
                         let state = self.gen_state_manager_grid_2d_discrete().unwrap();
                         let strat = self.gen_strat_grid_2d_discrete().unwrap();
                         let (callbacks, char_renderers, color_renderers) =
-                            self.gen_callback_grid_2d_discrete_state(save_dir);
+                            self.gen_callback_grid_2d_discrete_state(save_dir, is_triangular);
                         let mut board =
                             StandardBoard::new(space, neighbor, state, strat, callbacks);
                         std::thread::spawn(move || {
@@ -207,6 +207,7 @@ impl CellularAutomatonConfig {
 
     fn gen_neighbor_grid_2d(
         &self,
+        is_triangular: bool,
     ) -> Result<
         Box<dyn BoardNeighborManager<GridPoint2D<IntIdx>, std::vec::IntoIter<GridPoint2D<IntIdx>>>>,
         (),
@@ -214,7 +215,11 @@ impl CellularAutomatonConfig {
         match &self.neighbor_rule {
             NeighborRuleConfig::Moore { margin } => {
                 if margin == &1 {
-                    Ok(Box::new(NeighborMoore::new()))
+                    Ok(if is_triangular {
+                        Box::new(NeighborMooreTriangle::new())
+                    } else {
+                        Box::new(NeighborMoore::new())
+                    })
                 } else {
                     Ok(Box::new(NeighborsGridSurround::new(margin.clone())))
                 }
@@ -313,6 +318,7 @@ impl CellularAutomatonConfig {
     fn gen_callback_grid_2d_discrete_state(
         &self,
         save_dir: Option<String>,
+        is_triangular: bool,
     ) -> (
         Vec<
             BoardCallback<
@@ -367,7 +373,11 @@ impl CellularAutomatonConfig {
 
                         match graphical_renderer {
                             Ok(val) => {
-                                let real_gui_renderer = val.with_title(self.title.clone());
+                                let mut real_gui_renderer = val.with_title(self.title.clone());
+                                if is_triangular {
+                                    real_gui_renderer = real_gui_renderer.with_triangles();
+                                }
+
                                 let res = match &keyboard_control {
                                     Some(control) => {
                                         real_gui_renderer.with_keyboard_control(control.clone())
