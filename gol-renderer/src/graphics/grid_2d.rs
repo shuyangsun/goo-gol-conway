@@ -306,7 +306,7 @@ where
                             let double_per_position = 512.;
                             let ratio = position.y as f32 / double_per_position;
                             zoom = if ratio >= 0. {
-                                zoom + ratio
+                                zoom * (1. + ratio)
                             } else {
                                 1.0f32.max(zoom / (1. - ratio))
                             };
