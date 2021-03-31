@@ -84,7 +84,7 @@ impl<T, U> BatchDeserializerLocal<T, U> {
         let predictor = AdjacentIndexPrediction::new()
             .with_history_size(10)
             .with_backward_size(1)
-            .with_forward_size(2);
+            .with_forward_size(5);
         let cache = PreloadCache::new(Box::new(predictor), Box::new(file_get_delegate));
 
         let expanded = shellexpand::full(path).unwrap();
