@@ -308,7 +308,7 @@ where
                             zoom = if ratio >= 0. {
                                 zoom + ratio
                             } else {
-                                zoom / (1. - ratio)
+                                1.0f32.max(zoom / (1. - ratio))
                             };
                         }
                         _ => (),
