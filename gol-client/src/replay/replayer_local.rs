@@ -119,6 +119,7 @@ where
     states: Arc<RwLock<IndexedStates<T, CI, U>>>,
     delay: Arc<RwLock<Duration>>,
     is_paused: Arc<RwLock<bool>>,
+    is_forward: Arc<RwLock<bool>>,
 }
 
 impl<T, CI, U> ReplayerLocal<T, CI, U>
@@ -135,10 +136,12 @@ where
         let states = Arc::new(RwLock::new(IndexedStates::new(trivial_state, history_path)));
         let delay = Arc::new(RwLock::new(Duration::new(1, 0)));
         let is_paused = Arc::new(RwLock::new(true));
+        let is_forward = Arc::new(RwLock::new(true));
 
         let states_clone = Arc::clone(&states);
         let delay_clone = Arc::clone(&delay);
         let is_paused_clone = Arc::clone(&is_paused);
+        let is_forward_clone = Arc::clone(&is_forward);
 
         std::thread::spawn(move || {
             let mut last_update = Instant::now();
@@ -188,8 +191,22 @@ where
                             }
                             let delay = delay.ok().unwrap();
                             if Instant::now() - last_update >= delay.clone() {
-                                unlocked.ok().unwrap().set_idx(cur_idx + 1);
-                                last_update = Instant::now();
+                                loop {
+                                    let forward = is_forward_clone.try_read();
+                                    if forward.is_err() {
+                                        continue;
+                                    }
+                                    let new_idx = if *forward.ok().unwrap() {
+                                        cur_idx + 1
+                                    } else if cur_idx > 0 {
+                                        cur_idx - 1
+                                    } else {
+                                        cur_idx
+                                    };
+                                    unlocked.ok().unwrap().set_idx(new_idx);
+                                    last_update = Instant::now();
+                                    break;
+                                }
                                 break;
                             }
                         }
@@ -203,6 +220,7 @@ where
             states,
             delay,
             is_paused,
+            is_forward,
         }
     }
 
@@ -217,6 +235,7 @@ where
         let states = Arc::clone(&res.states);
         let pause = Arc::clone(&res.is_paused);
         let delay = Arc::clone(&res.delay);
+        let is_forward = Arc::clone(&res.is_forward);
         let mut control = keyboard_control.clone_receive_only();
 
         std::thread::spawn(move || loop {
@@ -228,23 +247,34 @@ where
                         continue;
                     }
                     let mut is_paused = unlocked.ok().unwrap();
-                    *is_paused = if ch == ' ' { !*is_paused } else { true };
-
-                    if ch != ' ' {
-                        loop {
-                            let states = states.try_write();
-                            if states.is_err() {
-                                continue;
+                    if ch == ' ' {
+                        *is_paused = !*is_paused
+                    } else {
+                        if *is_paused {
+                            loop {
+                                let states = states.try_write();
+                                if states.is_err() {
+                                    continue;
+                                }
+                                let mut states = states.ok().unwrap();
+                                let mut new_idx = states.get_idx();
+                                if ch == 'h' && new_idx > 0 {
+                                    new_idx -= 1;
+                                } else {
+                                    new_idx += 1;
+                                }
+                                states.set_idx(new_idx);
+                                break;
                             }
-                            let mut states = states.ok().unwrap();
-                            let mut new_idx = states.get_idx();
-                            if ch == 'h' && new_idx > 0 {
-                                new_idx -= 1;
-                            } else {
-                                new_idx += 1;
+                        } else {
+                            loop {
+                                let forward = is_forward.try_write();
+                                if forward.is_err() {
+                                    continue;
+                                }
+                                *forward.ok().unwrap() = ch == 'l';
+                                break;
                             }
-                            states.set_idx(new_idx);
-                            break;
                         }
                     }
                     break;
