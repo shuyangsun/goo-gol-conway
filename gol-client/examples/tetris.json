@@ -1,5 +1,5 @@
 {
-    "title": "GoLTetris",
+    "title": "Tetris",
     "max_iter": null,
     "delay": 1.0,
     "pause_at_start": true,

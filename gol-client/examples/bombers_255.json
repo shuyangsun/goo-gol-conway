@@ -1,7 +1,7 @@
 {
-    "title": "ByteState",
+    "title": "Bombers255",
     "max_iter": null,
-    "delay": 1.0,
+    "delay": 0.2,
     "pause_at_start": true,
     "enable_control": true,
     "visual": {
@@ -21,25 +21,25 @@
     "evolution_rule": {
         "type": "AliveCount",
         "survive": [
-            [
-                2,
-                4
-            ]
+            3,
+            4,
+            5
         ],
         "born": [
-            5,
-            10
+            2,
+            4
         ]
     },
     "board": {
         "type": "Grid2D",
         "shape": {
-            "width": 480,
-            "height": 250
+            "width": 1662,
+            "height": 540
         },
         "initial_states": {
             "type": "Random",
-            "alive_ratio": 0.3
+            "alive_ratio": 0.5
         }
     }
 }
+
