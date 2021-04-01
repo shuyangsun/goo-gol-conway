@@ -778,14 +778,15 @@ fn create_triangles(
         if !is_pointing_up {
             rotation = std::f32::consts::PI;
             x_transform += scale_x * scale;
-            y_transform += scale_y;
+            y_transform += scale_y * scale;
         }
 
         if idx.0 % 2 == 1 {
+            let offset = scale_x * scale / 2.0 + (1.0 - scale) / 2.0 * scale_x;
             if idx.0 > 0 {
-                x_transform += scale_x * scale / 2.0;
+                x_transform += offset;
             } else {
-                x_transform -= scale_x * scale / 2.0;
+                x_transform -= offset;
             }
         }
 
