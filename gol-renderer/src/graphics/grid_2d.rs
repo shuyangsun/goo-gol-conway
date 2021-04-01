@@ -347,7 +347,11 @@ where
                                 1.0f32.max(zoom / (1. - ratio))
                             };
                         }
-                        _ => (),
+                        MouseScrollDelta::LineDelta(_, line_count) => {
+                            // Zoom 1.1x everytime scroll 1 line.
+                            let line_zoom_factor = 1. + (line_count * 0.05);
+                            zoom = 1.0f32.max(zoom * line_zoom_factor);
+                        }
                     },
                     WindowEvent::KeyboardInput { input, .. } => {
                         if input.state == ElementState::Released {
@@ -778,7 +782,7 @@ fn create_triangles(
             + top_padding
             + (grid_height - idx.1 - 1) as f32 * scale_y
             + (1.0 - scale) / 2.0 * scale_y
-            + dx;
+            + dy;
         let mut rotation = 0.0;
 
         let is_pointing_up = (idx.0 + idx.1) % 2 == 0;
