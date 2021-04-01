@@ -317,7 +317,7 @@ where
                             if last_mouse_click_time.is_some() {
                                 let last_click: Instant = last_mouse_click_time.unwrap();
                                 let duration = Instant::now() - last_click;
-                                if duration.as_millis() < 500 {
+                                if duration.as_millis() < 250 {
                                     zoom = 1.;
                                     translate_x = 0.;
                                     translate_y = 0.;
