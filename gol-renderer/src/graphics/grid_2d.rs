@@ -33,6 +33,7 @@ use shaderc::ShaderKind;
 use std::borrow::Borrow;
 use std::hash::Hash;
 use std::mem::ManuallyDrop;
+use std::time::Instant;
 use winit::{
     dpi::{LogicalSize, PhysicalPosition, PhysicalSize},
     event::{ElementState, Event, MouseScrollDelta, VirtualKeyCode, WindowEvent},
@@ -282,8 +283,9 @@ where
 
         let (mut zoom, mut translate_x, mut translate_y) = (1., 0., 0.);
         let mut click_start_pos: Option<PhysicalPosition<f64>> = None;
-        let mut click_start_translates = None;
         let mut cur_cursor_pos: Option<PhysicalPosition<f64>> = None;
+        let mut click_start_translates = None;
+        let mut last_mouse_click_time = None;
 
         event_loop.run(move |event, _, control_flow| {
             let mut cur_iter: Option<usize> = None;
@@ -312,6 +314,16 @@ where
                         ElementState::Released => {
                             click_start_pos = None;
                             click_start_translates = None;
+                            if last_mouse_click_time.is_some() {
+                                let last_click: Instant = last_mouse_click_time.unwrap();
+                                let duration = Instant::now() - last_click;
+                                if duration.as_millis() < 500 {
+                                    zoom = 1.;
+                                    translate_x = 0.;
+                                    translate_y = 0.;
+                                }
+                            }
+                            last_mouse_click_time = Some(Instant::now());
                         }
                     },
                     WindowEvent::CursorMoved { position, .. } => {
