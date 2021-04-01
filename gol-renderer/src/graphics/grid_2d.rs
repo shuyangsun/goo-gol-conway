@@ -806,8 +806,8 @@ fn create_triangles(
 /// Dynamically calculate the gap between cells based on render zoom scale.
 fn cell_scale_for_gap(scale_x: f32, scale_y: f32) -> f32 {
     let max_gap_scale = 0.9;
-    let max_gap_len = 1. / 500.;
-    let no_gap_len = 1. / 1000.;
+    let max_gap_len = 1. / 128.;
+    let no_gap_len = 1. / 512.;
 
     let cell_len = scale_x.min(scale_y);
     if cell_len <= no_gap_len {
