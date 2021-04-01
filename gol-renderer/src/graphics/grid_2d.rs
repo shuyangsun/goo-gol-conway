@@ -48,7 +48,6 @@ where
     control: Option<KeyboardControl>,
     fps_counter: FPSCounter, // TODO: show FPS
     states_read_only: StatesReadOnly<CI, T>,
-    cell_scale: f32,
     is_triangle: bool,
 }
 
@@ -68,7 +67,6 @@ where
             control: None,
             fps_counter: FPSCounter::new(240),
             states_read_only: states_storage,
-            cell_scale: 0.95,
             is_triangle: false,
         })
     }
@@ -76,12 +74,6 @@ where
     pub fn with_title(self, title: String) -> Self {
         let mut res = self;
         res.info.set_title(title);
-        res
-    }
-
-    pub fn with_cell_render_scale(self, scale: f32) -> Self {
-        let mut res = self;
-        res.cell_scale = scale;
         res
     }
 
@@ -119,7 +111,6 @@ where
 
         let board_shape = self.info.board_shape().clone();
         let states_read_only = self.states_read_only.clone();
-        let cell_scale = self.cell_scale;
         let mut control = self.control.clone();
 
         let desired_aspect_ratio = 1.0;
@@ -344,13 +335,13 @@ where
                             zoom = if ratio >= 0. {
                                 zoom * (1. + ratio)
                             } else {
-                                1.0f32.max(zoom / (1. - ratio))
+                                zoom / (1. - ratio)
                             };
                         }
                         MouseScrollDelta::LineDelta(_, line_count) => {
-                            // Zoom 1.1x everytime scroll 1 line.
+                            // Zoom 1.05x everytime scroll 1 line.
                             let line_zoom_factor = 1. + (line_count * 0.05);
-                            zoom = 1.0f32.max(zoom * line_zoom_factor);
+                            zoom *= line_zoom_factor;
                         }
                     },
                     WindowEvent::KeyboardInput { input, .. } => {
@@ -558,7 +549,6 @@ where
                                 grid_width,
                                 grid_height,
                                 constants,
-                                cell_scale,
                                 zoom,
                                 translate_x,
                                 translate_y,
@@ -569,7 +559,6 @@ where
                                 grid_width,
                                 grid_height,
                                 constants,
-                                cell_scale,
                                 zoom,
                                 translate_x,
                                 translate_y,
@@ -702,12 +691,10 @@ fn create_squares(
     grid_width: u32,
     grid_height: u32,
     states: Vec<((u32, u32), ColorRGBA)>,
-    scale: f32,
     zoom: f32,
     dx: f32,
     dy: f32,
 ) -> Vec<PushConstants> {
-    assert!(scale >= 0.0 && scale <= 1.0);
     let (square_width, square_height) = (
         surface_extent.width as f32 / grid_width as f32,
         surface_extent.height as f32 / grid_height as f32,
@@ -720,6 +707,8 @@ fn create_squares(
 
     let left_padding = 1.0 - scale_x / 2.0 * grid_width as f32;
     let top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
+
+    let scale = cell_scale_for_gap(scale_x, scale_y);
 
     let mut res = Vec::new();
     for (idx, color) in states.iter() {
@@ -751,12 +740,10 @@ fn create_triangles(
     grid_width: u32,
     grid_height: u32,
     states: Vec<((u32, u32), ColorRGBA)>,
-    scale: f32,
     zoom: f32,
     dx: f32,
     dy: f32,
 ) -> Vec<PushConstants> {
-    assert!(scale >= 0.0 && scale <= 1.0);
     let h = 3.0f32.sqrt() / 2.0;
     let (triangle_width, triangle_height) = (
         surface_extent.width as f32 / grid_width as f32 * 2.0,
@@ -773,6 +760,8 @@ fn create_triangles(
 
     let left_padding = 1.0 - scale_x / 4.0 * grid_width as f32;
     let top_padding = 1.0 - scale_y / 2.0 * grid_height as f32;
+
+    let scale = cell_scale_for_gap(scale_x, scale_y);
 
     let mut res = Vec::new();
     for (idx, color) in states.iter() {
@@ -812,6 +801,25 @@ fn create_triangles(
         });
     }
     res
+}
+
+/// Dynamically calculate the gap between cells based on render zoom scale.
+fn cell_scale_for_gap(scale_x: f32, scale_y: f32) -> f32 {
+    let max_gap_scale = 0.9;
+    let max_gap_len = 1. / 500.;
+    let no_gap_len = 1. / 1000.;
+
+    let cell_len = scale_x.min(scale_y);
+    if cell_len <= no_gap_len {
+        1.
+    } else if cell_len >= max_gap_len {
+        max_gap_scale
+    } else {
+        let range_log = (max_gap_len / no_gap_len).ln() / 1.1f32.ln();
+        let len_log = (cell_len / no_gap_len).ln() / 1.1f32.ln();
+        let ratio = ((-3. + 6. * (len_log / range_log)).tanh() + 1.) / 2.;
+        return max_gap_scale.max(1.0f32.min(max_gap_scale + (1. - max_gap_scale) * ratio));
+    }
 }
 
 /// Compile some GLSL shader source to SPIR-V.
