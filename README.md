@@ -76,7 +76,7 @@ $ gol --replay /path/to/replay/directory --triangular
 
 | Input | Functionality | Live | Replay |
 | - | - | - | - |
-| Scrolling | Zoom | Yes | Yes |
+| Mouse Scroll | Zoom | Yes | Yes |
 | Mouse Drag | Pan | Yes | Yes |
 | Double Click | Reset Canvas | Yes | Yes |
 | `SPACE` | Play/Pause | Yes | Yes |
