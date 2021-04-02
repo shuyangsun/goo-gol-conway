@@ -4,6 +4,10 @@ A highly configurable Cellular Automaton framework (John Conway's Game of Life o
 
 Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is a tribute to him for his contribution to mathematics, [Google Conway](https://www.google.com/search?q=john+conway) to learn more about his work.
 
+![](resources/and_gate.gif)
+![](resources/starwars.gif)
+![](resources/bombers_triangle.gif)
+
 ## Installation
 
 This program has been (not rigorously) tested on some Linux, macOS and Windows platforms, the following steps should work for all three platforms (with the exception of no ASCII rendering support on Windows).
