@@ -65,7 +65,6 @@ impl<T, U> PreloadCache<T, U> {
             }
 
             cur_keys = cache.keys().cloned().collect();
-
             break;
         }
 
@@ -134,7 +133,7 @@ impl<T, U> PreloadCache<T, U> {
                 loop {
                     let cache_unlocked = self.cache.try_write();
                     if cache_unlocked.is_err() {
-                        continue;
+                        return;
                     }
                     let mut cache = cache_unlocked.unwrap();
                     for key in extra.iter() {
