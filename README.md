@@ -26,19 +26,19 @@ $ cargo install gol-client
 
 ```bash
 # Clone respository
-git clone git@github.com:shuyangsun/goo-gol-conway.git
+$ git clone git@github.com:shuyangsun/goo-gol-conway.git
 
 # Change working directory
-cd goo-gol-conway
+$ cd goo-gol-conway
 
 # Update crates index
-cargo update
+$ cargo update
 
 # Build
-cargo build --release
+$ cargo build --release
 
 # Check instruction
-./target/release/gol --help
+$ ./target/release/gol --help
 ```
 
 #### ASCII Rendering
@@ -51,25 +51,25 @@ To enable support for ASCII rendering, you need to install NCURSES first, and si
 
 ```bash
 # Check command-line argument options (and available demos).
-gol --help
+$ gol --help
 
 # Run a demo.
-gol --demo starwars
+$ gol --demo starwars
 
 # Run a demo, but in triangular mode.
-gol --demo bombers --triangle
+$ gol --demo bombers --triangle
 
 # Run from a JSON configuration file, checkout help message for examples.
-gol --config /path/to/config.json
+$ gol --config /path/to/config.json
 
 # Saving run result.
-gol --config /path/to/config.json --save /path/to/empty/directory
+$ gol --config /path/to/config.json --save /path/to/empty/directory
 
 # Replay from saved data.
-gol --replay /path/to/replay/directory
+$ gol --replay /path/to/replay/directory
 
 # Replay using triangular rendering
-gol --replay /path/to/replay/directory --triangle
+$ gol --replay /path/to/replay/directory --triangle
 ```
 
 ### Playback Control Options
