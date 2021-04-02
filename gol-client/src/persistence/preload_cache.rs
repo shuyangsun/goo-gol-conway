@@ -85,7 +85,7 @@ impl<T, U> PreloadCache<T, U> {
         }
 
         let is_updating = self.is_updating();
-        if is_updating {
+        if !is_updating {
             let extra = cur_keys.difference(&prediction).cloned().collect();
             let to_be_added: HashSet<T> = prediction.difference(&cur_keys).cloned().collect();
 
