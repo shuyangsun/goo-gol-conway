@@ -744,14 +744,14 @@ fn create_triangles(
     dx: f32,
     dy: f32,
 ) -> Vec<PushConstants> {
-    let h = 3.0f32.sqrt() / 2.0;
+    const SIN_PI_3: f32 = 0.86602540378; // sqrt(3)/2
     let (triangle_width, triangle_height) = (
-        surface_extent.width as f32 / grid_width as f32 * 2.0,
+        surface_extent.width as f32 / grid_width as f32 * 2.0 / SIN_PI_3,
         surface_extent.height as f32 / grid_height as f32,
     );
 
-    let triangle_width = triangle_width.min(triangle_height / h);
-    let triangle_height = triangle_height.min(triangle_width * h);
+    let triangle_width = triangle_width.min(triangle_height / SIN_PI_3);
+    let triangle_height = triangle_height.min(triangle_width * SIN_PI_3);
 
     let (scale_x, scale_y) = (
         triangle_width / surface_extent.width as f32 * 2.0 * zoom,
