@@ -1,8 +1,8 @@
 # Goo-GoL-Conway
 
-A highly configurable Cellular Automaton program (John Conway's Game of Life on steroids).
+A highly configurable Cellular Automaton framework (John Conway's Game of Life on steroids).
 
-Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is to pay respects to him for his contribution to mathematics, [Google Conway](https://www.google.com/search?q=john+conway) to learn more about him.
+Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is a tribute to him for his contribution to mathematics, [Google Conway](https://www.google.com/search?q=john+conway) to learn more about his work.
 
 ## Installation
 
@@ -45,7 +45,7 @@ $ ./target/release/gol --help
 
 In almost all use cases graphical rendering is desired, however sometimes limitations of the system may not allow a graphical representation (e.g., remote into a Linux terminal). In these situations you can still display grid-based two-dimensional Cellular Automaton systems with ASCII characters utilizing [NCURSES](https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/) library. This library is only available on UNIX platforms, that is why it is not enabled by default.
 
-To enable support for ASCII rendering, you need to install NCURSES first, and since the installation step is platform-dependent, we will not cover that in this document. After installing NCURSES, simply build the program with command `cargo build --features ascii --release`.
+To enable support for ASCII rendering, you need to install NCURSES first, and since the installation step is platform-dependent, we will not cover that in this document. After installing NCURSES, simply install the program with `cargo install gol-client --features ascii`, or build from source `cargo build --features ascii --release`.
 
 ## Usage
 
@@ -57,7 +57,7 @@ $ gol --help
 $ gol --demo starwars
 
 # Run a demo, but in triangular mode.
-$ gol --demo bombers --triangle
+$ gol --demo bombers --triangular
 
 # Run from a JSON configuration file, checkout help message for examples.
 $ gol --config /path/to/config.json
@@ -69,7 +69,7 @@ $ gol --config /path/to/config.json --save /path/to/empty/directory
 $ gol --replay /path/to/replay/directory
 
 # Replay using triangular rendering
-$ gol --replay /path/to/replay/directory --triangle
+$ gol --replay /path/to/replay/directory --triangular
 ```
 
 ### Playback Control Options
