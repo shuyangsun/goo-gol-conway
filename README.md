@@ -8,43 +8,53 @@ Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is a tr
 ![](resources/starwars.gif)
 ![](resources/bombers_triangle.gif)
 
-## Installation
+## Dependencies
 
-This program has been (not rigorously) tested on some Linux, macOS and Windows platforms, the following steps should work for all three platforms (with the exception of no ASCII rendering support on Windows).
+This program has been (not rigorously) tested on some Linux, macOS and Windows platforms, the following steps should work for all three platforms.
 
-Dedicated GPU hardware is preferred for faster rendering but not required. 
+Dedicated GPU hardware is preferred for faster rendering but not required.
 
-### Dependencies
-
-#### Rust
-
-If you do not already have Rust installed on your system, please follow the official Rust [installation documentation](https://www.rust-lang.org/tools/install) to install it.
-
-It is good practice to run `rustup update` to make sure your Rust toolchain is up to date before installing this program. From here, you can choose to either do a simple installation using Cargo (recomended) or build from source.
-
-#### Ubuntu
-
-Install [Vulkan SDK](https://vulkan.lunarg.com/).
+### Ubuntu
 
 ```bash
 # Install Shaderc dependencies.
-$ apt-get install build-essential cmake git ninja python3
+$ apt install build-essential cmake git ninja python3
+
+# Install Vulkan SDK (NVIDIA GPU only).
+$ apt install vulkan-utils
+
+# Install Vulkan SDK (AMD GPU only).
+$ apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
+
+# Optional: install NCURSES for ASCII rendering support.
+$ apt install libncurses5-dev libncursesw5-dev
 ```
 
-#### macOS
+For other Linux distros, follow [this tutorial](https://linuxconfig.org/install-and-test-vulkan-on-linux) to install Vulkan SDK.
 
-Install [Homebrew](https://brew.sh/).
+### macOS
+
+Install [Xcode](https://developer.apple.com/xcode/) and [Homebrew](https://brew.sh/) if you do not already have them. If it is your first time installing Xcode, it will prompt you to install additional components after launching it, select "yes" to install required dependencies.
 
 ```bash
 # Install Shaderc dependencies.
 $ brew install git cmake git ninja python@3.8
+
+# Optional: install NCURSES for ASCII rendering support.
+$ brew install ncurses
 ```
 
-#### Shaderc
+### Windows
 
-This program does not use third-party render engines, instead it compiles shader programs and build graphics pipeline from scratch. To compile shader programs, you have to install Google's [Shaderc](https://github.com/google/shaderc) library.
+Install [Visual Studio](https://visualstudio.microsoft.com/downloads/), [CMake](https://cmake.org/download/), [Python3.8](https://www.python.org/downloads/release/python-389/).
 
-Follow the [setup tutorial](https://crates.io/crates/shaderc) to install Shaderc.
+## Installation
+
+### Rust
+
+If you do not already have Rust installed on your system, please follow the official Rust [installation documentation](https://www.rust-lang.org/tools/install) to install it.
+
+It is good practice to run `rustup update` to make sure your Rust toolchain is up to date before installing this program. From here, you can choose to either do a simple installation using Cargo (recomended) or build from source.
 
 ### Using Cargo
 
