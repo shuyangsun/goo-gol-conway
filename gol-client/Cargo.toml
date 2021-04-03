@@ -1,9 +1,9 @@
 [package]
 name = "gol-client"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Shuyang Sun <shuyangsun10@gmail.com>"]
 edition = "2018"
-description = "Conway's Game of Life supercharged."
+description = "John Conway's Game of Life supercharged."
 license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

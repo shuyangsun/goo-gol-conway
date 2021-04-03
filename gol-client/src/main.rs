@@ -20,6 +20,7 @@ fn main() {
         include_str!("../examples/random_gol.json"),
         include_str!("../examples/and_gate_4_neighbors.json"),
         include_str!("../examples/star_wars.json"),
+        include_str!("../examples/star_wars_donut.json"),
         include_str!("../examples/brians_brain.json"),
         include_str!("../examples/bombers.json"),
         include_str!("../examples/bombers_255.json"),
