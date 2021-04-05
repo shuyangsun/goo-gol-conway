@@ -7,6 +7,7 @@ Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is a tr
 ![](resources/and_gate.gif)
 ![](resources/starwars.gif)
 ![](resources/bombers_triangle.gif)
+![](resources/starwars_ascii.gif)
 
 ## Dependencies
 
