@@ -127,5 +127,5 @@ $ gol --replay /path/to/replay/directory --triangular
 | `K` | 2x Speed Up | Yes | Yes |
 | `H` (playing) | Play Backward | No | Yes |
 | `L` (playing) | Play Forward | No | Yes |
-| `H` (paused) | One Step Backwad | No | Yes |
+| `H` (paused) | One Step Backward | No | Yes |
 | `L` (paused) | One Step Forward | No | Yes |
