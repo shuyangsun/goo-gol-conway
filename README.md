@@ -21,11 +21,11 @@ Dedicated GPU hardware is preferred for faster rendering but not required.
 # Install Shaderc dependencies.
 $ apt install build-essential cmake git ninja python3
 
-# Install Vulkan SDK (NVIDIA GPU only).
+# Install Vulkan SDK (CPU only or any GPU).
 $ apt install vulkan-utils
 
-# Install Vulkan SDK (AMD GPU only).
-$ apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
+# Install Vulkan SDK (only if you have an AMD GPU).
+$ apt install libvulkan1 mesa-vulkan-drivers
 
 # Optional: install NCURSES for ASCII rendering support.
 $ apt install libncurses5-dev libncursesw5-dev
