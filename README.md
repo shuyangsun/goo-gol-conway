@@ -1,6 +1,6 @@
 # Goo-GoL-Conway
 
-A highly configurable Cellular Automaton framework (John Conway's Game of Life on steroids).
+A highly configurable Cellular Automaton framework (John Conway's Game of Life on steroids). You can read the [research paper](resources/modular_design_of_cellular_automaton_in_rust.pdf) if you are interested.
 
 Sadly Conway passed away on April 11, 2020 due to COVID-19. This project is a tribute to him for his contribution to mathematics, [Google Conway](https://www.google.com/search?q=john+conway) to learn more about his work.
 
