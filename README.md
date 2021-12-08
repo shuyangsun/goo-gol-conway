@@ -39,7 +39,7 @@ Install [Xcode](https://developer.apple.com/xcode/) and [Homebrew](https://brew.
 
 ```bash
 # Install Shaderc dependencies.
-$ brew install git cmake git ninja python@3.8
+$ brew install git cmake ninja python@3.8
 
 # Optional: install NCURSES for ASCII rendering support.
 $ brew install ncurses
